@@ -150,25 +150,64 @@ Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_
 
 ## Deployment
 
-This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/).
+This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) with automatic deployment via GitHub Actions.
 
-1. Build the project:
+**Production URL:** https://plant-it.anna-kazmierczak-it.workers.dev
+
+### Development Workflow
+
+```bash
+# 1. Work on a feature branch
+git checkout -b feature/my-feature
+# ... make changes ...
+git add .
+git commit -m "Add my feature"
+git push origin feature/my-feature
+
+# 2. Create Pull Request on GitHub
+# → GitHub Actions runs: lint + build + tests
+
+# 3. Merge PR to main
+# → Automatic deployment to Cloudflare Workers 🚀
+```
+
+### Manual Deployment
+
+If you need to deploy manually:
 
 ```bash
 npm run build
-```
-
-2. Deploy with Wrangler:
-
-```bash
 npx wrangler deploy
 ```
 
-Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or via `npx wrangler secret put`.
+### Required Secrets
 
-## CI
+Configure these secrets in GitHub repository settings (Settings → Secrets and variables → Actions):
 
-GitHub Actions runs lint + build on every push and PR to `master`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_KEY` - Your Supabase anon/public key
+- `CLOUDFLARE_API_TOKEN` - Cloudflare API token with Workers permissions
+
+For local development, set these in `.dev.vars` file.
+
+### Monitoring Deployments
+
+- **GitHub Actions:** Check deployment status at `https://github.com/[username]/plant_it_app/actions`
+- **Cloudflare Dashboard:** View deployments at https://dash.cloudflare.com → Workers & Pages
+- **Logs:** Run `npx wrangler tail` to stream live logs from production
+
+### Detailed Deployment Guide
+
+For complete deployment setup instructions, see [context/deployment/deploy-plan.md](context/deployment/deploy-plan.md).
+
+## CI/CD
+
+GitHub Actions workflow runs on every push and PR to `main`:
+
+- **On Pull Requests:** Runs lint + build (no deployment)
+- **On Push to `main`:** Runs lint + build + **automatic deployment to Cloudflare Workers**
+
+The workflow is defined in `.github/workflows/ci.yml`.
 
 ## License
 

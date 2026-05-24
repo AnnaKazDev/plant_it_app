@@ -28,6 +28,39 @@ See @package.json scripts section.
 
 Pre-commit: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
 
+## Deployment
+
+- **Platform:** Cloudflare Workers (SSR)
+- **Production URL:** https://plant-it.anna-kazmierczak-it.workers.dev
+- **Auto-deploy:** Merge to `main` triggers automatic deployment via GitHub Actions
+
+### Development Workflow
+
+1. Work on feature branch
+2. Create PR → CI runs (lint + build)
+3. Merge to `main` → Auto-deploy to production
+
+### Manual Deploy
+
+```bash
+npm run build
+npx wrangler deploy
+```
+
+### Secrets
+
+- Local: `.dev.vars` (gitignored)
+- Production: Set via `npx wrangler secret put SUPABASE_URL` and `SUPABASE_KEY`
+- CI/CD: GitHub repository secrets
+
+### Monitoring
+
+- Logs: `npx wrangler tail` (real-time) or Cloudflare Dashboard → Workers & Pages → Logs (24h history)
+- Deployments: `npx wrangler deployments list`
+- Rollback: `npx wrangler rollback [deployment-id]`
+
+**IMPORTANT:** CPU time limit on free tier is 10ms. Current measurement: 18-20ms. Monitor with `npx wrangler tail` after deployments. May require upgrade to Workers Paid ($5/month) for production use.
+
 ## Coding Style
 
 - **TypeScript**: strict mode, React JSX transform (`jsx: "react-jsx"`), no unused vars (args/vars starting with `_` allowed).
