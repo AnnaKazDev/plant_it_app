@@ -1,6 +1,28 @@
-Cloudflare Workers Integration & Deployment Plan
+# Cloudflare Workers Integration & Deployment Plan
 
-Context
+## Quick Start Path
+
+**For first deployment (minimum viable path):**
+
+1. ✅ **Phase 0** - Create accounts (20-30 min)
+2. ✅ **Phase 1** - Update config files (5 min)
+3. ✅ **Phase 2** - Configure Supabase connection (10 min)
+4. ✅ **Phase 3** - Test locally (15 min)
+5. ✅ **Phase 4** - Deploy to Cloudflare (20 min)
+6. ⚠️ **Phase 5** - CI/CD (optional, 15 min if Option B)
+7. ⚠️ **Phase 6** - Production hardening (optional, 30 min)
+8. ⚠️ **Phase 7** - Documentation (optional, 20 min)
+
+**Total time for MVP deployment:** 70-90 minutes (Phases 0-4 only)
+
+**Phase priority:**
+- **MUST HAVE (for first deploy):** Phase 0, 1, 2, 3, 4
+- **RECOMMENDED (for production):** Phase 5 (manual deploy at minimum), Phase 6 (monitoring + alerts)
+- **OPTIONAL (can defer):** Phase 5 auto-deploy, Phase 6 custom domain/Sentry, Phase 7
+
+---
+
+## Context
 
 Based on context/foundation/infrastructure.md, we're deploying Plant It to Cloudflare Workers with:
 
@@ -142,8 +164,13 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    
    After project is ready:
    
-   - Click "Project Settings" (gear icon in left sidebar)
-   - Go to "API" section
+   - **Navigate to API settings:**
+     - Look at **left sidebar** of Supabase dashboard
+     - Click the **⚙️ gear icon** (labeled "Project Settings")
+     - In the Project Settings page, look at **left submenu**
+     - Click **"API"** section
+     - Alternatively, direct link: `https://supabase.com/dashboard/project/[project-ref]/settings/api`
+   
    - You'll need these two values:
    
    **Project URL:**
@@ -152,10 +179,14 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    ```
    Example: `https://xyzabcdefgh.supabase.co`
    
+   - Location in UI: Under "Configuration" → "Project URL"
+   
    **anon/public key:**
    ```
    eyJhbGc...very-long-jwt-token...
    ```
+   
+   - Location in UI: Under "Project API keys" → "anon" → "public" (click eye icon to reveal)
    
    - **Copy both values** - you'll need them in Phase 2
    - **Security note:** The `anon` key is safe to expose client-side (it's scoped by Row Level Security policies)
@@ -206,7 +237,7 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    ```
    
    **If not installed:**
-   - macOS: `xcode-select --install` or download from git-scm.com
+   - macOS: `xcode-select --install` or download from https://git-scm.com
    - Windows: https://git-scm.com/download/win
    - Linux: `sudo apt-get install git` (Ubuntu/Debian) or `sudo yum install git` (CentOS/RHEL)
 
@@ -258,17 +289,54 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
 
 ---
 
-Phase 1: Pre-Deployment Configuration
+## Phase 1: Pre-Deployment Configuration
 
-1.1 Update Wrangler Configuration
+### 1.1 Update Wrangler Configuration
 
-Current wrangler.jsonc needs updates per latest Cloudflare docs:
+**Current state:** The project already has `wrangler.jsonc` (created by the 10x Astro Starter).
 
+**Action required:** Update specific fields to match the deployment requirements.
+
+**How to update:**
+
+1. **Open** `wrangler.jsonc` in your editor
+2. **Verify current content** - you should see something like:
+   ```jsonc
+   {
+     "$schema": "node_modules/wrangler/config-schema.json",
+     "name": "10x-astro-starter",
+     "main": "@astrojs/cloudflare/entrypoints/server",
+     // ... other fields
+   }
+   ```
+
+3. **Update these specific fields:**
+   
+   **Change `name`:** from `"10x-astro-starter"` to `"plant-it"`
+   ```jsonc
+   "name": "plant-it",
+   ```
+   
+   **Change `main`:** from `"@astrojs/cloudflare/entrypoints/server"` to `"./dist/_worker.js/index.js"`
+   ```jsonc
+   "main": "./dist/_worker.js/index.js",
+   ```
+   **Why:** Astro 6 changed the worker output path. The new path points to the actual built worker file.
+   
+   **Update `compatibility_date`:** to today (2026-05-24)
+   ```jsonc
+   "compatibility_date": "2026-05-24",
+   ```
+   **Why:** Ensures you get the latest Cloudflare Workers runtime features and fixes.
+
+4. **Complete updated file should look like:**
+
+```jsonc
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "plant-it",  // Updated from "10x-astro-starter"
-  "main": "./dist/_worker.js/index.js",  // Changed: Astro 6 generates this entrypoint
-  "compatibility_date": "2026-05-24",  // Updated to today
+  "name": "plant-it",
+  "main": "./dist/_worker.js/index.js",
+  "compatibility_date": "2026-05-24",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "binding": "ASSETS",
@@ -279,26 +347,19 @@ Current wrangler.jsonc needs updates per latest Cloudflare docs:
     "enabled": true
   }
 }
+```
 
-Key changes:
+**Don't change:**
+- `$schema` - keep as-is
+- `compatibility_flags` - `nodejs_compat` is required
+- `assets` section - configured correctly
+- `observability` - already enabled
 
+**Edge case:** If using Cloudflare bindings (KV, R2, D1) later, add them here and run `npx wrangler types` to generate TypeScript definitions.
 
+---
 
-
-
-name: "plant-it" (matches project)
-
-
-
-main: "./dist/_worker.js/index.js" (new Astro 6 output path, not the entrypoint reference)
-
-
-
-compatibility_date: today's date (2026-05-24)
-
-Edge case: If using Cloudflare bindings (KV, R2, D1) later, add them here and run npx wrangler types to generate TypeScript definitions.
-
-1.2 Verify Astro Configuration
+### 1.2 Verify Astro Configuration
 
 astro.config.mjs is already correctly configured:
 
@@ -561,18 +622,40 @@ Edge case - secret update fails:
 
 "Worker not found": Deploy once first (npx wrangler deploy), then add secrets
 
-4.3 First Deployment
+### 4.3 First Deployment
 
+```bash
 npm run build
 npx wrangler deploy
+```
 
-Expected output:
+**Expected output:**
 
+```
 Total Upload: [N] KiB / gzip: [N] KiB
 Deployed plant-it triggers (1.23 sec)
-  https://plant-it.[account].workers.dev
+  https://plant-it.[account-subdomain].workers.dev
+```
 
-Edge case - build fails:
+**Understanding your Worker URL:**
+
+The URL format is `https://plant-it.[account-subdomain].workers.dev` where:
+- `plant-it` = your worker name (from `wrangler.jsonc`)
+- `[account-subdomain]` = your Cloudflare account's unique subdomain (assigned automatically)
+
+**How to find your account subdomain:**
+1. After first deploy, it's shown in the output above
+2. Or visit Cloudflare Dashboard → Workers & Pages
+3. Or check the URL bar: `https://dash.cloudflare.com/[account-id]/workers-and-pages`
+4. The `[account-subdomain]` is typically a shortened version of your account ID
+
+**Example:** If output shows `https://plant-it.abc123.workers.dev`, your account subdomain is `abc123`.
+
+**Save this URL** - you'll need it for testing in Phase 4.4 and 4.5.
+
+---
+
+**Edge case - build fails:**
 
 
 
@@ -761,59 +844,59 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-If choosing Option B, add GitHub Secret:
+**If choosing Option B, add GitHub Secret:**
 
+1. **Generate Cloudflare API Token:**
+   
+   - Go to Cloudflare Dashboard → Profile → API Tokens
+   - **Direct link:** `https://dash.cloudflare.com/profile/api-tokens`
+   - Click "Create Token" button (blue, top right)
+   - Scroll to "Custom token" section → Click "Get started"
+   - Or use **"Edit Cloudflare Workers" template** (faster):
+     - Find in "API token templates" section
+     - Click "Use template" next to "Edit Cloudflare Workers"
+   
+   **Token configuration:**
+   - **Token name:** "GitHub Actions - Plant It" (or any descriptive name)
+   - **Permissions:**
+     - Account → Workers Scripts → Edit
+     - Account → Account Settings → Read
+   - **Account Resources:** Include → [Your account name]
+   - **Zone Resources:** Not needed for Workers
+   - **TTL:** Default (no expiration) or set custom expiration
+   
+   - Click "Continue to summary" → "Create Token"
+   - **CRITICAL:** Copy token immediately (shown only once)
+   - Example token: `1234567890abcdefghijklmnopqrstuvwxyz`
 
+2. **Add to GitHub:**
+   
+   - Open your repository on GitHub
+   - Go to: Repository → Settings → Secrets and variables → Actions
+   - **Direct link pattern:** `https://github.com/<username>/<repo>/settings/secrets/actions`
+   - Example: `https://github.com/akazmierczak/plant-it/settings/secrets/actions`
+   
+   **Add three secrets:**
+   
+   a. **CLOUDFLARE_API_TOKEN**
+      - Click "New repository secret"
+      - Name: `CLOUDFLARE_API_TOKEN`
+      - Value: paste token from step 1
+      - Click "Add secret"
+   
+   b. **SUPABASE_URL** (if not already added)
+      - Click "New repository secret"
+      - Name: `SUPABASE_URL`
+      - Value: `https://[project-ref].supabase.co`
+      - Click "Add secret"
+   
+   c. **SUPABASE_KEY** (if not already added)
+      - Click "New repository secret"
+      - Name: `SUPABASE_KEY`
+      - Value: your anon/public key from Phase 0.3
+      - Click "Add secret"
 
-
-
-Generate Cloudflare API Token:
-
-
-
-
-
-Go to Cloudflare Dashboard → Profile → API Tokens
-
-
-
-Click "Create Token"
-
-
-
-Use "Edit Cloudflare Workers" template
-
-
-
-Scope to your account + "All Zones" (or specific zone)
-
-
-
-Copy token (shown once)
-
-
-
-Add to GitHub:
-
-
-
-
-
-Repository → Settings → Secrets and variables → Actions
-
-
-
-Click "New repository secret"
-
-
-
-Name: CLOUDFLARE_API_TOKEN
-
-
-
-Value: paste token
-
-Edge case - CI deployment fails:
+**Edge case - CI deployment fails:**
 
 
 
@@ -887,39 +970,73 @@ Requires adding [env.preview] section to wrangler.jsonc:
 
 Recommendation: Start with Approach A (simpler, no config). Only use Approach B if you need custom preview environment variables.
 
-Phase 6: Production Readiness Checks
+## Phase 6: Production Readiness Checks
 
-6.1 Custom Domain Setup (Optional)
+### 6.1 Custom Domain Setup (Optional)
 
-Default URL: plant-it.[account].workers.dev. To use custom domain:
+**Default URL:** `plant-it.[account-subdomain].workers.dev`
 
+**To use custom domain (e.g., `plantit.app` or `app.plantit.com`):**
 
+**Prerequisites:**
+- You must own a domain (purchase from registrar like Namecheap, GoDaddy, Cloudflare Registrar, etc.)
+- Domain costs: $10-15/year typically
+- **Cloudflare does NOT charge for:**
+  - SSL certificate (free via Let's Encrypt)
+  - DNS hosting (free)
+  - Domain transfer to Cloudflare (free)
+  - Custom domain routing to Workers (free)
 
+**Steps:**
 
+1. **Add domain to Cloudflare**
+   - Dashboard → Websites → "Add site" button
+   - Direct link: `https://dash.cloudflare.com/`
+   - Enter your domain (e.g., `plantit.app`)
+   - Select "Free" plan
+   - Click "Continue"
 
-Add domain to Cloudflare (Dashboard → Websites → Add site)
+2. **Update DNS nameservers** (at your domain registrar)
+   - Cloudflare will show 2 nameservers (e.g., `ns1.cloudflare.com`, `ns2.cloudflare.com`)
+   - Log in to your domain registrar (where you bought the domain)
+   - Find "Nameservers" or "DNS Settings"
+   - Replace registrar's nameservers with Cloudflare's nameservers
+   - **Wait 24-48 hours** for DNS propagation (usually takes 1-4 hours)
 
+3. **Connect domain to Worker**
+   - Cloudflare Dashboard → Workers & Pages → plant-it
+   - Go to "Settings" tab → "Domains & Routes" section
+   - Click "Add Custom Domain" button
+   - Enter domain:
+     - Root domain: `plantit.app`
+     - Or subdomain: `app.plantit.com`
+   - Click "Add Domain"
 
+4. **SSL certificate generation**
+   - Cloudflare auto-generates SSL certificate (1-5 minutes)
+   - Status shows "Active" when ready
+   - Your Worker is now accessible at `https://plantit.app` (or subdomain)
 
-Update DNS nameservers to Cloudflare's
+5. **Update Astro configuration**
+   
+   Add `site` to `astro.config.mjs`:
+   
+   ```js
+   export default defineConfig({
+     site: "https://plantit.app",  // or your custom domain
+     // ... rest of config
+   });
+   ```
+   
+   **Why:** Astro uses this for sitemap generation and canonical URLs.
 
+6. **Rebuild and redeploy**
+   ```bash
+   npm run build
+   npx wrangler deploy
+   ```
 
-
-Cloudflare Dashboard → Workers & Pages → plant-it → Settings → Domains & Routes
-
-
-
-Click "Add Custom Domain"
-
-
-
-Enter domain (e.g., plantit.app or app.plantit.com)
-
-
-
-Cloudflare auto-generates SSL certificate (1-5 minutes)
-
-Edge case - domain setup fails:
+**Edge case - domain setup fails:**
 
 
 
@@ -1402,6 +1519,178 @@ Based on infrastructure.md Risk Register, key mitigations in this plan:
 | **Deployment breaks DB** | Phase 6.4: Document that rollback doesn't revert Supabase migrations. Manual SQL rollback required. |
 | **Cost surprises** | Phase 6.5: Set billing alerts at 90% free tier. Document upgrade triggers and projected MVP costs. |
 
+---
+
+## Troubleshooting Guide
+
+### Common Issues by Phase
+
+#### Phase 0: Account Setup
+
+**Issue:** Supabase project stuck on "Setting up project..." for > 10 minutes
+- **Cause:** Rare provisioning delay or region overload
+- **Fix:** 
+  1. Check https://status.supabase.com for incidents
+  2. Refresh browser page
+  3. If still stuck after 15 min, delete project and recreate
+  4. Try different region (e.g., switch from Frankfurt to London)
+
+**Issue:** Can't find Project URL or anon key in Supabase dashboard
+- **Cause:** UI navigation confusion
+- **Fix:**
+  1. Ensure project finished provisioning (status shows "Active")
+  2. Click ⚙️ gear icon in left sidebar (not top menu)
+  3. Select "Project Settings" (not "Organization Settings")
+  4. In left submenu, click "API"
+  5. Scroll down to "Project API keys" section
+
+#### Phase 1-2: Configuration
+
+**Issue:** `wrangler.jsonc` syntax error after editing
+- **Cause:** Invalid JSON (missing comma, quote, bracket)
+- **Fix:**
+  1. Run: `npx jsonlint wrangler.jsonc`
+  2. Check for common mistakes:
+     - Missing comma after `"compatibility_date": "2026-05-24"` line
+     - Extra comma after last item in object
+     - Comments not using `//` format (JSONC requires `//` not `/* */`)
+  3. Compare with working example in Phase 1.1
+
+**Issue:** `.dev.vars` not recognized by `npm run dev`
+- **Cause:** Wrong file location or name
+- **Fix:**
+  1. File must be in project root (same directory as `package.json`)
+  2. File must be named exactly `.dev.vars` (not `.env`, not `dev.vars`)
+  3. No file extension (not `.dev.vars.txt`)
+  4. Check: `ls -la | grep dev.vars` should show `.dev.vars`
+
+#### Phase 3: Local Development
+
+**Issue:** `npm run dev` shows "SUPABASE_URL is not defined"
+- **Cause:** `.dev.vars` file missing, empty, or has wrong format
+- **Fix:**
+  1. Verify `.dev.vars` exists: `cat .dev.vars`
+  2. Check format (no quotes, no `export`, plain `KEY=value`):
+     ```bash
+     SUPABASE_URL=https://xyzabc.supabase.co
+     SUPABASE_KEY=eyJhbGc...
+     ```
+  3. No spaces around `=`
+  4. No trailing whitespace
+  5. Restart dev server after fixing
+
+**Issue:** Port 4321 already in use
+- **Cause:** Previous dev server still running
+- **Fix:**
+  1. Find process: `lsof -i :4321`
+  2. Kill process: `kill -9 [PID]`
+  3. Or use different port: `npm run dev -- --port 3000`
+
+**Issue:** Signup/signin forms don't work locally
+- **Cause:** Supabase project not configured or wrong credentials
+- **Fix:**
+  1. Verify credentials in `.dev.vars` match Supabase dashboard
+  2. Check Supabase dashboard → Authentication → Users (should see "0 users" or your test accounts)
+  3. Test connection: `curl -I https://[project-ref].supabase.co` should return 200
+  4. If 404: wrong Project URL
+  5. Check browser console for errors (F12)
+
+#### Phase 4: Deployment
+
+**Issue:** `npx wrangler login` fails with "Could not open browser"
+- **Cause:** Headless environment or no browser available
+- **Fix:** `npx wrangler login --no-browser` → follow CLI instructions (open URL manually)
+
+**Issue:** `npx wrangler deploy` fails with "Authentication error"
+- **Cause:** Not logged in or token expired
+- **Fix:**
+  1. Run: `npx wrangler whoami` (should show your email)
+  2. If not logged in: `npx wrangler login`
+  3. If still fails: `npx wrangler logout` then `npx wrangler login` again
+
+**Issue:** Build succeeds but deploy fails with "Worker exceeded size limit"
+- **Cause:** Bundle > 1MB (Worker limit on free tier)
+- **Fix:**
+  1. Check size: `ls -lh dist/_worker.js/index.js`
+  2. Enable code splitting in `astro.config.mjs`
+  3. Remove unused dependencies: `npm prune`
+  4. Analyze bundle: `npx astro build --analyze`
+
+**Issue:** Deploy succeeds but Worker returns 500 errors
+- **Cause:** Runtime error in Worker code
+- **Fix:**
+  1. Check logs: `npx wrangler tail`
+  2. Look for error stack trace
+  3. Common causes:
+     - Missing environment variables (SUPABASE_URL, SUPABASE_KEY)
+     - Incompatible Node.js APIs (Workers use V8, not full Node)
+     - Import errors (dynamic imports may fail)
+
+**Issue:** Can't add secrets with `npx wrangler secret put`
+- **Cause:** Worker doesn't exist yet (must deploy first)
+- **Fix:**
+  1. Deploy once: `npm run build && npx wrangler deploy`
+  2. Then add secrets: `npx wrangler secret put SUPABASE_URL`
+  3. Deploy again to pick up secrets: `npx wrangler deploy`
+
+#### Phase 5: CI/CD
+
+**Issue:** GitHub Actions workflow fails with "CLOUDFLARE_API_TOKEN not found"
+- **Cause:** Secret not set or wrong name
+- **Fix:**
+  1. Go to: `https://github.com/<username>/<repo>/settings/secrets/actions`
+  2. Verify "CLOUDFLARE_API_TOKEN" exists (exact name, all caps, underscores)
+  3. If missing, add it (see Phase 5.1)
+  4. If exists, regenerate token in Cloudflare dashboard and update secret
+
+**Issue:** CI build fails with "Cannot find module '@astrojs/cloudflare'"
+- **Cause:** `npm ci` didn't install dependencies correctly
+- **Fix:**
+  1. Check `package-lock.json` is committed to git
+  2. Delete `.github/workflows/ci.yml` cache
+  3. Re-run workflow
+
+#### General Debugging Commands
+
+**Check Cloudflare authentication:**
+```bash
+npx wrangler whoami
+# Should show: "You are logged in as: your-email@example.com"
+```
+
+**List deployed Workers:**
+```bash
+npx wrangler deployments list
+```
+
+**View live Worker logs:**
+```bash
+npx wrangler tail
+# Keep running, open Worker URL in browser, watch logs
+```
+
+**Test Supabase connection:**
+```bash
+curl -I https://[project-ref].supabase.co
+# Should return: HTTP/2 200
+```
+
+**Verify environment variables loaded:**
+```bash
+# In dev mode, check console output when starting server
+npm run dev
+# Look for: "Environment variables loaded: SUPABASE_URL, SUPABASE_KEY"
+```
+
+**Check Worker bundle size:**
+```bash
+npm run build
+ls -lh dist/_worker.js/index.js
+# Should be < 1MB (1,000,000 bytes)
+```
+
+---
+
 ## Out of Scope (For Future Iterations)
 
 The following are NOT included in this deployment plan:
@@ -1487,4 +1776,23 @@ The following are NOT included in this deployment plan:
 2. Set up Supabase tables with RLS policies
 3. Monitor CPU time and upgrade to Workers Paid if needed
 4. Configure custom domain when ready for users
+
+---
+
+## Document Revision History
+
+**v2.0 - 2026-05-24:**
+- ✅ Added "Quick Start Path" section with phase priorities (MUST/RECOMMENDED/OPTIONAL)
+- ✅ Added Phase 0: Account Setup with step-by-step registration for Cloudflare & Supabase
+- ✅ Enhanced Phase 1.1 with clear instructions on updating vs replacing `wrangler.jsonc`
+- ✅ Added exact UI locations for finding Supabase credentials (left sidebar → gear icon → API)
+- ✅ Added explanation of Cloudflare account subdomain in Worker URLs
+- ✅ Added direct links for GitHub secrets and Cloudflare API tokens
+- ✅ Enhanced custom domain section with costs breakdown (domain purchase vs free SSL)
+- ✅ Added comprehensive Troubleshooting Guide covering all phases
+- ✅ Fixed all git-scm.com links (added https://)
+- ✅ Added debugging commands reference section
+
+**v1.0 - Initial version:**
+- Base deployment plan with 7 phases (configuration through documentation)
 
