@@ -4,6 +4,7 @@ An Astro 6 SSR web application with React 19 islands, Tailwind 4, Supabase authe
 
 ## Critical Rules
 
+- **Git workflow**: NEVER commit or push without explicit approval. Always ask before running `git commit` or `git push`. The user controls when changes enter the repository.
 - **API routes**: Must export `const prerender = false` (SSR mode, see @astro.config.mjs).
 - **Tailwind classes**: Use `cn()` helper from `@/lib/utils` for conditional/merged class names. Never concatenate class strings manually.
 - **No Next.js directives**: Do not use `"use client"` or `"use server"`. This is Astro with React islands, not Next.js.
