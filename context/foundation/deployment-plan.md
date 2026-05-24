@@ -38,6 +38,226 @@ Plan to upgrade to Workers Paid ($5/month) if realistic page renders exceed 8ms
 
 Must use Supabase connection pooler (port 6543) to avoid connection setup overhead
 
+## Phase 0: Account Setup (For First-Time Users)
+
+**Prerequisites:** You need accounts on both Cloudflare and Supabase. If you already have these accounts, skip to Phase 1.
+
+### 0.1 Create Cloudflare Account
+
+**Step-by-step registration:**
+
+1. **Navigate to Cloudflare signup**
+   - Go to https://dash.cloudflare.com/sign-up
+   - You'll see "Create your Cloudflare account" page
+
+2. **Enter account details**
+   - Email address: Use a valid email you can access
+   - Password: Strong password (min 8 characters, mix of letters, numbers, symbols)
+   - Click "Create Account"
+
+3. **Verify email**
+   - Check your inbox for "Verify your Cloudflare account" email
+   - Click the verification link
+   - You'll be redirected to Cloudflare dashboard
+
+4. **Initial dashboard setup**
+   - Skip "Add a site" prompt (we're deploying Workers, not a website)
+   - Click "Workers & Pages" in left sidebar
+   - You'll see "Get started with Workers" page
+   - **Important:** You don't need to create a Worker yet - we'll do this via CLI
+
+5. **Verify free tier**
+   - Click your profile icon (top right) → Billing
+   - Confirm you're on "Free" plan
+   - Free tier includes: 100,000 requests/day, 10ms CPU time, 128MB memory
+
+**Edge cases:**
+- **"Email already registered"**: Use password reset or sign in with existing account
+- **Verification email not received**: Check spam folder, wait 5 minutes, or request resend
+- **Corporate email blocked**: Some corporate domains block Cloudflare emails - use personal email
+
+### 0.2 Create Supabase Account
+
+**Step-by-step registration:**
+
+1. **Navigate to Supabase signup**
+   - Go to https://supabase.com/dashboard
+   - Click "Start your project" or "Sign Up"
+
+2. **Choose authentication method**
+   - **Option A (Recommended):** Sign up with GitHub
+     - Click "Continue with GitHub"
+     - Authorize Supabase OAuth app
+     - Faster, no email verification needed
+   - **Option B:** Sign up with email
+     - Enter email and password
+     - Click "Sign Up"
+     - Verify email (check inbox for "Confirm your mail" from Supabase)
+
+3. **Create organization**
+   - After login, you'll see "Create a new organization"
+   - Organization name: "Personal" or your name (e.g., "Anna's Projects")
+   - Plan: Select "Free" (includes 500MB database, 1GB file storage, 50K monthly active users)
+   - Click "Create organization"
+
+4. **Review free tier limits**
+   - Database: 500MB storage, unlimited API requests
+   - Auth: 50,000 monthly active users
+   - Storage: 1GB files
+   - Realtime: 200 concurrent connections
+   - Edge Functions: 500K invocations/month
+
+**Edge cases:**
+- **GitHub OAuth fails**: Use email signup instead, or check if GitHub is accessible
+- **"Organization name taken"**: Add a number or unique identifier (e.g., "plant-it-dev-2026")
+- **No email verification received**: Check spam, wait 10 minutes, or use GitHub OAuth
+
+### 0.3 Create Supabase Project
+
+**Step-by-step project setup:**
+
+1. **Start new project**
+   - In Supabase dashboard, click "New project"
+   - You'll see "Create a new project" form
+
+2. **Configure project settings**
+   - **Name:** `plant-it` (lowercase, hyphens allowed)
+   - **Database Password:** Generate strong password
+     - Click "Generate a password" button (recommended)
+     - **CRITICAL:** Copy password immediately and save in password manager
+     - You'll need this if you ever need direct database access
+   - **Region:** Choose closest to your target users
+     - For Poland/Europe: **"Europe (Frankfurt)" (eu-central-1)** or **"Europe (London)" (eu-west-2)**
+     - For USA: "East US (N. Virginia)" or "West US (Oregon)"
+     - Note: Cannot change region after creation
+   - **Pricing Plan:** Confirm "Free" is selected
+
+3. **Create project**
+   - Click "Create new project"
+   - **Wait 2-5 minutes** for provisioning
+   - You'll see "Setting up project..." with progress indicator
+   - When ready, dashboard shows "Project is ready"
+
+4. **Locate project credentials**
+   
+   After project is ready:
+   
+   - Click "Project Settings" (gear icon in left sidebar)
+   - Go to "API" section
+   - You'll need these two values:
+   
+   **Project URL:**
+   ```
+   https://[project-ref].supabase.co
+   ```
+   Example: `https://xyzabcdefgh.supabase.co`
+   
+   **anon/public key:**
+   ```
+   eyJhbGc...very-long-jwt-token...
+   ```
+   
+   - **Copy both values** - you'll need them in Phase 2
+   - **Security note:** The `anon` key is safe to expose client-side (it's scoped by Row Level Security policies)
+   - **DO NOT share:** The `service_role` key (gives full database access, bypasses RLS)
+
+5. **Verify project health**
+   - In dashboard, click "Table Editor" (database icon in sidebar)
+   - You should see default `auth.users` table (may be empty)
+   - Click "SQL Editor" - you should see SQL query interface
+   - Run test query: `SELECT current_database();` → should return `postgres`
+
+**Edge cases:**
+- **Provisioning stuck > 10 minutes**: Refresh page, check status.supabase.com for incidents
+- **"Project name already taken"**: Add suffix like `plant-it-prod` or `plant-it-2026`
+- **Wrong region selected**: You must delete project and recreate (region cannot be changed)
+- **Lost database password**: Can reset via Project Settings → Database → Reset database password (requires ~5 min downtime)
+- **"Organization has reached free tier limit"**: Free tier allows 2 active projects - pause/delete unused projects
+
+### 0.4 Prepare Local Development Environment
+
+**Verify prerequisites:**
+
+1. **Node.js 22.x**
+   ```bash
+   node -v
+   # Expected: v22.14.0 or higher
+   ```
+   
+   **If not installed or wrong version:**
+   - Download from https://nodejs.org (LTS version)
+   - Or use nvm (Node Version Manager):
+     ```bash
+     nvm install 22
+     nvm use 22
+     ```
+   - Verify: `node -v` shows v22.x.x
+
+2. **npm (comes with Node.js)**
+   ```bash
+   npm -v
+   # Expected: 10.x or higher
+   ```
+
+3. **Git**
+   ```bash
+   git --version
+   # Expected: git version 2.x or higher
+   ```
+   
+   **If not installed:**
+   - macOS: `xcode-select --install` or download from git-scm.com
+   - Windows: https://git-scm.com/download/win
+   - Linux: `sudo apt-get install git` (Ubuntu/Debian) or `sudo yum install git` (CentOS/RHEL)
+
+4. **Code editor (optional but recommended)**
+   - VS Code: https://code.visualstudio.com
+   - Cursor: https://cursor.sh (VS Code fork with AI features)
+
+**Verify project repository:**
+
+1. **Check repository location**
+   ```bash
+   pwd
+   # Should show: /Users/akazmierczak/Documents/10xdevs3/plant_it_app
+   ```
+
+2. **Verify git repository**
+   ```bash
+   git status
+   # Should NOT show: "fatal: not a git repository"
+   # Should show current branch and file status
+   ```
+
+3. **Check dependencies installed**
+   ```bash
+   ls node_modules/
+   # Should list installed packages (astro, react, etc.)
+   # If empty or doesn't exist: run `npm install`
+   ```
+
+4. **Verify package.json scripts**
+   ```bash
+   npm run
+   # Should list available scripts: dev, build, preview, lint, etc.
+   ```
+
+**Checklist before Phase 1:**
+- [ ] Cloudflare account created and email verified
+- [ ] Supabase account created (GitHub or email)
+- [ ] Supabase organization created (on Free plan)
+- [ ] Supabase project `plant-it` provisioned and ready
+- [ ] Project URL and anon key copied and saved securely
+- [ ] Node.js 22.x installed and verified
+- [ ] npm 10.x+ available
+- [ ] Git installed and working
+- [ ] Project repository cloned/located at correct path
+- [ ] `npm install` completed (node_modules/ exists)
+
+**Time estimate for Phase 0:** 20-30 minutes (including account verification waits)
+
+---
+
 Phase 1: Pre-Deployment Configuration
 
 1.1 Update Wrangler Configuration
@@ -1196,6 +1416,15 @@ The following are NOT included in this deployment plan:
 - **Performance optimization:** Address only if CPU time > 10ms in Phase 4.4
 
 ## Implementation Checklist
+
+### Phase 0: Account Setup ✓
+- [ ] Create Cloudflare account and verify email
+- [ ] Create Supabase account (GitHub OAuth or email)
+- [ ] Create Supabase organization (Free plan)
+- [ ] Create Supabase project `plant-it` (Europe region recommended)
+- [ ] Copy Project URL and anon key
+- [ ] Verify Node.js 22.x, npm, git installed
+- [ ] Confirm project repository ready
 
 ### Phase 1: Configuration ✓
 - [ ] Update wrangler.jsonc (name, main, compatibility_date)
