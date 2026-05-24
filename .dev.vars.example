@@ -1,0 +1,4 @@
+# Cloudflare Workers local development secrets
+# Copy this to .dev.vars and fill in real values
+SUPABASE_URL=https://[project-ref].supabase.co
+SUPABASE_KEY=[anon-key-from-supabase-dashboard]
