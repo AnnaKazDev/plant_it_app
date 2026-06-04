@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
+import Topbar from "@/components/Topbar.astro";
 import { missingConfigs } from "@/lib/config-status";
 
 interface Props {
@@ -35,6 +36,9 @@ const { title = "10x Astro Starter" } = Astro.props;
         </Banner>
       ))
     }
+    <div class="sticky top-0 z-50 bg-background/80 backdrop-blur-sm p-4 sm:p-8 pb-0">
+      <Topbar />
+    </div>
     <slot />
   </body>
 </html>
