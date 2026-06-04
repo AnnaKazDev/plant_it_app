@@ -1,23 +1,24 @@
 // Re-export database types from generated file
-export type { Database, Tables, TablesInsert, TablesUpdate } from './database.types';
+import type { Tables, TablesInsert, TablesUpdate } from "./database.types";
+export type { Database, Tables, TablesInsert, TablesUpdate } from "./database.types";
 
 // Convenient type aliases for table rows
-export type Profile = Tables<'profiles'>;
-export type Plant = Tables<'plants'>;
-export type ActionType = Tables<'action_types'>;
-export type Action = Tables<'actions'>;
-export type Photo = Tables<'photos'>;
+export type Profile = Tables<"profiles">;
+export type Plant = Tables<"plants">;
+export type ActionType = Tables<"action_types">;
+export type Action = Tables<"actions">;
+export type Photo = Tables<"photos">;
 
 // Re-export for insert/update operations
-export type ProfileInsert = TablesInsert<'profiles'>;
-export type PlantInsert = TablesInsert<'plants'>;
-export type ActionInsert = TablesInsert<'actions'>;
-export type PhotoInsert = TablesInsert<'photos'>;
+export type ProfileInsert = TablesInsert<"profiles">;
+export type PlantInsert = TablesInsert<"plants">;
+export type ActionInsert = TablesInsert<"actions">;
+export type PhotoInsert = TablesInsert<"photos">;
 
-export type ProfileUpdate = TablesUpdate<'profiles'>;
-export type PlantUpdate = TablesUpdate<'plants'>;
-export type ActionUpdate = TablesUpdate<'actions'>;
-export type PhotoUpdate = TablesUpdate<'photos'>;
+export type ProfileUpdate = TablesUpdate<"profiles">;
+export type PlantUpdate = TablesUpdate<"plants">;
+export type ActionUpdate = TablesUpdate<"actions">;
+export type PhotoUpdate = TablesUpdate<"photos">;
 
 // Weather data structure from WeatherAPI.com
 // Reference: https://www.weatherapi.com/api-explorer.aspx
