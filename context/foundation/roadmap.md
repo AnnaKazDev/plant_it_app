@@ -87,15 +87,17 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### F-01: Core data schema
 
-- **Outcome:** (foundation) Core schema landed: plants table (name, photo_url, user_id, grid_x, grid_y), actions table (plant_id, action_name, date, weather_data), photos table (action_id, photo_url, order), user profile extension (location, garden_width, garden_height); RLS policies (user sees only their own data); indexes on foreign keys and user_id.
+- **Outcome:** (foundation) Core schema landed: plants table (name, photo_url, user_id, grid_x, grid_y), actions table (plant_id, action_type_id nullable FK, custom_action_name nullable TEXT, date, weather_data, additional_data), action_types table (~30 predefined actions with icons like "watering", "fertilizing", "planted from seed"), photos table (action_id, photo_url, order), user profile extension (location, garden_width, garden_height); RLS policies (user sees only their own data); indexes on foreign keys and user_id.
 - **Change ID:** core-data-schema
 - **PRD refs:** FR-003 (user sees only their own plants), FR-012 (garden dimensions during registration)
 - **Unlocks:** S-01 (extended registration needs user profile fields), S-02 (first plant needs plants/actions/photos tables), S-03, S-04, S-05
 - **Prerequisites:** —
 - **Parallel with:** F-02, F-03
 - **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Schema design is foundational — getting it wrong means expensive migrations later. Spend extra time on schema review (coordinate system: text like "A3" vs numeric x/y, weather_data JSON structure) before implementing.
+- **Unknowns:**
+  - Initial ~30 predefined actions list (names + icons). Owner: planning phase. Block: no.
+  - Icon pack/strategy for action_types. Owner: planning phase. Block: no (recommend Lucide React or Heroicons).
+- **Risk:** Schema design is foundational — getting it wrong means expensive migrations later. Spend extra time on schema review (coordinate system: text like "A3" vs numeric x/y, weather_data JSON structure, action_types table design with nullable FK approach) before implementing.
 - **Status:** ready
 
 ### F-02: Photo storage setup
@@ -151,7 +153,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:**
   - Grid coordinate input: dropdown (A-Z rows, 1-N cols) vs text field ("A3") vs click-on-map? Owner: user. Block: no (recommend text field "A3" for simplicity; validate format, show grid preview if time allows).
-  - Predefined action list: which actions? ("planted from seed", "watering", "fertilizing", "pruning", …) Owner: user. Block: no (can start with 5-8 common actions, allow custom entry for MVP).
+  - Predefined action list (~30 actions): see F-01 for schema decision (action_types table). Action examples: "watering", "fertilizing", "pruning", "planted from seed", "transplanting", "removing diseased leaves", etc. Full list to be defined during F-01 planning.
 - **Risk:** Most complex slice — touches all layers (data, API, UI, storage, external weather API). Could expand scope during planning. Keep tightly scoped: single plant, single action, no editing yet. Split into smaller changes if `/10x-plan` reveals hidden complexity.
 - **Status:** proposed
 
