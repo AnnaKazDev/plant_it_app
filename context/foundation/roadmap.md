@@ -98,7 +98,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Initial ~30 predefined actions list (names + icons). Owner: planning phase. Block: no.
   - Icon pack/strategy for action_types. Owner: planning phase. Block: no (recommend Lucide React or Heroicons).
 - **Risk:** Schema design is foundational — getting it wrong means expensive migrations later. Spend extra time on schema review (coordinate system: text like "A3" vs numeric x/y, weather_data JSON structure, action_types table design with nullable FK approach) before implementing.
-- **Status:** ready
+- **Status:** done
 
 ### F-02: Photo storage setup
 
