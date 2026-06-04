@@ -3,7 +3,7 @@ project: Plant It
 version: 1
 status: draft
 created: 2026-05-25
-updated: 2026-05-25
+updated: 2026-05-28
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -35,6 +35,32 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 | S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator | S-02 | FR-007, FR-008, FR-009, FR-010 | proposed |
 | S-04 | plant-list-view | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather) | S-02 | FR-005, FR-009 | proposed |
 | S-05 | garden-map-view | See garden map with all plants at their grid locations, click plant on map to open plant card | S-02 | FR-013, FR-014, FR-015 | proposed |
+
+## Routing structure
+
+File-based routing (Astro `src/pages/`). Auth middleware protects routes listed in `PROTECTED_ROUTES` (see `src/middleware.ts`).
+
+| Path | Auth | Slice | Purpose |
+|------|------|-------|---------|
+| `/` | public | baseline | Landing / welcome page (existing) |
+| `/auth/signin` | public | baseline | Sign in form (existing) |
+| `/auth/signup` | public | S-01 | Extended registration: email + password + location + garden dimensions |
+| `/auth/confirm-email` | public | baseline | Email confirmation page (existing) |
+| `/dashboard` | protected | baseline | Post-login entry point (existing) |
+| `/plants` | protected | S-04 | Plant list view with last-action teasers |
+| `/plants/new` | protected | S-02 | Add first plant form (photo + name + grid coordinates) |
+| `/plants/[id]` | protected | S-02, S-03 | Plant card: view plant details + action timeline + add new action |
+| `/garden-map` | protected | S-05 | Garden map view with plant positions |
+
+**Navigation flow (MVP):**
+- Unauthenticated: `/` → `/auth/signup` (or `/auth/signin`) → `/auth/confirm-email` → `/dashboard`
+- Authenticated: `/dashboard` → `/plants` (list) or `/garden-map` → `/plants/[id]` (card)
+
+**API routes (outside file-based routing):**
+- `/api/auth/{signin,signup,signout}` — existing auth endpoints
+- `/api/plants` — future CRUD (POST /plants, GET /plants, GET /plants/[id], PATCH /plants/[id], DELETE /plants/[id])
+- `/api/actions` — future CRUD (POST /actions, GET /actions, PATCH /actions/[id], DELETE /actions/[id])
+- `/api/photos/upload` — future photo upload endpoint (Supabase Storage wrapper)
 
 ## Streams
 
@@ -104,7 +130,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-01: Extended registration with garden setup
 
-- **Outcome:** User can register with email + password + location (city/coordinates) + garden dimensions (width x height in meters).
+- **Outcome:** User can register with email + password + location (city/coordinates) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).
 - **Change ID:** extended-registration
 - **PRD refs:** FR-001 (user can register and provide location + garden dimensions), FR-012 (provide garden dimensions during registration)
 - **Prerequisites:** F-01 (user profile extension fields must exist in schema)
@@ -117,7 +143,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-02: First plant + first action
 
-- **Outcome:** User can add plant with photo + name + grid coordinates (e.g., "A3"), add action with photos (max 5) + action name (from predefined list or typed, max 300 chars) + date (selected from calendar), see plant card with action teaser showing first photo + action name + date + weather info (temperature, rain/sun).
+- **Outcome:** User can add plant with photo + name + grid coordinates (e.g., "A3"), add action with photos (max 5) + action name (from predefined list or typed, max 300 chars) + date (selected from calendar), see plant card with action teaser showing first photo + action name + date + weather info (temperature, rain/sun). Routes: `/plants/new` (add plant form), `/plants/[id]` (plant card with action timeline + add action form).
 - **Change ID:** first-plant-first-action
 - **PRD refs:** US-01, FR-004 (add plant with name, photo, grid location), FR-006 (see plant card), FR-007 (add action with photos, action name, date), FR-009 (action teaser shows photo, action name, date, weather), FR-011 (placeholder icon if no photo), FR-013 (place plant at grid coordinates when adding)
 - **Prerequisites:** F-01 (plants/actions/photos schema), F-02 (photo upload), F-03 (weather fetch), S-01 (user has garden dimensions + location for weather)
@@ -131,7 +157,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-03: Track multiple actions per plant
 
-- **Outcome:** User can add multiple actions to a plant (past/today/future dates), see plant card with all action teasers in chronological order, planned actions (future dates) show visual indicator (badge/count) in plant list.
+- **Outcome:** User can add multiple actions to a plant (past/today/future dates), see plant card with all action teasers in chronological order, planned actions (future dates) show visual indicator (badge/count) in plant list. Route: `/plants/[id]` (extends plant card from S-02 to show action timeline + repeated "add action" flow).
 - **Change ID:** multiple-actions-tracking
 - **PRD refs:** FR-007 (add action), FR-008 (choose any date — past, today, or future), FR-009 (action teaser), FR-010 (planned actions show badge/count)
 - **Prerequisites:** S-02 (single plant + single action must work first)
@@ -143,7 +169,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-04: Plant list view with multiple plants
 
-- **Outcome:** User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions.
+- **Outcome:** User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions. Route: `/plants` (main plant list view, likely linked from `/dashboard`).
 - **Change ID:** plant-list-view
 - **PRD refs:** FR-005 (see list of all plants with last-action teasers), FR-009 (teaser shows photo, action name, date, weather)
 - **Prerequisites:** S-02 (single plant must work first)
@@ -155,7 +181,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-05: Garden map view with spatial layout
 
-- **Outcome:** User can see garden map with all plants positioned at their grid locations (visual grid matching garden dimensions from S-01), click plant icon on map to open that plant's card.
+- **Outcome:** User can see garden map with all plants positioned at their grid locations (visual grid matching garden dimensions from S-01), click plant icon on map to open that plant's card. Route: `/garden-map` (separate view, likely linked from `/dashboard` or `/plants`).
 - **Change ID:** garden-map-view
 - **PRD refs:** FR-013 (place plant at grid coordinates — input part done in S-02, visualization here), FR-014 (see garden map with all plants), FR-015 (click plant on map → open plant card)
 - **Prerequisites:** S-02 (plants must have grid coordinates)

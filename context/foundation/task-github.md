@@ -16,6 +16,7 @@ All tasks have been successfully executed:
 - ✅ Create S-04 issue: plant-list-view (blocks on S-02)
 - ✅ Create S-05 issue: garden-map-view (blocks on S-02)
 - ✅ Update all blocked issues with actual prerequisite issue numbers
+- ✅ Update all slice issues (S-01 through S-05) with routing information
 
 ---
 
@@ -117,6 +118,7 @@ These have prerequisites and should be marked as "blocked" initially.
 - **Milestone:** Core Experience
 - **Body:** From `roadmap.md` lines 105-116
   - Outcome: Register with email + password + location + garden dimensions
+  - Route: `/auth/signup` (extends existing signup page)
   - PRD references: FR-001, FR-012
   - Prerequisites: Reference F-01 issue number → Blocks on #\<F-01-number\>
   - Unknowns: Location input UX (city name vs coordinates)
@@ -130,6 +132,7 @@ These have prerequisites and should be marked as "blocked" initially.
 - **Body:** From `roadmap.md` lines 118-130
   - **North Star item** - most critical slice
   - Outcome: Add plant with photo + name + grid coords, add action with photos + date, see plant card with weather
+  - Routes: `/plants/new` (add plant form), `/plants/[id]` (plant card with action timeline + add action form)
   - PRD references: US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013
   - Prerequisites: Reference F-01, F-02, F-03, S-01 issue numbers
   - Risk: Most complex slice - touches all layers
@@ -143,6 +146,7 @@ These have prerequisites and should be marked as "blocked" initially.
 - **Milestone:** Enhanced Tracking
 - **Body:** From `roadmap.md` lines 132-142
   - Outcome: Add multiple actions (past/today/future), see all action teasers, planned actions badge
+  - Route: `/plants/[id]` (extends plant card from S-02)
   - PRD references: FR-007, FR-008, FR-009, FR-010
   - Prerequisites: Reference S-02 issue number
   - Parallel with: S-04, S-05
@@ -156,6 +160,7 @@ These have prerequisites and should be marked as "blocked" initially.
 - **Milestone:** Enhanced Tracking
 - **Body:** From `roadmap.md` lines 144-154
   - Outcome: Add multiple plants, see list with last-action teasers
+  - Route: `/plants` (main plant list view)
   - PRD references: FR-005, FR-009
   - Prerequisites: Reference S-02 issue number
   - Parallel with: S-03, S-05
@@ -169,6 +174,7 @@ These have prerequisites and should be marked as "blocked" initially.
 - **Milestone:** Enhanced Tracking
 - **Body:** From `roadmap.md` lines 156-167
   - Outcome: Garden map with plants at grid locations, click to open card
+  - Route: `/garden-map` (separate view)
   - PRD references: FR-013, FR-014, FR-015
   - Prerequisites: Reference S-02 issue number
   - Parallel with: S-03, S-04
