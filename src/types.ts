@@ -1,51 +1,23 @@
-// Database row types
-export interface Profile {
-  id: string; // UUID
-  locationLat: number | null;
-  locationLng: number | null;
-  gardenWidth: number | null;
-  gardenHeight: number | null;
-  createdAt: string; // ISO timestamp
-  updatedAt: string;
-}
+// Re-export database types from generated file
+export type { Database, Tables, TablesInsert, TablesUpdate } from './database.types';
 
-export interface Plant {
-  id: string;
-  userId: string;
-  name: string;
-  photoUrl: string | null;
-  gridX: number;
-  gridY: number;
-  createdAt: string;
-  updatedAt: string;
-}
+// Convenient type aliases for table rows
+export type Profile = Tables<'profiles'>;
+export type Plant = Tables<'plants'>;
+export type ActionType = Tables<'action_types'>;
+export type Action = Tables<'actions'>;
+export type Photo = Tables<'photos'>;
 
-export interface ActionType {
-  id: string;
-  name: string;
-  iconEmoji: string;
-  createdAt: string;
-}
+// Re-export for insert/update operations
+export type ProfileInsert = TablesInsert<'profiles'>;
+export type PlantInsert = TablesInsert<'plants'>;
+export type ActionInsert = TablesInsert<'actions'>;
+export type PhotoInsert = TablesInsert<'photos'>;
 
-export interface Action {
-  id: string;
-  plantId: string;
-  actionTypeId: string | null;
-  customActionName: string | null;
-  date: string; // ISO timestamp
-  weatherData: WeatherData | null;
-  additionalData: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Photo {
-  id: string;
-  actionId: string;
-  photoUrl: string;
-  orderIndex: number;
-  createdAt: string;
-}
+export type ProfileUpdate = TablesUpdate<'profiles'>;
+export type PlantUpdate = TablesUpdate<'plants'>;
+export type ActionUpdate = TablesUpdate<'actions'>;
+export type PhotoUpdate = TablesUpdate<'photos'>;
 
 // Weather data structure from WeatherAPI.com
 // Reference: https://www.weatherapi.com/api-explorer.aspx
@@ -64,14 +36,14 @@ export interface WeatherData {
   [key: string]: unknown;
 }
 
-// UI/API helper types
+// UI/API helper types (extend base types with relationships)
 export interface PlantWithLastAction extends Plant {
-  lastAction?: Action;
-  lastActionType?: ActionType;
+  last_action?: Action;
+  last_action_type?: ActionType;
 }
 
 export interface ActionWithType extends Action {
-  actionType?: ActionType;
+  action_type?: ActionType;
   plant?: Plant;
 }
 
