@@ -472,6 +472,29 @@ Manual verification via Supabase Studio:
 - Types convention: `CLAUDE.md:42`
 - WeatherAPI.com: https://www.weatherapi.com/api-explorer.aspx
 
+## Addendum: Post-Implementation Refinements
+
+### A1: CLI-Generated Types (2026-06-04, commit 03f6f3b)
+
+**Context:** During Phase 2 implementation, after completing the hand-written type definitions per plan, a refinement was made to use Supabase CLI-generated types instead.
+
+**Change:** Replaced the hand-written camelCase interfaces (as specified in the plan's Phase 2 contract) with:
+- `src/database.types.ts` — generated via `npx supabase gen types` (346 lines, snake_case property names matching database exactly)
+- `src/types.ts` — simplified to re-export generated types plus custom helper types (WeatherData, PlantWithLastAction, etc.)
+- `src/lib/supabase.ts` — updated to use `Database` generic for typed client (`createServerClient<Database>(...)`)
+
+**Note:** While the plan's Current State Analysis noted the client was "untyped (no `Database` generic)," updating the client was not explicitly listed as a Changes Required step. This update was a natural consequence of creating the Database type and is required for the types to be useful in practice.
+
+**Rationale:** This is a Supabase best practice that provides:
+1. **Auto-sync:** Types stay in sync with schema automatically; run `gen types` after migrations
+2. **Zero mapping errors:** No manual snake_case ↔ camelCase translation needed
+3. **Stronger type safety:** Includes Insert/Update types, exhaustive unions, and accurate nullability
+4. **Reduced maintenance:** No need to manually update types.ts when schema changes
+
+**Tradeoff:** Diverges from the original plan's camelCase convention. Snake_case property names in TypeScript may be less idiomatic for some teams, but they match the database exactly, reducing cognitive load when writing queries.
+
+**Decision:** Accepted as an architectural improvement. Future schema changes should continue using `npx supabase gen types` to regenerate `database.types.ts` rather than hand-editing types.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
