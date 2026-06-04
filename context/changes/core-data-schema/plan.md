@@ -480,16 +480,16 @@ Manual verification via Supabase Studio:
 
 #### Automated
 
-- [ ] 1.1 Migration applies cleanly
-- [ ] 1.2 No SQL errors in output
-- [ ] 1.3 Seed data verified via db diff
+- [x] 1.1 Migration applies cleanly
+- [x] 1.2 No SQL errors in output
+- [x] 1.3 Seed data verified via db diff
 
 #### Manual
 
-- [ ] 1.4 All 5 tables exist in Supabase Studio
-- [ ] 1.5 30 action_types rows with emoji icons present
-- [ ] 1.6 RLS test: cross-user query blocked
-- [ ] 1.7 Indexes verified in table info panels
+- [x] 1.4 All 5 tables exist in Supabase Studio
+- [x] 1.5 30 action_types rows with emoji icons present
+- [x] 1.6 RLS test: cross-user query blocked
+- [x] 1.7 Indexes verified in table info panels
 
 ### Phase 2: TypeScript Types
 
