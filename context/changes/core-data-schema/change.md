@@ -1,7 +1,7 @@
 ---
 change_id: core-data-schema
 title: Core database schema for plants, actions, photos, and user profiles
-status: implementing
+status: implemented
 created: 2026-06-04
 updated: 2026-06-04
 archived_at: null

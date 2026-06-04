@@ -495,12 +495,12 @@ Manual verification via Supabase Studio:
 
 #### Automated
 
-- [x] 2.1 Type-checking passes (npm run build)
-- [x] 2.2 Linting passes (npm run lint)
-- [x] 2.3 No unused imports/exports
+- [x] 2.1 Type-checking passes (npm run build) — 081f117
+- [x] 2.2 Linting passes (npm run lint) — 081f117
+- [x] 2.3 No unused imports/exports — 081f117
 
 #### Manual
 
-- [x] 2.4 IntelliSense works for new types in IDE
-- [x] 2.5 All interfaces export correctly
-- [x] 2.6 Weather data structure matches API docs
+- [x] 2.4 IntelliSense works for new types in IDE — 081f117
+- [x] 2.5 All interfaces export correctly — 081f117
+- [x] 2.6 Weather data structure matches API docs — 081f117
