@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { seedTestData, cleanupTestData, createTestFile, createTestClient } from "@/lib/test-utils";
 
 describe("POST /api/photos/upload", () => {
-  let testData: Awaited<ReturnType<typeof seedTestData>>;
+  let testData: Awaited<ReturnType<typeof seedTestData>> | undefined;
   let apiUrl: string;
 
   beforeAll(async () => {
@@ -33,11 +33,15 @@ describe("POST /api/photos/upload", () => {
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await cleanupTestData(testData.userId);
+    // Clean up test data (only if setup succeeded)
+    if (testData?.userId) {
+      await cleanupTestData(testData.userId);
+    }
   });
 
   it("should upload a valid photo and return 201 with photo metadata", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+    
     const file = createTestFile("test-photo.jpg", "image/jpeg", 5 * 1024); // 5KB
     const formData = new FormData();
     formData.append("action_id", testData.actionId);
@@ -75,6 +79,8 @@ describe("POST /api/photos/upload", () => {
   });
 
   it("should reject invalid MIME type with 400 INVALID_FILE_TYPE", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+    
     const file = createTestFile("test.txt", "text/plain", 1024);
     const formData = new FormData();
     formData.append("action_id", testData.actionId);
@@ -97,6 +103,8 @@ describe("POST /api/photos/upload", () => {
   });
 
   it("should reject file larger than 10MB with 413 FILE_TOO_LARGE", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+    
     const file = createTestFile("large.jpg", "image/jpeg", 11 * 1024 * 1024); // 11MB
     const formData = new FormData();
     formData.append("action_id", testData.actionId);
@@ -119,6 +127,8 @@ describe("POST /api/photos/upload", () => {
   });
 
   it("should reject 6th photo upload with 400 MAX_PHOTOS_EXCEEDED", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+    
     // Upload 5 photos first
     for (let i = 0; i < 5; i++) {
       const file = createTestFile(`photo-${i}.jpg`, "image/jpeg", 1024);
@@ -160,6 +170,8 @@ describe("POST /api/photos/upload", () => {
   });
 
   it("should reject unauthenticated request with 401", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+    
     const file = createTestFile("test.jpg", "image/jpeg", 1024);
     const formData = new FormData();
     formData.append("action_id", testData.actionId);
@@ -176,6 +188,8 @@ describe("POST /api/photos/upload", () => {
   });
 
   it("should reject cross-user action access with 404 (RLS)", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+    
     // Create a second user
     const secondUser = await seedTestData();
 
