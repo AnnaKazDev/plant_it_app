@@ -10,27 +10,27 @@ import ws from "ws";
  * Create a Supabase client for testing
  * Uses environment variables from .env
  * Configures WebSocket transport for Node.js < 22
- * 
+ *
  * @param useServiceRole - If true, uses service role key for admin operations
  */
-export function createTestClient(useServiceRole: boolean = false) {
+export function createTestClient(useServiceRole = false) {
   const supabaseUrl = process.env.SUPABASE_URL;
   // Use service role key for admin operations, anon key otherwise
-  const supabaseKey = useServiceRole 
-    ? process.env.SUPABASE_SERVICE_ROLE_KEY 
-    : process.env.SUPABASE_KEY;
+  const supabaseKey = useServiceRole ? process.env.SUPABASE_SERVICE_ROLE_KEY : process.env.SUPABASE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error(`Missing SUPABASE_URL or ${useServiceRole ? 'SUPABASE_SERVICE_ROLE_KEY' : 'SUPABASE_KEY'} in environment`);
+    throw new Error(
+      `Missing SUPABASE_URL or ${useServiceRole ? "SUPABASE_SERVICE_ROLE_KEY" : "SUPABASE_KEY"} in environment`,
+    );
   }
 
   return createSupabaseClient<Database>(supabaseUrl, supabaseKey, {
     realtime: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
       transport: ws as any,
     },
   });
 }
-
 
 /**
  * Create test user and seed data for photo upload tests
@@ -38,7 +38,6 @@ export function createTestClient(useServiceRole: boolean = false) {
  */
 export async function seedTestData() {
   const supabase = createTestClient();
-  const apiUrl = process.env.API_URL || "http://localhost:4321";
 
   // Create test user
   const email = `test-${Date.now()}@example.com`;
@@ -74,8 +73,8 @@ export async function seedTestData() {
     .select("id")
     .single();
 
-  if (plantError || !plant) {
-    throw new Error(`Failed to create test plant: ${plantError?.message}`);
+  if (plantError) {
+    throw new Error(`Failed to create test plant: ${plantError.message}`);
   }
 
   // Create test action
@@ -89,8 +88,8 @@ export async function seedTestData() {
     .select("id")
     .single();
 
-  if (actionError || !action) {
-    throw new Error(`Failed to create test action: ${actionError?.message}`);
+  if (actionError) {
+    throw new Error(`Failed to create test action: ${actionError.message}`);
   }
 
   return {
@@ -110,7 +109,7 @@ export async function cleanupTestData(userId: string) {
 
   // Delete user's plants (cascade deletes actions and photos)
   await supabase.from("plants").delete().eq("user_id", userId);
-  
+
   // Delete user from auth (requires service role)
   await supabase.auth.admin.deleteUser(userId);
 }
@@ -118,11 +117,7 @@ export async function cleanupTestData(userId: string) {
 /**
  * Create a test file (image) for upload testing
  */
-export function createTestFile(
-  name: string = "test.jpg",
-  type: string = "image/jpeg",
-  size: number = 1024,
-): File {
+export function createTestFile(name = "test.jpg", type = "image/jpeg", size = 1024): File {
   // Create a small test buffer
   const buffer = new Uint8Array(size);
   // Fill with some data
