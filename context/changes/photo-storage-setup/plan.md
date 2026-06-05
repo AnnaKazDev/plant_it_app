@@ -437,22 +437,22 @@ Write integration tests for upload API validation logic. Update README and AGENT
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `npx supabase migration up`
-- [x] 1.2 Local storage starts: `npx supabase start` shows storage service healthy
-- [x] 1.3 Bucket exists in local DB: query returns 1 row with `public = false`
-- [x] 1.4 RLS policies exist: query returns 4 policies
-- [x] 1.5 TypeScript types regenerate: `npx supabase gen types` completes
+- [x] 1.1 Migration applies cleanly: `npx supabase migration up` — 40f3a1e
+- [x] 1.2 Local storage starts: `npx supabase start` shows storage service healthy — 40f3a1e
+- [x] 1.3 Bucket exists in local DB: query returns 1 row with `public = false` — 40f3a1e
+- [x] 1.4 RLS policies exist: query returns 4 policies — 40f3a1e
+- [x] 1.5 TypeScript types regenerate: `npx supabase gen types` completes — 40f3a1e
 
 #### Manual
 
-- [ ] 1.6 Browse local dashboard → Storage section shows `plant-photos` bucket with correct settings
+- [x] 1.6 Browse local dashboard → Storage section shows `plant-photos` bucket with correct settings — 40f3a1e
 
 ### Phase 2: Upload API Endpoint
 
 #### Automated
 
-- [ ] 2.1 TypeScript compiles: `npm run build` succeeds
-- [ ] 2.2 Linting passes: `npm run lint` succeeds
+- [x] 2.1 TypeScript compiles: `npm run build` succeeds
+- [x] 2.2 Linting passes: `npm run lint` succeeds
 - [ ] 2.3 Integration tests pass: `npm run test:integration` succeeds
 - [ ] 2.4 API route responds to OPTIONS: returns 200 or 204
 

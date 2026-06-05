@@ -51,3 +51,21 @@ export interface ActionWithType extends Action {
 export interface ActionWithPhotos extends Action {
   photos: Photo[];
 }
+
+// API error response structure
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+// Error codes for API responses
+export const ERROR_CODES = {
+  QUOTA_EXCEEDED: "QUOTA_EXCEEDED",
+  INVALID_FILE_TYPE: "INVALID_FILE_TYPE",
+  MAX_PHOTOS_EXCEEDED: "MAX_PHOTOS_EXCEEDED",
+  FILE_TOO_LARGE: "FILE_TOO_LARGE",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  MISSING_ACTION_ID: "MISSING_ACTION_ID",
+  ACTION_NOT_FOUND: "ACTION_NOT_FOUND",
+} as const;
