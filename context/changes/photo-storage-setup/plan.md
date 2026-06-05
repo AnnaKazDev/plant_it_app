@@ -7,12 +7,14 @@ Set up Supabase Storage infrastructure for plant photos with private bucket, RLS
 ## Current State Analysis
 
 **What exists:**
+
 - Database schema with `photos` table (photo_url, order_index, action_id FK) and RLS policies via `actions` → `plants` → `user_id`
 - Supabase SSR client (`src/lib/supabase.ts`) that provides `.storage` access
 - API route pattern: POST handlers with `formData()` and redirect-based errors
 - Storage enabled in `supabase/config.toml` with 50MiB global limit
 
 **What's missing:**
+
 - Supabase Storage bucket (no buckets defined)
 - Storage RLS policies (no policies on `storage.objects` table)
 - Upload API endpoint (`/api/photos/upload` doesn't exist)
@@ -24,7 +26,7 @@ Set up Supabase Storage infrastructure for plant photos with private bucket, RLS
 - Supabase Storage SDK is accessed via `supabase.storage` from existing SSR client — no additional dependencies needed (line 10, src/lib/supabase.ts)
 - Storage RLS uses `storage.objects` table with policies per operation (SELECT/INSERT/DELETE), following same pattern as database RLS (lines 105-132, supabase/migrations/20260604120000_core_data_schema.sql)
 - Storage bucket path structure choice (user_folders: `user_id/action_id/filename`) aligns with ownership model and simplifies RLS policy (`storage.foldername(name)[1]` check)
-- Astro supports file uploads via `request.formData()` in API routes or newer Actions pattern; current codebase uses API routes exclusively (src/pages/api/auth/*)
+- Astro supports file uploads via `request.formData()` in API routes or newer Actions pattern; current codebase uses API routes exclusively (src/pages/api/auth/\*)
 - Private buckets require signed URLs or RLS-checked public URLs; user chose storing public URL from `getPublicUrl()` with RLS enforcement (no signed URL generation overhead)
 
 ## Desired End State
@@ -32,21 +34,25 @@ Set up Supabase Storage infrastructure for plant photos with private bucket, RLS
 A specification of the desired end state after this plan is complete:
 
 **Infrastructure:**
+
 - Storage bucket `plant-photos` exists with `public: false`, MIME type restrictions (JPEG/PNG/WebP), 10MB per-file limit
 - RLS policies on `storage.objects` enforce user ownership via path prefix (`{user_id}/...`)
 - Migration is reproducible (SQL in `supabase/migrations/`)
 
 **API:**
+
 - `POST /api/photos/upload` accepts multipart form data with action_id + file
 - Validates: auth (middleware), file type (JPEG/PNG/WebP), file size (≤10MB), max 5 photos per action (database count)
 - Returns JSON: `{ success: true, photo: { id, photo_url, size_bytes } }` or structured error
 - File stored at path: `{user_id}/{action_id}/{uuid}.{ext}`
 
 **Helpers:**
+
 - `src/lib/storage.ts` provides typed upload/download functions
 - Error types and validation schemas in `src/types.ts`
 
 **Verification:**
+
 - Integration tests cover: valid upload, invalid file type, file too large, max 5 exceeded, unauthenticated rejected
 - Manual test: upload photo via curl, verify RLS denies cross-user access, check database `photo_url` column populated
 
@@ -70,6 +76,7 @@ A specification of the desired end state after this plan is complete:
 3. **Helpers & types** — Extract reusable storage helpers (`src/lib/storage.ts`) and error types to DRY the API code and support future download/delete operations.
 
 **Key design choices** (from user decisions):
+
 - **Bucket structure**: `user_id/action_id/filename.ext` aligns with ownership model, simplifies RLS (`storage.foldername(name)[1] = auth.uid()::text`)
 - **File validation**: JPEG/PNG/WebP, max 10MB (covers 95% of mobile camera use cases without HEIC complexity)
 - **API response format**: JSON with photo metadata (enables multi-photo upload UX, breaks from redirect pattern)
@@ -169,18 +176,18 @@ Build `/api/photos/upload` endpoint that accepts multipart form data, validates 
 File type validation snippet (non-obvious MIME type check):
 
 ```typescript
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 if (!ALLOWED_MIME_TYPES.includes(file.type as any)) {
   return Response.json(
     {
       error: {
         code: ERROR_CODES.INVALID_FILE_TYPE,
-        message: `Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}`,
+        message: `Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.join(", ")}`,
         details: { received: file.type },
       },
     },
-    { status: 400 }
+    { status: 400 },
   );
 }
 ```
@@ -189,9 +196,9 @@ Max-5 validation (database count query before upload to prevent exceeding limit)
 
 ```typescript
 const { count, error: countError } = await supabase
-  .from('photos')
-  .select('*', { count: 'exact', head: true })
-  .eq('action_id', action_id);
+  .from("photos")
+  .select("*", { count: "exact", head: true })
+  .eq("action_id", action_id);
 
 if (countError) {
   throw new Error(`Failed to count photos: ${countError.message}`);
@@ -202,11 +209,11 @@ if (count !== null && count >= 5) {
     {
       error: {
         code: ERROR_CODES.MAX_PHOTOS_EXCEEDED,
-        message: 'Maximum 5 photos per action',
+        message: "Maximum 5 photos per action",
         details: { current_count: count },
       },
     },
-    { status: 400 }
+    { status: 400 },
   );
 }
 ```
@@ -274,6 +281,7 @@ Write integration tests for upload API validation logic. Update README and AGENT
 **Intent**: Test all validation paths in upload API: happy path, invalid file type, file too large, max 5 exceeded, unauthenticated, and Storage RLS isolation.
 
 **Contract**: Vitest test suite with 7 test cases:
+
 1. `POST /api/photos/upload` with valid file returns 201 + photo metadata
 2. Invalid MIME type returns 400 + `INVALID_FILE_TYPE` error
 3. File >10MB returns 400/413 + `FILE_TOO_LARGE` error
@@ -373,6 +381,7 @@ Write integration tests for upload API validation logic. Update README and AGENT
 ## Performance Considerations
 
 **Storage quota monitoring:**
+
 - Supabase free tier: 50 GB storage, 2 GB bandwidth/month
 - Monitor storage usage in Supabase dashboard (Settings → Usage)
 - 10MB per photo × 5 photos per action × estimated 100 actions in MVP = ~5 GB total (well under limit)
@@ -380,18 +389,21 @@ Write integration tests for upload API validation logic. Update README and AGENT
 - Risk: If quota exceeded, uploads fail with `QUOTA_EXCEEDED` error — user must upgrade or delete old photos
 
 **API response time:**
+
 - Upload flow: parse multipart (~10ms) → count photos query (~50ms) → storage upload (~500ms for 5MB) → insert photos row (~50ms) = ~600ms total
 - Target: <2s for 10MB upload on typical broadband (5 Mbps upload = 2s theoretical)
 - Bottleneck: Supabase Storage upload latency (network-bound)
 - No optimization needed for MVP (single-file upload, no concurrency)
 
 **RLS policy performance:**
+
 - Storage RLS checks `storage.foldername(name)[1] = auth.uid()::text` on every operation
 - Uses indexed `name` column on `storage.objects` (Supabase default index)
 - Expected: <10ms policy evaluation (simple string prefix match)
 - Database RLS on `photos` table uses FK indexes (`idx_photos_action_id`) — already optimized in F-01
 
 **Deferred optimizations:**
+
 - Client-side direct upload (presigned URLs) to offload bandwidth from API
 - Image compression/resizing at upload time (reduce storage + bandwidth)
 - CDN caching for photo URLs (Cloudflare R2 or Supabase CDN)
@@ -402,17 +414,20 @@ Write integration tests for upload API validation logic. Update README and AGENT
 **No data migration needed** — this is a greenfield setup (no existing photos in database or storage).
 
 **Rolling back:**
+
 - Migration down: `DROP TABLE` statements in `supabase/migrations/20260604180000_photo_storage_setup.sql` down-migration (optional, not required by Supabase CLI)
 - Manual rollback: delete bucket via Supabase dashboard or SQL `DELETE FROM storage.buckets WHERE id = 'plant-photos'`
 - Storage blobs: deleting bucket also deletes all files (irreversible — backup first if needed)
 
 **Production deployment:**
+
 - Migrations auto-apply via GitHub Actions CD pipeline (already configured in `.github/workflows/ci.yml`)
 - After deploy, verify bucket exists in hosted Supabase dashboard (Storage section)
 - Test upload via production API: `curl -X POST https://plant-it.anna-kazmierczak-it.workers.dev/api/photos/upload ...`
 - Monitor Cloudflare Workers CPU time: upload API adds ~100-200ms (may approach 10ms free-tier limit)
 
 **Environment secrets:**
+
 - No new secrets required (`SUPABASE_URL` and `SUPABASE_KEY` already configured)
 - Local: `.env` or `.dev.vars` (existing)
 - CI: GitHub secrets `SUPABASE_URL`, `SUPABASE_KEY` (existing)

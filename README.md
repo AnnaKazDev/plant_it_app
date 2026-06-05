@@ -175,10 +175,12 @@ After running `npx supabase start` and applying migrations (`npx supabase migrat
 **Authentication:** Required (session cookie)
 
 **Body:** multipart/form-data
+
 - `action_id` (string, UUID) - Action to attach photo to
 - `file` (File) - Image file (JPEG/PNG/WebP, max 10MB)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -193,12 +195,14 @@ After running `npx supabase start` and applying migrations (`npx supabase migrat
 ```
 
 **Validation:**
+
 - Max 5 photos per action
 - File type: JPEG, PNG, or WebP only
 - File size: ≤10MB
 - User must own the action (enforced via RLS)
 
 **Testing:**
+
 ```bash
 # Create test image
 echo "iVBORw0KGgo..." | base64 -d > test.png

@@ -29,23 +29,23 @@ All tasks have been successfully executed:
 
 All labels were created as workspace-level labels:
 
-| Label | Color | Description |
-|-------|-------|-------------|
+| Label          | Color        | Description                              |
+| -------------- | ------------ | ---------------------------------------- |
 | **foundation** | `#0E8A16` 🟢 | Foundation work - infrastructure & setup |
-| **slice** | `#1D76DB` 🔵 | User-facing feature slice |
-| **ready** | `#0E8A16` 🟢 | Ready to implement - no blockers |
-| **blocked** | `#D93F0B` 🔴 | Blocked by dependencies |
-| **roadmap** | `#FBCA04` 🟡 | Derived from roadmap.md |
+| **slice**      | `#1D76DB` 🔵 | User-facing feature slice                |
+| **ready**      | `#0E8A16` 🟢 | Ready to implement - no blockers         |
+| **blocked**    | `#D93F0B` 🔴 | Blocked by dependencies                  |
+| **roadmap**    | `#FBCA04` 🟡 | Derived from roadmap.md                  |
 
 ### Projects Created
 
 Projects in Linear serve as milestone/epic containers:
 
-| Project | Icon | Target Date | Summary | URL |
-|---------|------|-------------|---------|-----|
-| **MVP Foundations** | 🌱 `:seedling:` | June 2026 | Foundation work - infrastructure & setup | [View](https://linear.app/plant-it/project/mvp-foundations-0d8099ae384c) |
-| **Core Experience** | 🌿 `:herb:` | June 2026 | Core user-facing features | [View](https://linear.app/plant-it/project/core-experience-d4fbc2931641) |
-| **Enhanced Tracking** | 🌳 `:deciduous_tree:` | June 2026 | Enhanced plant tracking capabilities | [View](https://linear.app/plant-it/project/enhanced-tracking-dfd6997a03e5) |
+| Project               | Icon                  | Target Date | Summary                                  | URL                                                                        |
+| --------------------- | --------------------- | ----------- | ---------------------------------------- | -------------------------------------------------------------------------- |
+| **MVP Foundations**   | 🌱 `:seedling:`       | June 2026   | Foundation work - infrastructure & setup | [View](https://linear.app/plant-it/project/mvp-foundations-0d8099ae384c)   |
+| **Core Experience**   | 🌿 `:herb:`           | June 2026   | Core user-facing features                | [View](https://linear.app/plant-it/project/core-experience-d4fbc2931641)   |
+| **Enhanced Tracking** | 🌳 `:deciduous_tree:` | June 2026   | Enhanced plant tracking capabilities     | [View](https://linear.app/plant-it/project/enhanced-tracking-dfd6997a03e5) |
 
 ### Issues Created
 
@@ -65,6 +65,7 @@ All foundation issues are marked as `ready` and have no blockers:
 - **Git Branch:** `annakazmierczakit/pla-6-f-01-core-data-schema-database-schema-for-plants-actions`
 
 **Description:**
+
 ```
 ## Outcome
 Define and implement the complete database schema for plants, actions, and photos.
@@ -99,6 +100,7 @@ S-01, S-02, and all other slices
 - **Git Branch:** `annakazmierczakit/pla-5-f-02-photo-storage-setup-supabase-storage-bucket-upload-api`
 
 **Description:**
+
 ```
 ## Outcome
 Storage bucket, API helpers, RLS, max 5 photos validation
@@ -132,6 +134,7 @@ S-02, S-03, S-04
 - **Git Branch:** `annakazmierczakit/pla-7-f-03-weather-api-integration-historical-weather-fetch-by`
 
 **Description:**
+
 ```
 ## Outcome
 Weather API client wrapper in src/lib/weather.ts
@@ -170,6 +173,7 @@ All slice issues are marked as `blocked` initially:
 - **Git Branch:** `annakazmierczakit/pla-8-s-01-extended-registration-location-garden-dimensions-during`
 
 **Description:**
+
 ```
 ## Outcome
 Register with email + password + location + garden dimensions
@@ -203,6 +207,7 @@ Location input UX (city name vs coordinates)
 - **Git Branch:** `annakazmierczakit/pla-9-s-02-first-plant-first-action-add-plant-action-with-weather`
 
 **Description:**
+
 ```
 ## 🎯 North Star Item
 Most critical slice - touches all layers
@@ -249,6 +254,7 @@ Most complex slice - touches all layers
 - **Git Branch:** `annakazmierczakit/pla-10-s-03-multiple-actions-tracking-track-multiple-actions-per`
 
 **Description:**
+
 ```
 ## Outcome
 Add multiple actions (past/today/future), see all action teasers, planned actions badge
@@ -285,6 +291,7 @@ Timezone handling for date logic
 - **Git Branch:** `annakazmierczakit/pla-11-s-04-plant-list-view-multiple-plants-with-last-action`
 
 **Description:**
+
 ```
 ## Outcome
 Add multiple plants, see list with last-action teasers
@@ -321,6 +328,7 @@ List performance with 10+ plants (bulk query needed)
 - **Git Branch:** `annakazmierczakit/pla-12-s-05-garden-map-view-spatial-grid-layout-with-plant`
 
 **Description:**
+
 ```
 ## Outcome
 Garden map with plants at grid locations, click to open card
@@ -352,7 +360,9 @@ Keep simple - no drag-and-drop (per PRD Non-Goals)
 ## Execution Order
 
 ### Phase 1 (Parallel) - Foundation Work
+
 **Start immediately, no blockers:**
+
 - PLA-6 (F-01: core-data-schema) - Priority: High
 - PLA-5 (F-02: photo-storage-setup) - Priority: High
 - PLA-7 (F-03: weather-api-integration) - Priority: High
@@ -360,18 +370,24 @@ Keep simple - no drag-and-drop (per PRD Non-Goals)
 **Duration:** ~2 weeks (MVP Foundations milestone)
 
 ### Phase 2 - Extended Registration
+
 **After PLA-6 completes:**
+
 - PLA-8 (S-01: extended-registration) - Priority: Medium
 
 ### Phase 3 - North Star 🎯
+
 **After PLA-6, PLA-5, PLA-7, and PLA-8 complete:**
+
 - PLA-9 (S-02: first-plant-first-action) - Priority: Urgent
 - **This is the most critical slice** - validates the entire app concept
 
 **Duration:** ~3 weeks (Core Experience milestone)
 
 ### Phase 4 (Parallel) - Enhanced Features
+
 **After PLA-9 completes:**
+
 - PLA-10 (S-03: multiple-actions-tracking) - Priority: Medium
 - PLA-11 (S-04: plant-list-view) - Priority: Medium
 - PLA-12 (S-05: garden-map-view) - Priority: Medium
@@ -411,11 +427,13 @@ S-XX    Slice issue (blocked by prerequisites)
 ### MCP Tools Called
 
 1. **Authentication:**
+
    ```
    CallMcpTool: mcp_auth (server: plugin-linear-linear)
    ```
 
 2. **Labels Creation:**
+
    ```
    CallMcpTool: create_issue_label
    - foundation (#0E8A16)
@@ -426,6 +444,7 @@ S-XX    Slice issue (blocked by prerequisites)
    ```
 
 3. **Projects Creation:**
+
    ```
    CallMcpTool: save_project
    - MVP Foundations (target: 2026-06-30)
@@ -434,6 +453,7 @@ S-XX    Slice issue (blocked by prerequisites)
    ```
 
 4. **Issues Creation:**
+
    ```
    CallMcpTool: save_issue (x8)
    - F-01, F-02, F-03 (with labels: foundation, ready, roadmap)
@@ -471,6 +491,7 @@ Each issue includes:
 **Automatic state transitions:**
 
 Linear automatically updates issue state when:
+
 - All blocking issues are completed → Issue becomes unblocked
 - Issue is started → Status changes from "Backlog" to "In Progress"
 - Issue is completed → Status changes to "Done"
@@ -497,22 +518,26 @@ Linear automatically updates issue state when:
 ### Working with Linear
 
 **View all issues:**
+
 ```
 https://linear.app/plant-it
 ```
 
 **Filter by label:**
+
 - Foundation work: Filter by `foundation` label
 - User slices: Filter by `slice` label
 - Ready to work: Filter by `ready` label
 - Blocked: Filter by `blocked` label
 
 **View specific projects:**
+
 - [MVP Foundations](https://linear.app/plant-it/project/mvp-foundations-0d8099ae384c)
 - [Core Experience](https://linear.app/plant-it/project/core-experience-d4fbc2931641)
 - [Enhanced Tracking](https://linear.app/plant-it/project/enhanced-tracking-dfd6997a03e5)
 
 **Git Integration:**
+
 - Each issue has an auto-generated git branch name
 - Format: `annakazmierczakit/pla-{number}-{slug}`
 - Use these branch names to link commits to Linear issues
@@ -532,6 +557,7 @@ Keep `roadmap.md` and PRD as reference - do not delete after migration.
 ### Sync Strategy
 
 When roadmap changes:
+
 1. Update `roadmap.md` first
 2. Create/update corresponding Linear issues
 3. Document changes in this file
@@ -539,11 +565,13 @@ When roadmap changes:
 ### Progress Tracking
 
 **Weekly checkpoints:**
+
 - Review project progress in Linear
 - Update issue statuses and labels
 - Identify and resolve blockers
 
 **Completion criteria:**
+
 - All acceptance criteria checkboxes marked
 - Code reviewed and merged
 - Tests passing

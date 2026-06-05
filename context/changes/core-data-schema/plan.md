@@ -7,29 +7,34 @@ Create the foundational database schema for Plant It: plants, actions, action_ty
 ## Current State Analysis
 
 **Database:**
+
 - Supabase configured for auth-only usage (no app tables yet)
 - No `supabase/migrations/` directory exists
 - Migration convention documented: `YYYYMMDDHHmmss_short_description.sql` format
 - RLS required on all new tables (AGENTS.md:11)
 
 **Codebase:**
+
 - Supabase client at `src/lib/supabase.ts` is untyped (no `Database` generic)
 - No `src/types.ts` file yet (convention: shared types go here per CLAUDE.md:42)
 - Auth pattern: `Astro.locals.user` from middleware, `user.id` will be FK for `user_id` columns
 
 **External dependencies:**
+
 - WeatherAPI.com for weather data (free tier: 1M calls/month)
 - Expected fields: temp_max, temp_min, wind, precip, humidity, sunrise, sunset, moonrise, moonset, moon_phase, plus potentially more
 
 ## Desired End State
 
 A complete database foundation that enables:
+
 - User registration with location + garden dimensions (S-01)
 - Adding plants with grid coordinates (S-02)
 - Recording actions (predefined or custom) with weather data and photos (S-02)
 - Querying user's own data only (RLS enforced)
 
 **Verification:**
+
 - Migration applies cleanly: `npx supabase db reset`
 - Seed data present: 30 action_types with emoji icons
 - RLS works: cross-user queries blocked via Supabase Studio
@@ -56,6 +61,7 @@ A complete database foundation that enables:
 **Single migration file** with all tables, constraints, RLS policies, indexes, and seed data. TypeScript types defined in a separate phase to match the schema exactly.
 
 **Key decisions:**
+
 - **User profile:** New `public.profiles` table (1:1 with `auth.users`)
 - **Coordinates:** Numeric `grid_x`, `grid_y` integers (not text like "A3")
 - **Weather data:** JSONB storing full WeatherAPI.com response
@@ -397,6 +403,7 @@ Not applicable (schema-only change, no application logic).
 ### Integration Tests:
 
 Manual verification via Supabase Studio:
+
 1. Insert a profile row via SQL editor, verify user_id FK constraint works
 2. Insert a plant with invalid grid_x (negative number), expect CHECK constraint error
 3. Insert an action with both action_type_id and custom_action_name, expect constraint violation
@@ -406,10 +413,12 @@ Manual verification via Supabase Studio:
 ### Manual Testing Steps:
 
 1. **Verify migration applied:**
+
    ```bash
    npx supabase db reset
    npx supabase db diff
    ```
+
    Expected: "No schema changes detected"
 
 2. **Verify seed data:**
@@ -417,20 +426,23 @@ Manual verification via Supabase Studio:
 
 3. **Verify RLS:**
    - Studio → SQL Editor:
+
      ```sql
      -- As authenticated user A (replace with real UUID after sign-up)
      SET request.jwt.claim.sub = 'user-a-uuid';
      INSERT INTO plants (user_id, name, grid_x, grid_y) VALUES ('user-a-uuid', 'Tomato', 0, 0);
-     
+
      -- As authenticated user B
      SET request.jwt.claim.sub = 'user-b-uuid';
      SELECT * FROM plants; -- Should return empty (RLS blocks user B from seeing user A's plants)
      ```
 
 4. **Verify types compile:**
+
    ```bash
    npm run build
    ```
+
    Expected: No TypeScript errors, build succeeds
 
 5. **Verify constraint checks:**
@@ -450,16 +462,19 @@ Manual verification via Supabase Studio:
 ## Migration Notes
 
 **First migration:**
+
 - This is the project's first app-data migration (auth.users already exists via Supabase)
 - No rollback migration needed (can drop entire schema and re-run if needed during dev)
 - Once deployed to production Supabase project, treat as immutable (new migrations for schema changes)
 
 **Local development:**
+
 - `npx supabase start` (requires Docker) spins up local Postgres + Studio
 - `npx supabase db reset` applies all migrations from scratch (destructive)
 - `npx supabase db diff --schema public` compares local vs remote schema
 
 **Production deployment:**
+
 - Link to remote project: `npx supabase link --project-ref YOUR_PROJECT_REF`
 - Push migrations: `npx supabase db push` (applies pending migrations only)
 - Verify RLS works: test cross-user queries via Studio on remote project
@@ -479,6 +494,7 @@ Manual verification via Supabase Studio:
 **Context:** During Phase 2 implementation, after completing the hand-written type definitions per plan, a refinement was made to use Supabase CLI-generated types instead.
 
 **Change:** Replaced the hand-written camelCase interfaces (as specified in the plan's Phase 2 contract) with:
+
 - `src/database.types.ts` — generated via `npx supabase gen types` (346 lines, snake_case property names matching database exactly)
 - `src/types.ts` — simplified to re-export generated types plus custom helper types (WeatherData, PlantWithLastAction, etc.)
 - `src/lib/supabase.ts` — updated to use `Database` generic for typed client (`createServerClient<Database>(...)`)
@@ -486,6 +502,7 @@ Manual verification via Supabase Studio:
 **Note:** While the plan's Current State Analysis noted the client was "untyped (no `Database` generic)," updating the client was not explicitly listed as a Changes Required step. This update was a natural consequence of creating the Database type and is required for the types to be useful in practice.
 
 **Rationale:** This is a Supabase best practice that provides:
+
 1. **Auto-sync:** Types stay in sync with schema automatically; run `gen types` after migrations
 2. **Zero mapping errors:** No manual snake_case ↔ camelCase translation needed
 3. **Stronger type safety:** Includes Insert/Update types, exhaustive unions, and accurate nullability

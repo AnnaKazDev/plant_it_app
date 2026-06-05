@@ -16,6 +16,7 @@
 **Total time for MVP deployment:** 70-90 minutes (Phases 0-4 only)
 
 **Phase priority:**
+
 - **MUST HAVE (for first deploy):** Phase 0, 1, 2, 3, 4
 - **RECOMMENDED (for production):** Phase 5 (manual deploy at minimum), Phase 6 (monitoring + alerts)
 - **OPTIONAL (can defer):** Phase 5 auto-deploy, Phase 6 custom domain/Sentry, Phase 7
@@ -26,37 +27,19 @@
 
 Based on context/foundation/infrastructure.md, we're deploying Plant It to Cloudflare Workers with:
 
-
-
-
-
 Astro 6 SSR with React 19 islands
-
-
 
 Supabase for auth and database (external)
 
-
-
 @astrojs/cloudflare v13.5.0 adapter (already installed)
-
-
 
 Wrangler 4.90.0 (already installed)
 
 Critical trade-offs identified:
 
-
-
-
-
 10ms CPU limit on free tier likely insufficient for SSR with Supabase queries
 
-
-
 Plan to upgrade to Workers Paid ($5/month) if realistic page renders exceed 8ms
-
-
 
 Must use Supabase connection pooler (port 6543) to avoid connection setup overhead
 
@@ -94,6 +77,7 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    - Free tier includes: 100,000 requests/day, 10ms CPU time, 128MB memory
 
 **Edge cases:**
+
 - **"Email already registered"**: Use password reset or sign in with existing account
 - **Verification email not received**: Check spam folder, wait 5 minutes, or request resend
 - **Corporate email blocked**: Some corporate domains block Cloudflare emails - use personal email
@@ -130,6 +114,7 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    - Edge Functions: 500K invocations/month
 
 **Edge cases:**
+
 - **GitHub OAuth fails**: Use email signup instead, or check if GitHub is accessible
 - **"Organization name taken"**: Add a number or unique identifier (e.g., "plant-it-dev-2026")
 - **No email verification received**: Check spam, wait 10 minutes, or use GitHub OAuth
@@ -161,33 +146,32 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    - When ready, dashboard shows "Project is ready"
 
 4. **Locate project credentials**
-   
+
    After project is ready:
-   
    - **Navigate to API settings:**
      - Look at **left sidebar** of Supabase dashboard
      - Click the **⚙️ gear icon** (labeled "Project Settings")
      - In the Project Settings page, look at **left submenu**
      - Click **"API"** section
      - Alternatively, direct link: `https://supabase.com/dashboard/project/[project-ref]/settings/api`
-   
    - You'll need these two values:
-   
+
    **Project URL:**
+
    ```
    https://[project-ref].supabase.co
    ```
+
    Example: `https://xyzabcdefgh.supabase.co`
-   
    - Location in UI: Under "Configuration" → "Project URL"
-   
+
    **anon/public key:**
+
    ```
    eyJhbGc...very-long-jwt-token...
    ```
-   
+
    - Location in UI: Under "Project API keys" → "anon" → "public" (click eye icon to reveal)
-   
    - **Copy both values** - you'll need them in Phase 2
    - **Security note:** The `anon` key is safe to expose client-side (it's scoped by Row Level Security policies)
    - **DO NOT share:** The `service_role` key (gives full database access, bypasses RLS)
@@ -199,6 +183,7 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    - Run test query: `SELECT current_database();` → should return `postgres`
 
 **Edge cases:**
+
 - **Provisioning stuck > 10 minutes**: Refresh page, check status.supabase.com for incidents
 - **"Project name already taken"**: Add suffix like `plant-it-prod` or `plant-it-2026`
 - **Wrong region selected**: You must delete project and recreate (region cannot be changed)
@@ -210,11 +195,12 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
 **Verify prerequisites:**
 
 1. **Node.js 22.x**
+
    ```bash
    node -v
    # Expected: v22.14.0 or higher
    ```
-   
+
    **If not installed or wrong version:**
    - Download from https://nodejs.org (LTS version)
    - Or use nvm (Node Version Manager):
@@ -225,17 +211,19 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    - Verify: `node -v` shows v22.x.x
 
 2. **npm (comes with Node.js)**
+
    ```bash
    npm -v
    # Expected: 10.x or higher
    ```
 
 3. **Git**
+
    ```bash
    git --version
    # Expected: git version 2.x or higher
    ```
-   
+
    **If not installed:**
    - macOS: `xcode-select --install` or download from https://git-scm.com
    - Windows: https://git-scm.com/download/win
@@ -248,12 +236,14 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
 **Verify project repository:**
 
 1. **Check repository location**
+
    ```bash
    pwd
    # Should show: /Users/akazmierczak/Documents/10xdevs3/plant_it_app
    ```
 
 2. **Verify git repository**
+
    ```bash
    git status
    # Should NOT show: "fatal: not a git repository"
@@ -261,6 +251,7 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    ```
 
 3. **Check dependencies installed**
+
    ```bash
    ls node_modules/
    # Should list installed packages (astro, react, etc.)
@@ -274,6 +265,7 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    ```
 
 **Checklist before Phase 1:**
+
 - [ ] Cloudflare account created and email verified
 - [ ] Supabase account created (GitHub or email)
 - [ ] Supabase organization created (on Free plan)
@@ -301,6 +293,7 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
 
 1. **Open** `wrangler.jsonc` in your editor
 2. **Verify current content** - you should see something like:
+
    ```jsonc
    {
      "$schema": "node_modules/wrangler/config-schema.json",
@@ -311,22 +304,27 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
    ```
 
 3. **Update these specific fields:**
-   
+
    **Change `name`:** from `"10x-astro-starter"` to `"plant-it"`
+
    ```jsonc
    "name": "plant-it",
    ```
-   
+
    **Change `main`:** from `"@astrojs/cloudflare/entrypoints/server"` to `"./dist/_worker.js/index.js"`
+
    ```jsonc
    "main": "./dist/_worker.js/index.js",
    ```
+
    **Why:** Astro 6 changed the worker output path. The new path points to the actual built worker file.
-   
+
    **Update `compatibility_date`:** to today (2026-05-24)
+
    ```jsonc
    "compatibility_date": "2026-05-24",
    ```
+
    **Why:** Ensures you get the latest Cloudflare Workers runtime features and fixes.
 
 4. **Complete updated file should look like:**
@@ -341,15 +339,16 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
   },
   "observability": {
-    "enabled": true
-  }
+    "enabled": true,
+  },
 }
 ```
 
 **Don't change:**
+
 - `$schema` - keep as-is
 - `compatibility_flags` - `nodejs_compat` is required
 - `assets` section - configured correctly
@@ -363,17 +362,9 @@ Must use Supabase connection pooler (port 6543) to avoid connection setup overhe
 
 astro.config.mjs is already correctly configured:
 
-
-
-
-
 output: "server" ✅
 
-
-
 adapter: cloudflare() ✅
-
-
 
 env.schema with SUPABASE_URL and SUPABASE_KEY ✅
 
@@ -384,7 +375,9 @@ No changes needed.
 Create .dev.vars.example to document required secrets (.dev.vars is already gitignored):
 
 # Cloudflare Workers local development secrets
+
 # Copy this to .dev.vars and fill in real values
+
 SUPABASE_URL=https://[project-ref].supabase.co
 SUPABASE_KEY=[anon-key-from-supabase-dashboard]
 
@@ -400,25 +393,13 @@ Path A: Local Supabase (Docker-based)
 
 Already documented in README.md. Requires Docker + 7GB RAM.
 
-
-
-
-
 ✅ Good for: isolated development, no cloud costs
-
-
 
 ❌ Bad for: production deployment (can't deploy local DB to cloud)
 
 Path B: Cloud Supabase Project (Recommended for deployment)
 
-
-
-
-
 ✅ Good for: production deployment, matches infrastructure.md assumptions
-
-
 
 ❌ Requires: Supabase account (free tier available)
 
@@ -426,46 +407,24 @@ Action required: User must decide which path. For production deployment, Path B 
 
 If Path B (Cloud Supabase):
 
-
-
-
-
 Create Supabase project at https://supabase.com/dashboard
-
-
 
 Get credentials from Dashboard → Settings → API:
 
-
-
-
-
 Project URL: https://[project-ref].supabase.co
-
-
 
 Anon/public key: eyJ... (safe to expose client-side)
 
-
-
 Create .dev.vars file:
 
-   SUPABASE_URL=https://[project-ref].supabase.co
-   SUPABASE_KEY=[anon-key]
-   
-
+SUPABASE_URL=https://[project-ref].supabase.co
+SUPABASE_KEY=[anon-key]
 
 2.2 Verify Supabase Client Configuration
 
 src/lib/supabase.ts uses @supabase/ssr correctly:
 
-
-
-
-
 Reads from astro:env/server (SUPABASE_URL, SUPABASE_KEY) ✅
-
-
 
 Server-side client with cookie-based sessions ✅
 
@@ -479,17 +438,9 @@ Note: Current implementation uses Supabase client (not direct Postgres), so pool
 
 Per README.md, Supabase requires email confirmation by default. For production:
 
-
-
-
-
 Keep email confirmation ON (security best practice)
 
-
-
 Add email templates in Supabase Dashboard → Authentication → Email Templates
-
-
 
 Configure SMTP (or use Supabase's default sender)
 
@@ -506,6 +457,7 @@ npm install
 3.2 Create Local Environment File
 
 cp .env.example .dev.vars
+
 # Edit .dev.vars with real Supabase credentials
 
 3.3 Start Development Server
@@ -514,67 +466,37 @@ npm run dev
 
 Expected: Astro dev server starts with Cloudflare workerd runtime. Check console output for:
 
-astro  v6.3.1 started in [N]ms
-  ┃ Local    http://localhost:4321/
-  ┃ Runtime  Cloudflare (workerd)
+astro v6.3.1 started in [N]ms
+┃ Local http://localhost:4321/
+┃ Runtime Cloudflare (workerd)
 
 Edge case - if dev server fails:
 
-
-
-
-
 "SUPABASE_URL is not defined": .dev.vars not created or missing variables
 
-
-
 "Module not found": Run npm install again
-
-
 
 "Port 4321 already in use": Kill existing process or use different port
 
 3.4 Test Auth Flow Locally
 
-
-
-
-
 Navigate to http://localhost:4321/auth/signup
-
-
 
 Create test account
 
-
-
 If email confirmation is enabled: check Supabase Dashboard → Authentication → Users to manually confirm
 
-
-
 Sign in at http://localhost:4321/auth/signin
-
-
 
 Verify redirect to http://localhost:4321/dashboard
 
 Checklist:
 
-
-
-
-
 Signup form works
-
-
 
 Signin form works
 
-
-
 Protected route (/dashboard) redirects when not authenticated
-
-
 
 Protected route accessible when authenticated
 
@@ -588,13 +510,7 @@ Expected: Browser opens to Cloudflare login. Choose the account for Plant It dep
 
 Edge case - authentication fails:
 
-
-
-
-
 If behind corporate proxy: npx wrangler login --proxy http://proxy-url:port
-
-
 
 If no browser available: Use npx wrangler login --no-browser and follow CLI instructions
 
@@ -603,22 +519,18 @@ If no browser available: Use npx wrangler login --no-browser and follow CLI inst
 Cloudflare Workers requires secrets to be set separately (not in wrangler.jsonc).
 
 npx wrangler secret put SUPABASE_URL
+
 # When prompted, paste: https://[project-ref].supabase.co
 
 npx wrangler secret put SUPABASE_KEY
+
 # When prompted, paste: your anon/public key
 
 Security note: These secrets are encrypted at rest and only injected at runtime. Not visible in Cloudflare dashboard to non-admin users.
 
 Edge case - secret update fails:
 
-
-
-
-
 "Authentication error": Re-run npx wrangler login
-
-
 
 "Worker not found": Deploy once first (npx wrangler deploy), then add secrets
 
@@ -640,10 +552,12 @@ Deployed plant-it triggers (1.23 sec)
 **Understanding your Worker URL:**
 
 The URL format is `https://plant-it.[account-subdomain].workers.dev` where:
+
 - `plant-it` = your worker name (from `wrangler.jsonc`)
 - `[account-subdomain]` = your Cloudflare account's unique subdomain (assigned automatically)
 
 **How to find your account subdomain:**
+
 1. After first deploy, it's shown in the output above
 2. Or visit Cloudflare Dashboard → Workers & Pages
 3. Or check the URL bar: `https://dash.cloudflare.com/[account-id]/workers-and-pages`
@@ -657,33 +571,17 @@ The URL format is `https://plant-it.[account-subdomain].workers.dev` where:
 
 **Edge case - build fails:**
 
-
-
-
-
 "SUPABASE_URL is required": Set as Wrangler secret first (step 4.2)
 
-
-
 TypeScript errors: Run npm run lint locally first
-
-
 
 "Worker exceeded size limit": Use code splitting or remove unused dependencies
 
 Edge case - deployment fails:
 
-
-
-
-
 "Authentication error": Re-run npx wrangler login
 
-
-
 "Account limit exceeded": Check Cloudflare dashboard → Workers & Pages → Settings → Usage (free tier: 100k requests/day)
-
-
 
 "Invalid wrangler.jsonc": Verify JSON syntax (use npx jsonlint wrangler.jsonc)
 
@@ -694,95 +592,59 @@ After first deployment, immediately test SSR performance:
 # Open 2 terminals:
 
 # Terminal 1: Stream live logs
+
 npx wrangler tail
 
 # Terminal 2: Make requests
+
 curl https://plant-it.[account].workers.dev/
 curl https://plant-it.[account].workers.dev/auth/signin
 
 In Terminal 1, look for cpuTime in logs:
 
 {
-  "event": { ... },
-  "logs": [ ... ],
-  "outcome": "ok",
-  "scriptName": "plant-it",
-  "cpuTime": 12  // <-- THIS NUMBER IN MILLISECONDS
+"event": { ... },
+"logs": [ ... ],
+"outcome": "ok",
+"scriptName": "plant-it",
+"cpuTime": 12 // <-- THIS NUMBER IN MILLISECONDS
 }
 
 Decision rule:
 
-
-
-
-
 If cpuTime > 8ms on any page: Plan to upgrade to Workers Paid ($5/month) before user-facing launch
-
-
 
 If cpuTime > 10ms consistently: Upgrade immediately (free tier will reject ~60% of requests with Error 1027)
 
 Mitigation if upgrade not possible:
 
-
-
-
-
 Cache external API calls (weather data) in KV (1 hour TTL)
-
-
 
 Use Supabase RPC for complex queries (runs DB-side, saves Worker CPU)
 
-
-
 Minimize React island hydration code
-
-
 
 Consider switching to Vercel (no CPU limits, but 3x lower request ceiling)
 
 4.5 Verify Deployment
 
-
-
-
-
 Open https://plant-it.[account].workers.dev in browser
 
-
-
 Test auth flow (signup, signin, protected routes)
-
-
 
 Check logs for errors: npx wrangler tail
 
 Checklist:
 
-
-
-
-
 Homepage loads
-
-
 
 Signup flow works
 
-
-
 Signin flow works
-
-
 
 Dashboard redirects correctly
 
-
-
 No 500 errors in logs
-
-
 
 CPU time measured and acceptable (< 8ms) or upgrade planned
 
@@ -798,13 +660,7 @@ Option A: Manual Deployment (Recommended for MVP)
 
 Keep CI as-is (lint + build only). Deploy manually via npx wrangler deploy when ready.
 
-
-
-
-
 ✅ Safer: human approval before production changes
-
-
 
 ❌ Slower: requires manual step
 
@@ -815,28 +671,22 @@ Add deployment step to CI workflow:
 name: CI
 
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+push:
+branches: [master]
+pull_request:
+branches: [master]
 
 jobs:
-  ci:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx astro sync
-      - run: npm run lint
-      - run: npm run build
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      
+ci:
+runs-on: ubuntu-latest
+steps: - uses: actions/checkout@v4 - uses: actions/setup-node@v4
+with:
+node-version: 22
+cache: npm - run: npm ci - run: npx astro sync - run: npm run lint - run: npm run build
+env:
+SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
       # New: Auto-deploy on push to master
       - name: Deploy to Cloudflare Workers
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -847,7 +697,6 @@ jobs:
 **If choosing Option B, add GitHub Secret:**
 
 1. **Generate Cloudflare API Token:**
-   
    - Go to Cloudflare Dashboard → Profile → API Tokens
    - **Direct link:** `https://dash.cloudflare.com/profile/api-tokens`
    - Click "Create Token" button (blue, top right)
@@ -855,7 +704,7 @@ jobs:
    - Or use **"Edit Cloudflare Workers" template** (faster):
      - Find in "API token templates" section
      - Click "Use template" next to "Edit Cloudflare Workers"
-   
+
    **Token configuration:**
    - **Token name:** "GitHub Actions - Plant It" (or any descriptive name)
    - **Permissions:**
@@ -864,51 +713,41 @@ jobs:
    - **Account Resources:** Include → [Your account name]
    - **Zone Resources:** Not needed for Workers
    - **TTL:** Default (no expiration) or set custom expiration
-   
    - Click "Continue to summary" → "Create Token"
    - **CRITICAL:** Copy token immediately (shown only once)
    - Example token: `1234567890abcdefghijklmnopqrstuvwxyz`
 
 2. **Add to GitHub:**
-   
    - Open your repository on GitHub
    - Go to: Repository → Settings → Secrets and variables → Actions
    - **Direct link pattern:** `https://github.com/<username>/<repo>/settings/secrets/actions`
    - Example: `https://github.com/akazmierczak/plant-it/settings/secrets/actions`
-   
+
    **Add three secrets:**
-   
+
    a. **CLOUDFLARE_API_TOKEN**
-      - Click "New repository secret"
-      - Name: `CLOUDFLARE_API_TOKEN`
-      - Value: paste token from step 1
-      - Click "Add secret"
-   
+   - Click "New repository secret"
+   - Name: `CLOUDFLARE_API_TOKEN`
+   - Value: paste token from step 1
+   - Click "Add secret"
+
    b. **SUPABASE_URL** (if not already added)
-      - Click "New repository secret"
-      - Name: `SUPABASE_URL`
-      - Value: `https://[project-ref].supabase.co`
-      - Click "Add secret"
-   
+   - Click "New repository secret"
+   - Name: `SUPABASE_URL`
+   - Value: `https://[project-ref].supabase.co`
+   - Click "Add secret"
+
    c. **SUPABASE_KEY** (if not already added)
-      - Click "New repository secret"
-      - Name: `SUPABASE_KEY`
-      - Value: your anon/public key from Phase 0.3
-      - Click "Add secret"
+   - Click "New repository secret"
+   - Name: `SUPABASE_KEY`
+   - Value: your anon/public key from Phase 0.3
+   - Click "Add secret"
 
 **Edge case - CI deployment fails:**
 
-
-
-
-
 "Authentication error": Regenerate API token, ensure "Edit Cloudflare Workers" permission
 
-
-
 "Secrets not found": Verify SUPABASE_URL and SUPABASE_KEY are set in GitHub repository secrets
-
-
 
 "Build timeout": Increase timeout in workflow (timeout-minutes: 15)
 
@@ -918,17 +757,9 @@ Cloudflare supports automatic preview deployments for branches/PRs. Two approach
 
 Approach A: GitHub Integration (Zero Config)
 
-
-
-
-
 Cloudflare Dashboard → Workers & Pages → plant-it → Settings → Builds & deployments
 
-
-
 Connect GitHub repository
-
-
 
 Enable "Automatic deployments" for branches
 
@@ -936,13 +767,7 @@ Result: Every branch/PR auto-deploys to [branch].plant-it.[account].workers.dev
 
 Edge case: Preview URLs are public by default. To restrict:
 
-
-
-
-
 Use Cloudflare Access (free for up to 50 users): Dashboard → Zero Trust → Access → Applications
-
-
 
 Add auth rule (e.g., "Allow email domain: @yourdomain.com")
 
@@ -954,18 +779,18 @@ Add preview deployment to CI workflow:
   if: github.event_name == 'pull_request'
   run: npx wrangler deploy --env preview
   env:
-    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
 Requires adding [env.preview] section to wrangler.jsonc:
 
 {
-  "name": "plant-it",
-  // ... existing config ...
-  "env": {
-    "preview": {
-      "name": "plant-it-preview"
-    }
-  }
+"name": "plant-it",
+// ... existing config ...
+"env": {
+"preview": {
+"name": "plant-it-preview"
+}
+}
 }
 
 Recommendation: Start with Approach A (simpler, no config). Only use Approach B if you need custom preview environment variables.
@@ -979,6 +804,7 @@ Recommendation: Start with Approach A (simpler, no config). Only use Approach B 
 **To use custom domain (e.g., `plantit.app` or `app.plantit.com`):**
 
 **Prerequisites:**
+
 - You must own a domain (purchase from registrar like Namecheap, GoDaddy, Cloudflare Registrar, etc.)
 - Domain costs: $10-15/year typically
 - **Cloudflare does NOT charge for:**
@@ -1018,16 +844,16 @@ Recommendation: Start with Approach A (simpler, no config). Only use Approach B 
    - Your Worker is now accessible at `https://plantit.app` (or subdomain)
 
 5. **Update Astro configuration**
-   
+
    Add `site` to `astro.config.mjs`:
-   
+
    ```js
    export default defineConfig({
-     site: "https://plantit.app",  // or your custom domain
+     site: "https://plantit.app", // or your custom domain
      // ... rest of config
    });
    ```
-   
+
    **Why:** Astro uses this for sitemap generation and canonical URLs.
 
 6. **Rebuild and redeploy**
@@ -1038,17 +864,9 @@ Recommendation: Start with Approach A (simpler, no config). Only use Approach B 
 
 **Edge case - domain setup fails:**
 
-
-
-
-
 "DNS verification failed": Ensure domain's nameservers point to Cloudflare
 
-
-
 "Certificate generation failed": Wait 24 hours for DNS propagation, try again
-
-
 
 "Domain already in use": Check if another Worker uses this domain
 
@@ -1056,8 +874,8 @@ Update in Astro:
 Add site to astro.config.mjs:
 
 export default defineConfig({
-  site: "https://plantit.app",  // or your custom domain
-  // ... rest of config
+site: "https://plantit.app", // or your custom domain
+// ... rest of config
 });
 
 Rebuild and redeploy: npm run build && npx wrangler deploy
@@ -1066,65 +884,33 @@ Rebuild and redeploy: npm run build && npx wrangler deploy
 
 Included by default:
 
-
-
-
-
 "observability": { "enabled": true } in wrangler.jsonc enables Workers Analytics
-
-
 
 View in Cloudflare Dashboard → Workers & Pages → plant-it → Analytics
 
 Metrics available:
 
-
-
-
-
 Requests per second
-
-
 
 Error rate
 
-
-
 CPU time percentiles (p50, p90, p99)
-
-
 
 Success/failure breakdown
 
 Alerting (Optional):
 
-
-
-
-
 Dashboard → Notifications → Destinations → Add destination (email, webhook, PagerDuty)
 
-
-
 Dashboard → Notifications → Notifications → Create
-
-
 
 Set alert: "Worker error rate > 5% for 5 minutes" → notify destination
 
 Edge case - no metrics showing:
 
-
-
-
-
 Wait 5-10 minutes after first deployment (metrics delayed)
 
-
-
 Verify observability.enabled: true in wrangler.jsonc
-
-
 
 Check free tier limits: historical metrics available up to 24 hours (paid: 30 days)
 
@@ -1134,61 +920,35 @@ Cloudflare logs are ephemeral (24 hours on free tier). For persistent error trac
 
 Option A: Sentry (Recommended)
 
-
-
-
-
 Create Sentry project at https://sentry.io
-
-
 
 Install: npm install @sentry/astro
 
-
-
 Add to astro.config.mjs:
 
-   import sentry from "@sentry/astro";
-   
-   export default defineConfig({
-     integrations: [
-       sentry({
-         dsn: "https://[key]@[org].ingest.sentry.io/[project]",
-         environment: "production",
-       }),
-       // ... other integrations
-     ],
-   });
-   
+import sentry from "@sentry/astro";
 
-
-
-
-
+export default defineConfig({
+integrations: [
+sentry({
+dsn: "https://[key]@[org].ingest.sentry.io/[project]",
+environment: "production",
+}),
+// ... other integrations
+],
+});
 
 Add SENTRY_DSN to wrangler secrets: npx wrangler secret put SENTRY_DSN
 
 Edge case - Sentry bundle too large:
 
-
-
-
-
 Sentry client adds ~50KB to bundle. If approaching 1MB Worker limit, use Sentry's SDK lazy loading.
 
 Option B: Axiom
 
-
-
-
-
 Create Axiom account at https://axiom.co (1GB/month free)
 
-
-
 Dashboard → Settings → API Tokens → Create token
-
-
 
 Add Axiom integration to Worker (via Wrangler binding or fetch in error handler)
 
@@ -1199,44 +959,28 @@ Trade-off: Axiom better for log aggregation, Sentry better for structured error 
 Cloudflare supports instant rollbacks:
 
 # List deployments
+
 npx wrangler deployments list
 
 # Rollback to previous version
+
 npx wrangler rollback [deployment-id]
 
 How rollback works:
 
-
-
-
-
 Changes production traffic routing to selected version (instant, global edge propagation ~30s)
 
-
-
 Does NOT create a new deployment (just routes to existing one)
-
-
 
 Does NOT rollback database migrations (Supabase schema changes are separate)
 
 Critical edge case: If a deployment included Supabase schema changes (new tables, columns), rolling back code will NOT rollback the database. You must manually revert migrations:
 
-
-
-
-
 Identify migration: ls supabase/migrations/
 
-
-
-Create reverse migration: npx supabase migration new rollback_[feature]
-
-
+Create reverse migration: npx supabase migration new rollback\_[feature]
 
 Write reverse SQL (e.g., DROP TABLE plants;)
-
-
 
 Apply: npx supabase db push (or push via Supabase Studio)
 
@@ -1248,69 +992,35 @@ Per infrastructure.md pre-mortem, cost surprises are a real risk.
 
 Set billing alerts:
 
-
-
-
-
 Cloudflare Dashboard → Billing → Notifications
 
-
-
 Create alert: "Workers usage > 90% of free tier" → email
-
-
 
 Create alert: "R2 usage > $1/month" → email (if using R2 for photos later)
 
 Free tier limits (as of 2026-05-24):
 
-
-
-
-
 Requests: 100,000/day (3M/month)
-
-
 
 CPU time: 10ms per request
 
-
-
 Duration: 30 seconds per request
-
-
 
 KV writes: 1,000/day
 
 Upgrade triggers:
 
-
-
-
-
 CPU time consistently > 10ms → Workers Paid ($5/month, 30s CPU limit)
 
-
-
 Requests > 3M/month → Workers Paid ($5/month + $0.30/million beyond 10M)
-
-
 
 KV writes > 1,000/day → Workers Paid ($5/month, 1M writes included)
 
 Projected MVP cost:
 
-
-
-
-
 Baseline: $0/month (free tier covers < 50 DAU, no photo uploads)
 
-
-
 With photo uploads: $0-2/month (R2: $4.50/million writes, ~30k photos = $0.14/month)
-
-
 
 With scale (100+ DAU): $5-7/month (Workers Paid + R2 storage)
 
@@ -1320,41 +1030,36 @@ Phase 7: Post-Deployment Tasks
 
 Files to update:
 
-
-
-
-
 README.md - Add "Production Deployment" section:
 
-   ## Production Deployment
-   
-   Deployed to Cloudflare Workers at https://plant-it.[account].workers.dev
-   
-   To deploy changes:
-   
+## Production Deployment
 
-```bash
+Deployed to Cloudflare Workers at https://plant-it.[account].workers.dev
+
+To deploy changes:
+
+````bash
    npm run build
    npx wrangler deploy
-   
+
 
 
    See context/foundation/infrastructure.md for deployment architecture and cost estimates.
 
 
 2. [AGENTS.md](AGENTS.md) - Add deployment notes:
-   
+
 
 ```markdown
    ## Deployment
-   
+
    - Platform: Cloudflare Workers (SSR)
    - Secrets: SUPABASE_URL, SUPABASE_KEY (set via `npx wrangler secret put`)
    - Rollback: `npx wrangler rollback [deployment-id]`
    - Logs: `npx wrangler tail` (real-time) or Dashboard → Workers & Pages → plant-it → Logs (historical, 24h)
-   
+
    **Critical:** CPU time limit on free tier is 10ms. Measure with `npx wrangler tail` after each deployment. If consistently > 8ms, upgrade to Workers Paid ($5/month).
-   
+
 
 
 
@@ -1364,20 +1069,20 @@ README.md - Add "Production Deployment" section:
 Create deployment runbook: docs/deployment.md (or add to context/):
 
    # Deployment Runbook
-   
+
    ## Pre-deployment checklist
    - [ ] All tests pass locally
    - [ ] Lint checks pass: `npm run lint`
    - [ ] Build succeeds: `npm run build`
    - [ ] New environment variables added to Wrangler secrets
-   
+
    ## Deploy to production
-   
+
 
 ```bash
    npm run build
    npx wrangler deploy
-   
+
 
 
 Post-deployment verification
@@ -1404,7 +1109,7 @@ Rollback procedure
 
    npx wrangler deployments list
    npx wrangler rollback [previous-deployment-id]
-   
+
 
 
    If deployment included database migrations, manually revert in Supabase Studio.
@@ -1438,7 +1143,7 @@ Supabase Status: https://status.supabase.com
 
 3. **Content Security Policy**
    Add CSP headers in `src/middleware.ts`:
-   
+
 
 ```ts
    export async function onRequest(context, next) {
@@ -1449,7 +1154,7 @@ Supabase Status: https://status.supabase.com
      );
      return response;
    }
-   
+
 
 
 
@@ -1529,7 +1234,7 @@ Based on infrastructure.md Risk Register, key mitigations in this plan:
 
 **Issue:** Supabase project stuck on "Setting up project..." for > 10 minutes
 - **Cause:** Rare provisioning delay or region overload
-- **Fix:** 
+- **Fix:**
   1. Check https://status.supabase.com for incidents
   2. Refresh browser page
   3. If still stuck after 15 min, delete project and recreate
@@ -1656,26 +1361,30 @@ Based on infrastructure.md Risk Register, key mitigations in this plan:
 ```bash
 npx wrangler whoami
 # Should show: "You are logged in as: your-email@example.com"
-```
+````
 
 **List deployed Workers:**
+
 ```bash
 npx wrangler deployments list
 ```
 
 **View live Worker logs:**
+
 ```bash
 npx wrangler tail
 # Keep running, open Worker URL in browser, watch logs
 ```
 
 **Test Supabase connection:**
+
 ```bash
 curl -I https://[project-ref].supabase.co
 # Should return: HTTP/2 200
 ```
 
 **Verify environment variables loaded:**
+
 ```bash
 # In dev mode, check console output when starting server
 npm run dev
@@ -1683,6 +1392,7 @@ npm run dev
 ```
 
 **Check Worker bundle size:**
+
 ```bash
 npm run build
 ls -lh dist/_worker.js/index.js
@@ -1707,6 +1417,7 @@ The following are NOT included in this deployment plan:
 ## Implementation Checklist
 
 ### Phase 0: Account Setup ✓
+
 - [ ] Create Cloudflare account and verify email
 - [ ] Create Supabase account (GitHub OAuth or email)
 - [ ] Create Supabase organization (Free plan)
@@ -1716,21 +1427,25 @@ The following are NOT included in this deployment plan:
 - [ ] Confirm project repository ready
 
 ### Phase 1: Configuration ✓
+
 - [ ] Update wrangler.jsonc (name, main, compatibility_date)
 - [ ] Create .dev.vars.example
 
 ### Phase 2: Supabase ✓
+
 - [ ] Decide: Local (Docker) or Cloud Supabase
 - [ ] If Cloud: Create project, get credentials
 - [ ] Create .dev.vars with credentials
 - [ ] Configure email confirmation (ON for prod, optional OFF for testing)
 
 ### Phase 3: Local Verification ✓
+
 - [ ] npm install
 - [ ] npm run dev (verify workerd runtime)
 - [ ] Test auth flow: signup, signin, dashboard
 
 ### Phase 4: Deployment ✓
+
 - [ ] npx wrangler login
 - [ ] npx wrangler secret put SUPABASE_URL
 - [ ] npx wrangler secret put SUPABASE_KEY
@@ -1741,12 +1456,14 @@ The following are NOT included in this deployment plan:
 - [ ] Verify deployment (homepage, auth, no errors)
 
 ### Phase 5: CI/CD ✓
+
 - [ ] Decide: Manual deploy (Option A) or Auto-deploy (Option B)
 - [ ] If Option B: Add CLOUDFLARE_API_TOKEN to GitHub secrets
 - [ ] If Option B: Update .github/workflows/ci.yml
 - [ ] Optional: Configure branch previews (Approach A or B)
 
 ### Phase 6: Production Readiness ✓
+
 - [ ] Optional: Set up custom domain
 - [ ] Verify Workers Analytics enabled
 - [ ] Optional: Configure alerts (error rate, usage)
@@ -1755,6 +1472,7 @@ The following are NOT included in this deployment plan:
 - [ ] Set billing alerts (90% free tier, $1/month R2)
 
 ### Phase 7: Post-Deployment ✓
+
 - [ ] Update README.md (Production Deployment section)
 - [ ] Update AGENTS.md (deployment notes)
 - [ ] Create docs/deployment.md runbook
@@ -1767,11 +1485,13 @@ The following are NOT included in this deployment plan:
 **Estimated time:** 2-3 hours (includes Cloud Supabase setup, first deployment, verification, docs)
 
 **Prerequisites:**
+
 - Cloudflare account (free tier sufficient for MVP)
 - Cloud Supabase project (if not using local Docker)
 - GitHub repository with Actions enabled (for CI/CD)
 
 **Next steps after deployment:**
+
 1. Implement core features per PRD (plants, actions, photos, weather)
 2. Set up Supabase tables with RLS policies
 3. Monitor CPU time and upgrade to Workers Paid if needed
@@ -1782,6 +1502,7 @@ The following are NOT included in this deployment plan:
 ## Document Revision History
 
 **v2.0 - 2026-05-24:**
+
 - ✅ Added "Quick Start Path" section with phase priorities (MUST/RECOMMENDED/OPTIONAL)
 - ✅ Added Phase 0: Account Setup with step-by-step registration for Cloudflare & Supabase
 - ✅ Enhanced Phase 1.1 with clear instructions on updating vs replacing `wrangler.jsonc`
@@ -1794,5 +1515,5 @@ The following are NOT included in this deployment plan:
 - ✅ Added debugging commands reference section
 
 **v1.0 - Initial version:**
-- Base deployment plan with 7 phases (configuration through documentation)
 
+- Base deployment plan with 7 phases (configuration through documentation)
