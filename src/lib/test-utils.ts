@@ -8,6 +8,7 @@ import type { Database } from "@/database.types";
 /**
  * Create a Supabase client for testing
  * Uses environment variables from .env
+ * Disables realtime to avoid WebSocket issues in test environment
  */
 export function createTestClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -17,7 +18,11 @@ export function createTestClient() {
     throw new Error("Missing SUPABASE_URL or SUPABASE_KEY in environment");
   }
 
-  return createSupabaseClient<Database>(supabaseUrl, supabaseKey);
+  return createSupabaseClient<Database>(supabaseUrl, supabaseKey, {
+    realtime: {
+      disabled: true, // Disable realtime to avoid WebSocket requirement in tests
+    },
+  });
 }
 
 /**
