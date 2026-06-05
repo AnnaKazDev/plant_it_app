@@ -1,0 +1,130 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
+---
+
+<Layout title="Theme Preview">
+  <div class="min-h-screen bg-background p-8">
+    <div class="mx-auto max-w-4xl space-y-12">
+      <div class="flex items-start justify-between">
+        <div>
+          <h1 class="text-4xl font-bold text-foreground mb-2">Theme Preview - Sage Green</h1>
+          <p class="text-muted-foreground">Nowy theme z tweakcn w formacie OKLCH</p>
+        </div>
+        <ThemeToggle client:load />
+      </div>
+
+      <!-- Colors Grid -->
+      <div class="space-y-4">
+        <h2 class="text-2xl font-semibold text-foreground">Kolory</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg bg-primary"></div>
+            <p class="text-sm text-foreground">Primary</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg bg-secondary"></div>
+            <p class="text-sm text-foreground">Secondary</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg bg-accent"></div>
+            <p class="text-sm text-foreground">Accent</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg bg-muted"></div>
+            <p class="text-sm text-foreground">Muted</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg bg-destructive"></div>
+            <p class="text-sm text-foreground">Destructive</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg border-2 border-border bg-card"></div>
+            <p class="text-sm text-foreground">Card</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg border-2 border-border bg-popover"></div>
+            <p class="text-sm text-foreground">Popover</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-20 rounded-lg bg-input border-2 border-border"></div>
+            <p class="text-sm text-foreground">Input</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="space-y-4">
+        <h2 class="text-2xl font-semibold text-foreground">Przyciski</h2>
+        <div class="flex flex-wrap gap-4">
+          <Button client:load>Default Button</Button>
+          <Button client:load variant="secondary">Secondary</Button>
+          <Button client:load variant="outline">Outline</Button>
+          <Button client:load variant="ghost">Ghost</Button>
+          <Button client:load variant="destructive">Destructive</Button>
+          <Button client:load variant="link">Link</Button>
+        </div>
+      </div>
+
+      <!-- Cards -->
+      <div class="space-y-4">
+        <h2 class="text-2xl font-semibold text-foreground">Karty</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-card text-card-foreground rounded-lg border border-border p-6 space-y-2">
+            <h3 class="text-lg font-semibold">Card Title</h3>
+            <p class="text-sm text-muted-foreground">
+              This is a card using the new sage green theme. Notice the soft, natural colors.
+            </p>
+            <Button client:load size="sm">Card Action</Button>
+          </div>
+          <div class="bg-muted text-foreground rounded-lg p-6 space-y-2">
+            <h3 class="text-lg font-semibold">Muted Card</h3>
+            <p class="text-sm text-muted-foreground">
+              A muted variant with slightly different background.
+            </p>
+            <Button client:load variant="secondary" size="sm">Secondary Action</Button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typography -->
+      <div class="space-y-4">
+        <h2 class="text-2xl font-semibold text-foreground">Typografia</h2>
+        <div class="space-y-2">
+          <p class="text-foreground">This is default foreground text.</p>
+          <p class="text-muted-foreground">This is muted foreground text.</p>
+          <p class="text-accent-foreground">This is accent foreground text.</p>
+        </div>
+      </div>
+
+      <!-- Dark Mode Info -->
+      <div class="space-y-4">
+        <h2 class="text-2xl font-semibold text-foreground">Dark Mode</h2>
+        <div class="bg-card text-card-foreground rounded-lg border border-border p-6 space-y-3">
+          <p class="text-sm text-muted-foreground">
+            Użyj przycisku w prawym górnym rogu aby przełączyć między trybem jasnym a ciemnym.
+          </p>
+          <div class="grid md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p class="font-semibold mb-1">Light Mode:</p>
+              <ul class="text-muted-foreground space-y-1">
+                <li>• Beżowo-kremowe tło</li>
+                <li>• Sage green primary</li>
+                <li>• Ciemny tekst</li>
+              </ul>
+            </div>
+            <div>
+              <p class="font-semibold mb-1">Dark Mode:</p>
+              <ul class="text-muted-foreground space-y-1">
+                <li>• Ciemne szare tło</li>
+                <li>• Sage green primary (taki sam)</li>
+                <li>• Jasny tekst</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

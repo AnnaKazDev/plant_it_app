@@ -148,6 +148,72 @@ Users can then sign in immediately after sign-up without clicking a confirmation
 
 Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
 
+## Photo Storage
+
+This project uses Supabase Storage for managing plant photos with user-level security.
+
+### Setup
+
+The storage infrastructure is created automatically via database migrations:
+
+1. **Storage bucket:** `plant-photos` (private, 10MB limit, JPEG/PNG/WebP only)
+2. **RLS policies:** Path-based access control ensures users can only access their own photos
+3. **Database integration:** Photos are linked to actions via the `photos` table
+
+### Local Development
+
+After running `npx supabase start` and applying migrations (`npx supabase migration up`), you can:
+
+- View storage in the dashboard: `http://localhost:54323` → Storage → `plant-photos`
+- Upload photos via API: `POST /api/photos/upload` (requires authentication)
+- Photos are stored at path: `{user_id}/{action_id}/{uuid}.{ext}`
+
+### Upload API
+
+**Endpoint:** `POST /api/photos/upload`
+
+**Authentication:** Required (session cookie)
+
+**Body:** multipart/form-data
+- `action_id` (string, UUID) - Action to attach photo to
+- `file` (File) - Image file (JPEG/PNG/WebP, max 10MB)
+
+**Response:**
+```json
+{
+  "success": true,
+  "photo": {
+    "id": "uuid",
+    "photo_url": "https://...",
+    "size_bytes": 1234,
+    "order_index": 1,
+    "created_at": "2026-06-05T..."
+  }
+}
+```
+
+**Validation:**
+- Max 5 photos per action
+- File type: JPEG, PNG, or WebP only
+- File size: ≤10MB
+- User must own the action (enforced via RLS)
+
+**Testing:**
+```bash
+# Create test image
+echo "iVBORw0KGgo..." | base64 -d > test.png
+
+# Upload (replace ACTION_ID and TOKEN)
+curl -X POST http://localhost:4321/api/photos/upload \
+  -H "Cookie: sb-access-token=YOUR_TOKEN" \
+  -F "action_id=YOUR_ACTION_ID" \
+  -F "file=@test.png"
+```
+
+### Production Deployment
+
+Migrations auto-apply via GitHub Actions. Verify the bucket exists in the Supabase Dashboard → Storage after deployment.
+
 ## Deployment
 
 This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) with automatic deployment via GitHub Actions.
