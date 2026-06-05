@@ -9,6 +9,7 @@ An Astro 6 SSR web application with React 19 islands, Tailwind 4, Supabase authe
 - **Tailwind classes**: Use `cn()` helper from `@/lib/utils` for conditional/merged class names. Never concatenate class strings manually.
 - **No Next.js directives**: Do not use `"use client"` or `"use server"`. This is Astro with React islands, not Next.js.
 - **Supabase migrations**: Place in `supabase/migrations/` with format `YYYYMMDDHHmmss_short_description.sql`. Always enable RLS on new tables with granular per-operation policies.
+- **Photo storage**: Supabase Storage bucket `plant-photos` (private, RLS via `storage.objects` policies). Upload API at `/api/photos/upload` (multipart + zod validation). Helpers in `src/lib/storage.ts`. Max 5 photos per action enforced at API layer. File types: JPEG/PNG/WebP only, ≤10MB.
 
 ## Project Structure
 
@@ -70,7 +71,12 @@ npx wrangler deploy
 
 ## Testing
 
-No test framework configured yet. Tests should follow the pattern `*.test.ts` or `*.spec.ts` when added.
+- **Framework**: Vitest (integration tests for API endpoints)
+- **Test files**: `src/**/*.test.ts`
+- **Run tests**: `npm run test:integration` (requires local Supabase: `npx supabase start`)
+- **Watch mode**: `npm run test:watch` (with UI)
+- **Test utilities**: `src/lib/test-utils.ts` (seedTestData, createTestFile, cleanupTestData)
+- **Configuration**: `vitest.config.ts`
 
 ## Pull Requests & CI
 
