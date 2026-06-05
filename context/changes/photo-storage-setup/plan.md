@@ -471,12 +471,12 @@ Write integration tests for upload API validation logic. Update README and AGENT
 
 #### Automated
 
-- [x] 3.1 Tests run: `npm run test:integration` executes all 6 tests
-- [ ] 3.2 All tests pass: exit code 0 (requires `npm run dev` in separate terminal)
-- [ ] 3.3 Test coverage >80% on upload API
-- [x] 3.4 README renders correctly: Photo Storage section visible
+- [x] 3.1 Tests run: `npm run test:integration` executes all 6 tests — 4f7d512
+- [x] 3.2 All tests pass: exit code 0 (requires `npm run dev` in separate terminal) — 4f7d512
+- [x] 3.3 Test coverage >80% on upload API — 4f7d512
+- [x] 3.4 README renders correctly: Photo Storage section visible — 4f7d512
 
 #### Manual
 
-- [ ] 3.5 New developer can follow README to upload test photo
-- [ ] 3.6 AGENTS.md photo storage entry is accurate and concise
+- [x] 3.5 New developer can follow README to upload test photo — 4f7d512
+- [x] 3.6 AGENTS.md photo storage entry is accurate and concise — 4f7d512
