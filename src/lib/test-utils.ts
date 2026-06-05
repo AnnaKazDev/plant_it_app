@@ -4,33 +4,41 @@
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/database.types";
+import ws from "ws";
 
 /**
  * Create a Supabase client for testing
  * Uses environment variables from .env
- * Disables realtime to avoid WebSocket issues in test environment
+ * Configures WebSocket transport for Node.js < 22
+ * 
+ * @param useServiceRole - If true, uses service role key for admin operations
  */
-export function createTestClient() {
+export function createTestClient(useServiceRole: boolean = false) {
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY;
+  // Use service role key for admin operations, anon key otherwise
+  const supabaseKey = useServiceRole 
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY 
+    : process.env.SUPABASE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_KEY in environment");
+    throw new Error(`Missing SUPABASE_URL or ${useServiceRole ? 'SUPABASE_SERVICE_ROLE_KEY' : 'SUPABASE_KEY'} in environment`);
   }
 
   return createSupabaseClient<Database>(supabaseUrl, supabaseKey, {
     realtime: {
-      disabled: true, // Disable realtime to avoid WebSocket requirement in tests
+      transport: ws as any,
     },
   });
 }
 
+
 /**
  * Create test user and seed data for photo upload tests
- * Returns user auth session, plant ID, and action ID
+ * Returns user auth session, plant ID, action ID, and auth cookies
  */
 export async function seedTestData() {
   const supabase = createTestClient();
+  const apiUrl = process.env.API_URL || "http://localhost:4321";
 
   // Create test user
   const email = `test-${Date.now()}@example.com`;
@@ -41,7 +49,7 @@ export async function seedTestData() {
     password,
   });
 
-  if (signUpError || !authData.user) {
+  if (signUpError || !authData.user || !authData.session) {
     throw new Error(`Failed to create test user: ${signUpError?.message}`);
   }
 
@@ -89,7 +97,6 @@ export async function seedTestData() {
     userId,
     plantId: plant.id,
     actionId: action.id,
-    session: authData.session,
     email,
     password,
   };
@@ -99,13 +106,13 @@ export async function seedTestData() {
  * Clean up test data after tests
  */
 export async function cleanupTestData(userId: string) {
-  const supabase = createTestClient();
+  const supabase = createTestClient(true); // Use service role for cleanup
 
   // Delete user's plants (cascade deletes actions and photos)
   await supabase.from("plants").delete().eq("user_id", userId);
-
-  // Note: We can't delete auth.users via client SDK
-  // In production tests, use service role key or manual cleanup
+  
+  // Delete user from auth (requires service role)
+  await supabase.auth.admin.deleteUser(userId);
 }
 
 /**

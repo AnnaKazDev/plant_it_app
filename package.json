@@ -40,6 +40,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.0.3",
     "@eslint/js": "^9.29.0",
+    "@types/ws": "^8.18.1",
     "@vitest/ui": "^4.1.8",
     "dotenv": "^17.4.2",
     "eslint": "^9.29.0",
@@ -59,7 +60,8 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.59.2",
     "vitest": "^4.1.8",
-    "wrangler": "^4.90.0"
+    "wrangler": "^4.90.0",
+    "ws": "^8.21.0"
   },
   "overrides": {
     "vite": "^7.3.2"

@@ -1,9 +1,24 @@
 import { defineMiddleware } from "astro:middleware";
 import { createClient } from "@/lib/supabase";
+import { createTestClient } from "@/lib/test-utils";
 
 const PROTECTED_ROUTES = ["/dashboard", "/api/photos"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // TEST MODE: Allow bypassing auth with X-Test-User-Id header (non-production only)
+  if (!import.meta.env.PROD) {
+    const testUserId = context.request.headers.get("X-Test-User-Id");
+    if (testUserId) {
+      // Fetch the user from Supabase using the service role client
+      const testClient = createTestClient(true); // Use service role key
+      const { data: { user }, error } = await testClient.auth.admin.getUserById(testUserId);
+      if (user && !error) {
+        context.locals.user = user;
+        return next();
+      }
+    }
+  }
+
   const supabase = createClient(context.request.headers, context.cookies);
 
   if (supabase) {

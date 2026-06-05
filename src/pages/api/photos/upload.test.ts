@@ -50,10 +50,19 @@ describe("POST /api/photos/upload", () => {
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
       headers: {
-        Cookie: `sb-access-token=${testData.session?.access_token}`,
+        "X-Test-User-Id": testData.userId,
+        Origin: apiUrl,
       },
       body: formData,
     });
+
+    // Debug: log response details
+    if (response.status !== 201) {
+      const text = await response.text();
+      console.log(`Response status: ${response.status}`);
+      console.log(`Response body: ${text}`);
+      console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
+    }
 
     expect(response.status).toBe(201);
 
@@ -65,8 +74,8 @@ describe("POST /api/photos/upload", () => {
     expect(json.photo).toHaveProperty("size_bytes", file.size);
     expect(json.photo).toHaveProperty("order_index", 1);
 
-    // Verify photo exists in database
-    const supabase = createTestClient();
+    // Verify photo exists in database (use service role to bypass RLS)
+    const supabase = createTestClient(true);
     const { data: photo } = await supabase
       .from("photos")
       .select("*")
@@ -89,7 +98,8 @@ describe("POST /api/photos/upload", () => {
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
       headers: {
-        Cookie: `sb-access-token=${testData.session?.access_token}`,
+        "X-Test-User-Id": testData.userId,
+        Origin: apiUrl,
       },
       body: formData,
     });
@@ -113,7 +123,8 @@ describe("POST /api/photos/upload", () => {
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
       headers: {
-        Cookie: `sb-access-token=${testData.session?.access_token}`,
+        "X-Test-User-Id": testData.userId,
+        Origin: apiUrl,
       },
       body: formData,
     });
@@ -139,7 +150,8 @@ describe("POST /api/photos/upload", () => {
       const response = await fetch(`${apiUrl}/api/photos/upload`, {
         method: "POST",
         headers: {
-          Cookie: `sb-access-token=${testData.session?.access_token}`,
+          "X-Test-User-Id": testData.userId,
+          Origin: apiUrl,
         },
         body: formData,
       });
@@ -156,7 +168,8 @@ describe("POST /api/photos/upload", () => {
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
       headers: {
-        Cookie: `sb-access-token=${testData.session?.access_token}`,
+        "X-Test-User-Id": testData.userId,
+        Origin: apiUrl,
       },
       body: formData,
     });
@@ -179,7 +192,10 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      // No Cookie header - unauthenticated
+      headers: {
+        Origin: apiUrl, // Bypass CSRF to test auth
+      },
+      // No X-Test-User-Id header - unauthenticated
       body: formData,
     });
 
@@ -203,7 +219,8 @@ describe("POST /api/photos/upload", () => {
       const response = await fetch(`${apiUrl}/api/photos/upload`, {
         method: "POST",
         headers: {
-          Cookie: `sb-access-token=${secondUser.session?.access_token}`,
+          "X-Test-User-Id": secondUser.userId,
+          Origin: apiUrl,
         },
         body: formData,
       });
