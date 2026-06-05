@@ -1,4 +1,5 @@
 <!-- IMPL-REVIEW-REPORT -->
+
 # Implementation Review: Core Database Schema Implementation Plan
 
 - **Plan**: context/changes/core-data-schema/plan.md
@@ -9,14 +10,14 @@
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| Plan Adherence | WARNING ⚠️ (1 finding) |
-| Scope Discipline | WARNING ⚠️ (2 findings) |
-| Safety & Quality | PASS ✅ |
-| Architecture | PASS ✅ |
-| Pattern Consistency | WARNING ⚠️ (1 finding) |
-| Success Criteria | WARNING ⚠️ (1 finding) |
+| Dimension           | Verdict                 |
+| ------------------- | ----------------------- |
+| Plan Adherence      | WARNING ⚠️ (1 finding)  |
+| Scope Discipline    | WARNING ⚠️ (2 findings) |
+| Safety & Quality    | PASS ✅                 |
+| Architecture        | PASS ✅                 |
+| Pattern Consistency | WARNING ⚠️ (1 finding)  |
+| Success Criteria    | WARNING ⚠️ (1 finding)  |
 
 ## Overall
 
@@ -118,6 +119,7 @@
 ## Next Steps
 
 Triage the 5 findings to decide:
+
 - Accept the architectural drift (F2) and document it?
 - Fix the lint exclusion (F1) to restore success criterion?
 - Document post-implementation work (F3) for traceability?

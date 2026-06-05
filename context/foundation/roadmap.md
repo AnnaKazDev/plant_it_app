@@ -17,7 +17,7 @@ top_blocker: time
 
 ## Vision recap
 
-Hobby gardeners lose track of when plants were planted, how they looked at each stage, and what care activities have already been performed. The cost: watering gets forgotten, fertilizing happens twice, and there's no way to see whether a plant is thriving because the visual timeline is trapped in the camera roll and care actions live only in memory. The insight: a gardener wants to *see* the plant's journey — photo history showing how it changed over time — tied to the actions that shaped that growth.
+Hobby gardeners lose track of when plants were planted, how they looked at each stage, and what care activities have already been performed. The cost: watering gets forgotten, fertilizing happens twice, and there's no way to see whether a plant is thriving because the visual timeline is trapped in the camera roll and care actions live only in memory. The insight: a gardener wants to _see_ the plant's journey — photo history showing how it changed over time — tied to the actions that shaped that growth.
 
 ## North star
 
@@ -25,38 +25,40 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 
 ## At a glance
 
-| ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
-|---|---|---|---|---|---|
-| F-01 | core-data-schema | (foundation) Core schema landed: plants, actions, photos tables + user profile extension (location, garden dimensions) + RLS policies | — | FR-003, FR-012 | ready |
-| F-02 | photo-storage-setup | (foundation) Photo storage ready: Supabase Storage bucket, upload API, RLS for private photos, max 5 per action validation | — | NFR (privacy), FR-007 | ready |
-| F-03 | weather-api-integration | (foundation) Weather API client wired: fetch historical weather by date + coordinates, error handling | — | FR-009, NFR (weather data) | ready |
-| S-01 | extended-registration | Register with email + password + location (city/coordinates) + garden dimensions (width x height in meters) | F-01 | FR-001, FR-012 | proposed |
-| S-02 | first-plant-first-action | Add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teaser showing photo + action name + date + weather | F-01, F-02, F-03, S-01 | US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013 | proposed |
-| S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator | S-02 | FR-007, FR-008, FR-009, FR-010 | proposed |
-| S-04 | plant-list-view | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather) | S-02 | FR-005, FR-009 | proposed |
-| S-05 | garden-map-view | See garden map with all plants at their grid locations, click plant on map to open plant card | S-02 | FR-013, FR-014, FR-015 | proposed |
+| ID   | Change ID                 | Outcome (user can …)                                                                                                                                          | Prerequisites          | PRD refs                                              | Status   |
+| ---- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------- | -------- |
+| F-01 | core-data-schema          | (foundation) Core schema landed: plants, actions, photos tables + user profile extension (location, garden dimensions) + RLS policies                         | —                      | FR-003, FR-012                                        | ready    |
+| F-02 | photo-storage-setup       | (foundation) Photo storage ready: Supabase Storage bucket, upload API, RLS for private photos, max 5 per action validation                                    | —                      | NFR (privacy), FR-007                                 | ready    |
+| F-03 | weather-api-integration   | (foundation) Weather API client wired: fetch historical weather by date + coordinates, error handling                                                         | —                      | FR-009, NFR (weather data)                            | ready    |
+| S-01 | extended-registration     | Register with email + password + location (city/coordinates) + garden dimensions (width x height in meters)                                                   | F-01                   | FR-001, FR-012                                        | proposed |
+| S-02 | first-plant-first-action  | Add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teaser showing photo + action name + date + weather | F-01, F-02, F-03, S-01 | US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013 | proposed |
+| S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator                                  | S-02                   | FR-007, FR-008, FR-009, FR-010                        | proposed |
+| S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | proposed |
+| S-05 | garden-map-view           | See garden map with all plants at their grid locations, click plant on map to open plant card                                                                 | S-02                   | FR-013, FR-014, FR-015                                | proposed |
 
 ## Routing structure
 
 File-based routing (Astro `src/pages/`). Auth middleware protects routes listed in `PROTECTED_ROUTES` (see `src/middleware.ts`).
 
-| Path | Auth | Slice | Purpose |
-|------|------|-------|---------|
-| `/` | public | baseline | Landing / welcome page (existing) |
-| `/auth/signin` | public | baseline | Sign in form (existing) |
-| `/auth/signup` | public | S-01 | Extended registration: email + password + location + garden dimensions |
-| `/auth/confirm-email` | public | baseline | Email confirmation page (existing) |
-| `/dashboard` | protected | baseline | Post-login entry point (existing) |
-| `/plants` | protected | S-04 | Plant list view with last-action teasers |
-| `/plants/new` | protected | S-02 | Add first plant form (photo + name + grid coordinates) |
-| `/plants/[id]` | protected | S-02, S-03 | Plant card: view plant details + action timeline + add new action |
-| `/garden-map` | protected | S-05 | Garden map view with plant positions |
+| Path                  | Auth      | Slice      | Purpose                                                                |
+| --------------------- | --------- | ---------- | ---------------------------------------------------------------------- |
+| `/`                   | public    | baseline   | Landing / welcome page (existing)                                      |
+| `/auth/signin`        | public    | baseline   | Sign in form (existing)                                                |
+| `/auth/signup`        | public    | S-01       | Extended registration: email + password + location + garden dimensions |
+| `/auth/confirm-email` | public    | baseline   | Email confirmation page (existing)                                     |
+| `/dashboard`          | protected | baseline   | Post-login entry point (existing)                                      |
+| `/plants`             | protected | S-04       | Plant list view with last-action teasers                               |
+| `/plants/new`         | protected | S-02       | Add first plant form (photo + name + grid coordinates)                 |
+| `/plants/[id]`        | protected | S-02, S-03 | Plant card: view plant details + action timeline + add new action      |
+| `/garden-map`         | protected | S-05       | Garden map view with plant positions                                   |
 
 **Navigation flow (MVP):**
+
 - Unauthenticated: `/` → `/auth/signup` (or `/auth/signin`) → `/auth/confirm-email` → `/dashboard`
 - Authenticated: `/dashboard` → `/plants` (list) or `/garden-map` → `/plants/[id]` (card)
 
 **API routes (outside file-based routing):**
+
 - `/api/auth/{signin,signup,signout}` — existing auth endpoints
 - `/api/plants` — future CRUD (POST /plants, GET /plants, GET /plants/[id], PATCH /plants/[id], DELETE /plants/[id])
 - `/api/actions` — future CRUD (POST /actions, GET /actions, PATCH /actions/[id], DELETE /actions/[id])
@@ -66,10 +68,10 @@ File-based routing (Astro `src/pages/`). Auth middleware protects routes listed 
 
 Navigation aid — groups items that share a Prerequisites chain. Canonical ordering still lives in the dependency graph below; this table is the proposed reading order across parallel tracks.
 
-| Stream | Theme | Chain | Note |
-|---|---|---|---|
-| A | Foundation & onboarding | `F-01` → `S-01` | Enables user registration with garden setup; joins Stream B at `S-02` |
-| B | Growth tracking | `F-02` / `F-03` → `S-02` → `S-03` / `S-04` / `S-05` | Core product (visual story = photo + weather + actions); north star path |
+| Stream | Theme                   | Chain                                               | Note                                                                     |
+| ------ | ----------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| A      | Foundation & onboarding | `F-01` → `S-01`                                     | Enables user registration with garden setup; joins Stream B at `S-02`    |
+| B      | Growth tracking         | `F-02` / `F-03` → `S-02` → `S-03` / `S-04` / `S-05` | Core product (visual story = photo + weather + actions); north star path |
 
 ## Baseline
 
@@ -196,16 +198,16 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
-|---|---|---|---|---|
-| F-01 | core-data-schema | Database schema: plants, actions, photos, user profile extension + RLS | yes | Run `/10x-plan core-data-schema` |
-| F-02 | photo-storage-setup | Photo storage: Supabase Storage bucket + upload API + RLS | yes | Run `/10x-plan photo-storage-setup` |
-| F-03 | weather-api-integration | Weather API integration: historical fetch by date + coordinates | yes | Run `/10x-plan weather-api-integration` |
-| S-01 | extended-registration | Extended registration: location + garden dimensions | no | Blocked on F-01 |
-| S-02 | first-plant-first-action | Add first plant + first action with weather | no | Blocked on F-01, F-02, F-03, S-01 |
-| S-03 | multiple-actions-tracking | Track multiple actions per plant (past/future dates) | no | Blocked on S-02 |
-| S-04 | plant-list-view | Plant list view with last-action teasers | no | Blocked on S-02 |
-| S-05 | garden-map-view | Garden map view with plant positions | no | Blocked on S-02 |
+| Roadmap ID | Change ID                 | Suggested issue title                                                  | Ready for `/10x-plan` | Notes                                   |
+| ---------- | ------------------------- | ---------------------------------------------------------------------- | --------------------- | --------------------------------------- |
+| F-01       | core-data-schema          | Database schema: plants, actions, photos, user profile extension + RLS | yes                   | Run `/10x-plan core-data-schema`        |
+| F-02       | photo-storage-setup       | Photo storage: Supabase Storage bucket + upload API + RLS              | yes                   | Run `/10x-plan photo-storage-setup`     |
+| F-03       | weather-api-integration   | Weather API integration: historical fetch by date + coordinates        | yes                   | Run `/10x-plan weather-api-integration` |
+| S-01       | extended-registration     | Extended registration: location + garden dimensions                    | no                    | Blocked on F-01                         |
+| S-02       | first-plant-first-action  | Add first plant + first action with weather                            | no                    | Blocked on F-01, F-02, F-03, S-01       |
+| S-03       | multiple-actions-tracking | Track multiple actions per plant (past/future dates)                   | no                    | Blocked on S-02                         |
+| S-04       | plant-list-view           | Plant list view with last-action teasers                               | no                    | Blocked on S-02                         |
+| S-05       | garden-map-view           | Garden map view with plant positions                                   | no                    | Blocked on S-02                         |
 
 ## Open Roadmap Questions
 

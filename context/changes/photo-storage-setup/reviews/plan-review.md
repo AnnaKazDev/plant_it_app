@@ -1,4 +1,5 @@
 <!-- PLAN-REVIEW-REPORT -->
+
 # Plan Review: Photo Storage Setup
 
 - **Plan**: context/changes/photo-storage-setup/plan.md
@@ -9,13 +10,13 @@
 
 ## Verdicts
 
-| Dimension | Verdict |
-|-----------|---------|
-| End-State Alignment | PASS |
-| Lean Execution | WARNING |
+| Dimension             | Verdict |
+| --------------------- | ------- |
+| End-State Alignment   | PASS    |
+| Lean Execution        | WARNING |
 | Architectural Fitness | WARNING |
-| Blind Spots | FAIL |
-| Plan Completeness | PASS |
+| Blind Spots           | FAIL    |
+| Plan Completeness     | PASS    |
 
 ## Grounding
 

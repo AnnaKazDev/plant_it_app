@@ -16,20 +16,21 @@ Developers (and later, React forms in S-02) can POST multipart form data to `/ap
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) | Source |
-| -------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| Bucket path structure | `user_id/action_id/filename.ext` | Aligns with user ownership model and simplifies RLS policy (single `storage.foldername(name)[1] = auth.uid()::text` check). | Plan |
-| File type validation | JPEG/PNG/WebP, max 10MB | Covers 95% of mobile camera use cases without HEIC server-side conversion complexity. | Plan |
-| API response format | JSON with photo metadata | Enables multi-photo upload UX and client-side progress; breaks from redirect pattern intentionally. | Plan |
-| Max-5 enforcement | API layer (database count query) | Server-side enforcement prevents client bypass; single source of truth. | Plan |
-| Error handling | Structured JSON with error codes | Client can handle each error type differently (quota exceeded → show upgrade, invalid file → format hint). | Plan |
-| Storage RLS | Private bucket, path-based policies | Mirrors database RLS ownership model; prevents URL-guessing attacks (PRD privacy requirement). | Plan |
-| URL pattern | Store public URL from getPublicUrl | RLS enforces access; no signed URL generation overhead; compatible with private bucket + RLS. | Plan |
-| Testing approach | Integration tests (API + Storage) | Catches validation regressions; validates RLS; documents expected behavior; ~20% time overhead acceptable for foundation. | Plan |
+| Decision              | Choice                              | Why (1 sentence)                                                                                                            | Source |
+| --------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Bucket path structure | `user_id/action_id/filename.ext`    | Aligns with user ownership model and simplifies RLS policy (single `storage.foldername(name)[1] = auth.uid()::text` check). | Plan   |
+| File type validation  | JPEG/PNG/WebP, max 10MB             | Covers 95% of mobile camera use cases without HEIC server-side conversion complexity.                                       | Plan   |
+| API response format   | JSON with photo metadata            | Enables multi-photo upload UX and client-side progress; breaks from redirect pattern intentionally.                         | Plan   |
+| Max-5 enforcement     | API layer (database count query)    | Server-side enforcement prevents client bypass; single source of truth.                                                     | Plan   |
+| Error handling        | Structured JSON with error codes    | Client can handle each error type differently (quota exceeded → show upgrade, invalid file → format hint).                  | Plan   |
+| Storage RLS           | Private bucket, path-based policies | Mirrors database RLS ownership model; prevents URL-guessing attacks (PRD privacy requirement).                              | Plan   |
+| URL pattern           | Store public URL from getPublicUrl  | RLS enforces access; no signed URL generation overhead; compatible with private bucket + RLS.                               | Plan   |
+| Testing approach      | Integration tests (API + Storage)   | Catches validation regressions; validates RLS; documents expected behavior; ~20% time overhead acceptable for foundation.   | Plan   |
 
 ## Scope
 
 **In scope:**
+
 - Storage bucket creation via SQL migration (`plant-photos`, private, 10MB limit, MIME type restrictions)
 - RLS policies on `storage.objects` (SELECT/INSERT/UPDATE/DELETE, user ownership via path prefix)
 - Upload API endpoint `/api/photos/upload` (multipart, zod validation, max-5 check, JSON response)
@@ -39,6 +40,7 @@ Developers (and later, React forms in S-02) can POST multipart form data to `/ap
 - README + AGENTS.md updates with photo storage setup instructions
 
 **Out of scope:**
+
 - Automatic storage cleanup when photos/actions deleted (database CASCADE deletes rows, blobs persist — deferred to cleanup job)
 - Client-side direct upload with presigned URLs (simpler flow through API — future optimization)
 - Image transformation (resize, compress, thumbnails — store originals only, defer to S-02 or later)
@@ -59,11 +61,11 @@ Developers (and later, React forms in S-02) can POST multipart form data to `/ap
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| 1. Storage Infrastructure | Storage bucket + RLS policies via migration; local config mirroring | Migration failure or RLS misconfiguration could block all uploads |
-| 2. Upload API Endpoint | `/api/photos/upload` with validation, storage integration, JSON response, max-5 enforcement | Multipart parsing or storage SDK integration issues; first JSON API pattern |
-| 3. Integration Tests & Documentation | Vitest test suite (6 cases), README + AGENTS.md updates | Test environment setup complexity (local Supabase requirement) |
+| Phase                                | What it delivers                                                                            | Key risk                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1. Storage Infrastructure            | Storage bucket + RLS policies via migration; local config mirroring                         | Migration failure or RLS misconfiguration could block all uploads           |
+| 2. Upload API Endpoint               | `/api/photos/upload` with validation, storage integration, JSON response, max-5 enforcement | Multipart parsing or storage SDK integration issues; first JSON API pattern |
+| 3. Integration Tests & Documentation | Vitest test suite (6 cases), README + AGENTS.md updates                                     | Test environment setup complexity (local Supabase requirement)              |
 
 **Prerequisites:** Database schema from F-01 (core-data-schema) must be applied. Supabase local instance running (`npx supabase start`). Node v22.14.0 (per `.nvmrc`).
 

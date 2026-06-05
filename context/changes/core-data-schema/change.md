@@ -12,6 +12,7 @@ archived_at: null
 **Roadmap ref:** F-01
 
 Database schema foundation for the Plant It app:
+
 - **plants** table: name, photo_url, user_id, grid_x, grid_y
 - **actions** table: plant_id, action_type_id (nullable FK), custom_action_name (nullable TEXT), date, weather_data, additional_data
   - **Predefined action**: `action_type_id` points to `action_types` table (has icon, i18n-ready) - e.g., "watering", "fertilizing", "pruning"
@@ -27,6 +28,7 @@ Database schema foundation for the Plant It app:
 This schema unlocks S-01 (extended registration), S-02 (first plant + first action), and all subsequent slices.
 
 **Schema design is foundational** — getting it wrong means expensive migrations later. Spend extra time on schema review:
+
 - Coordinate system: text like "A3" vs numeric x/y
 - weather_data JSON structure
 - Photo storage strategy (URL patterns, cleanup on deletion)

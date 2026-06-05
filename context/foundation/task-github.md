@@ -45,6 +45,7 @@ Create 5 labels for categorizing issues:
 - **roadmap** (color: `FBCA04`, description: "Derived from roadmap.md")
 
 **Command:**
+
 ```bash
 gh label create <name> --color <hex> --description <desc> --repo AnnaKazDev/plant_it_app
 ```
@@ -58,6 +59,7 @@ Create 3 milestones for grouping work:
 - **Enhanced Tracking** - Due: 4 weeks from now
 
 **Command:**
+
 ```bash
 gh issue create --milestone <name> --repo AnnaKazDev/plant_it_app
 ```
@@ -197,15 +199,19 @@ After all issues are created:
 ## Execution Order
 
 ### Phase 1 (Parallel)
+
 F-01, F-02, F-03 can be worked on simultaneously
 
 ### Phase 2
+
 S-01 (after F-01 completes)
 
 ### Phase 3
+
 S-02 (after F-01, F-02, F-03, S-01 complete) - **NORTH STAR**
 
 ### Phase 4 (Parallel)
+
 S-03, S-04, S-05 (after S-02 completes)
 
 ---
@@ -217,4 +223,4 @@ S-03, S-04, S-05 (after S-02 completes)
 - All commands target `--repo AnnaKazDev/plant_it_app`
 - Issue numbers will be assigned automatically and must be back-referenced
 - Keep `roadmap.md` as source of truth - do not delete after migration
-p
+  p

@@ -3,12 +3,14 @@
 In the `global.css` file you have two theme versions to choose from:
 
 ## 🅰️ THEME A: Sage Green (ACTIVE)
+
 - Natural, muted colors
 - Beige-cream background
 - Sage green as primary
 - Muted orange destructive
 
 ## 🅱️ THEME B: Monochrome (INACTIVE)
+
 - Black & white colors
 - Minimalist palette
 - Original project theme

@@ -7,7 +7,9 @@ interface Props {
 const { label, version } = Astro.props;
 ---
 
-<span class="inline-flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-1.5 font-mono text-secondary-foreground shadow-sm">
+<span
+  class="bg-secondary/50 text-secondary-foreground inline-flex items-center gap-2 rounded-lg px-3 py-1.5 font-mono shadow-sm"
+>
   {label}
-  {version && <span class="rounded-full bg-primary/30 px-2 py-0.5 text-xs text-primary-foreground">{version}</span>}
+  {version && <span class="bg-primary/30 text-primary-foreground rounded-full px-2 py-0.5 text-xs">{version}</span>}
 </span>

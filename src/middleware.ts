@@ -11,7 +11,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (testUserId) {
       // Fetch the user from Supabase using the service role client
       const testClient = createTestClient(true); // Use service role key
-      const { data: { user }, error } = await testClient.auth.admin.getUserById(testUserId);
+      const {
+        data: { user },
+        error,
+      } = await testClient.auth.admin.getUserById(testUserId);
       if (user && !error) {
         context.locals.user = user;
         return next();
