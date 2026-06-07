@@ -1,22 +1,20 @@
+/* eslint-disable no-console */
 // Manual verification script for Phase 2
 // Run this file with: npx tsx src/lib/weather-manual-test.ts
 // Make sure Supabase is running: npx supabase start
 
 import { WeatherService } from "./weather.ts";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types";
 
 const WEATHER_API_KEY = "d2f46b3b45704a45acd154556260706";
-const SUPABASE_URL = process.env.SUPABASE_URL || "http://127.0.0.1:54321";
+const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SUPABASE_KEY =
-  process.env.SUPABASE_KEY ||
+  process.env.SUPABASE_KEY ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
 async function runTests() {
   console.log("🧪 Phase 2 Manual Verification Tests\n");
 
   const weatherService = new WeatherService(WEATHER_API_KEY);
-  const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
 
   // Test coordinates (Warsaw, Poland)
   const latitude = 52.2297;
@@ -76,7 +74,7 @@ async function runTests() {
   console.log("Cache will be tested in integration tests (Phase 3).");
 }
 
-runTests().catch((error) => {
+runTests().catch((error: unknown) => {
   console.error("❌ Test failed with error:", error);
   process.exit(1);
 });
