@@ -494,33 +494,33 @@ Existing actions with `weather_data: null` remain unchanged. Future action creat
 
 #### Automated
 
-- [x] 1.1 Type checking passes (`npm run build`)
-- [x] 1.2 Linting passes (`npm run lint`)
-- [x] 1.3 `src/lib/weather.ts` exists and exports `WeatherError`, `WeatherService`
-- [x] 1.4 `astro.config.mjs` declares `WEATHER_API_KEY` in env schema
-- [x] 1.5 `.env.example` and `.dev.vars.example` document `WEATHER_API_KEY`
+- [x] 1.1 Type checking passes (`npm run build`) — d279a69
+- [x] 1.2 Linting passes (`npm run lint`) — d279a69
+- [x] 1.3 `src/lib/weather.ts` exists and exports `WeatherError`, `WeatherService` — d279a69
+- [x] 1.4 `astro.config.mjs` declares `WEATHER_API_KEY` in env schema — d279a69
+- [x] 1.5 `.env.example` and `.dev.vars.example` document `WEATHER_API_KEY` — d279a69
 
 #### Manual
 
-- [x] 1.6 Import `WEATHER_API_KEY` from `astro:env/server` in test file — no TypeScript error
-- [x] 1.7 Create `.env` with real key, run `npm run dev` — server starts without env errors
+- [x] 1.6 Import `WEATHER_API_KEY` from `astro:env/server` in test file — no TypeScript error — d279a69
+- [x] 1.7 Create `.env` with real key, run `npm run dev` — server starts without env errors — d279a69
 
 ### Phase 2: API Integration - Fetch & Cache Logic
 
 #### Automated
 
-- [ ] 2.1 Type checking passes (`npm run build`)
-- [ ] 2.2 Linting passes (`npm run lint`)
-- [ ] 2.3 `WeatherService` methods implemented (no empty stubs)
-- [ ] 2.4 `fetchWeatherForDate()` returns `WeatherData | null`
-- [ ] 2.5 `getCachedWeather()` queries `actions` table correctly
+- [x] 2.1 Type checking passes (`npm run build`)
+- [x] 2.2 Linting passes (`npm run lint`)
+- [x] 2.3 `WeatherService` methods implemented (no empty stubs)
+- [x] 2.4 `fetchWeatherForDate()` returns `WeatherData | null`
+- [x] 2.5 `getCachedWeather()` queries `actions` table correctly
 
 #### Manual
 
-- [ ] 2.6 Test script calls `getWeatherForDate()` with real key + date + coordinates → returns `WeatherData`
-- [ ] 2.7 Second call with same date returns cached result (no second API call)
-- [ ] 2.8 Invalid date returns `null` gracefully
-- [ ] 2.9 Invalid API key returns `null` without throwing error
+- [x] 2.6 Test script calls `getWeatherForDate()` with real key + date + coordinates → returns `WeatherData`
+- [x] 2.7 Second call with same date returns cached result (no second API call)
+- [x] 2.8 Invalid date returns `null` gracefully
+- [x] 2.9 Invalid API key returns `null` without throwing error
 
 ### Phase 3: Testing & Documentation
 
