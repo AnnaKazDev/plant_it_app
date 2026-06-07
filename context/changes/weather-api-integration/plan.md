@@ -509,32 +509,32 @@ Existing actions with `weather_data: null` remain unchanged. Future action creat
 
 #### Automated
 
-- [x] 2.1 Type checking passes (`npm run build`)
-- [x] 2.2 Linting passes (`npm run lint`)
-- [x] 2.3 `WeatherService` methods implemented (no empty stubs)
-- [x] 2.4 `fetchWeatherForDate()` returns `WeatherData | null`
-- [x] 2.5 `getCachedWeather()` queries `actions` table correctly
+- [x] 2.1 Type checking passes (`npm run build`) — 13d4b47
+- [x] 2.2 Linting passes (`npm run lint`) — 13d4b47
+- [x] 2.3 `WeatherService` methods implemented (no empty stubs) — 13d4b47
+- [x] 2.4 `fetchWeatherForDate()` returns `WeatherData | null` — 13d4b47
+- [x] 2.5 `getCachedWeather()` queries `actions` table correctly — 13d4b47
 
 #### Manual
 
-- [x] 2.6 Test script calls `getWeatherForDate()` with real key + date + coordinates → returns `WeatherData`
-- [x] 2.7 Second call with same date returns cached result (no second API call)
-- [x] 2.8 Invalid date returns `null` gracefully
-- [x] 2.9 Invalid API key returns `null` without throwing error
+- [x] 2.6 Test script calls `getWeatherForDate()` with real key + date + coordinates → returns `WeatherData` — 13d4b47
+- [x] 2.7 Second call with same date returns cached result (no second API call) — 13d4b47
+- [x] 2.8 Invalid date returns `null` gracefully — 13d4b47
+- [x] 2.9 Invalid API key returns `null` without throwing error — 13d4b47
 
 ### Phase 3: Testing & Documentation
 
 #### Automated
 
-- [ ] 3.1 All tests pass: `npm run test:integration`
-- [ ] 3.2 `src/lib/weather.test.ts` has 10+ test cases
-- [ ] 3.3 Type checking passes: `npm run build`
-- [ ] 3.4 Linting passes: `npm run lint`
-- [ ] 3.5 `config-status.ts` includes weather API check
+- [x] 3.1 All tests pass: `npm run test:integration`
+- [x] 3.2 `src/lib/weather.test.ts` has 10+ test cases
+- [x] 3.3 Type checking passes: `npm run build`
+- [x] 3.4 Linting passes: `npm run lint`
+- [x] 3.5 `config-status.ts` includes weather API check
 
 #### Manual
 
-- [ ] 3.6 Run tests with real API key: weather fetch succeeds (optional verification)
-- [ ] 3.7 Run tests without API key: mocked tests still pass
-- [ ] 3.8 `README.md` includes WeatherAPI.com setup instructions
+- [x] 3.6 Run tests with real API key: weather fetch succeeds (optional verification)
+- [x] 3.7 Run tests without API key: mocked tests still pass
+- [x] 3.8 `README.md` includes WeatherAPI.com setup instructions
 - [ ] 3.9 Visit `/dashboard`: weather API status appears in config health check UI

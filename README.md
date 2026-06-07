@@ -218,6 +218,45 @@ curl -X POST http://localhost:4321/api/photos/upload \
 
 Migrations auto-apply via GitHub Actions. Verify the bucket exists in the Supabase Dashboard → Storage after deployment.
 
+## WeatherAPI.com Setup
+
+This project integrates with [WeatherAPI.com](https://www.weatherapi.com/) to enrich plant care actions with historical weather data (temperature, precipitation, humidity, wind, sun/moon times).
+
+### Getting Your API Key
+
+1. Sign up for a free account at https://weatherapi.com/signup.aspx
+2. Get your API key from https://www.weatherapi.com/my/ (Dashboard → "Your API Key")
+3. Add to your environment files:
+   - **Node.js / Supabase CLI:** Add `WEATHER_API_KEY=your-key-here` to `.env`
+   - **Cloudflare Workers local dev:** Add `WEATHER_API_KEY=your-key-here` to `.dev.vars`
+
+### Production Setup
+
+For production deployment, set the secret via Wrangler:
+
+```bash
+npx wrangler secret put WEATHER_API_KEY
+# Paste your API key when prompted
+```
+
+For CI/CD, add `WEATHER_API_KEY` to GitHub repository secrets.
+
+### API Limits
+
+- **Free tier:** 1,000,000 calls/month
+- **Historical data:** Available from 2010-01-01 onwards
+- **Caching:** Weather data is cached in the database to minimize API calls
+
+### Verification
+
+Run integration tests to verify the setup:
+
+```bash
+npm run test:integration
+```
+
+Weather integration tests use mocked `fetch()` and don't require a real API key.
+
 ## Deployment
 
 This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) with automatic deployment via GitHub Actions.
