@@ -526,15 +526,15 @@ Existing actions with `weather_data: null` remain unchanged. Future action creat
 
 #### Automated
 
-- [x] 3.1 All tests pass: `npm run test:integration`
-- [x] 3.2 `src/lib/weather.test.ts` has 10+ test cases
-- [x] 3.3 Type checking passes: `npm run build`
-- [x] 3.4 Linting passes: `npm run lint`
-- [x] 3.5 `config-status.ts` includes weather API check
+- [x] 3.1 All tests pass: `npm run test:integration` — 6903f16
+- [x] 3.2 `src/lib/weather.test.ts` has 10+ test cases — 6903f16
+- [x] 3.3 Type checking passes: `npm run build` — 6903f16
+- [x] 3.4 Linting passes: `npm run lint` — 6903f16
+- [x] 3.5 `config-status.ts` includes weather API check — 6903f16
 
 #### Manual
 
-- [x] 3.6 Run tests with real API key: weather fetch succeeds (optional verification)
-- [x] 3.7 Run tests without API key: mocked tests still pass
-- [x] 3.8 `README.md` includes WeatherAPI.com setup instructions
+- [x] 3.6 Run tests with real API key: weather fetch succeeds (optional verification) — 6903f16
+- [x] 3.7 Run tests without API key: mocked tests still pass — 6903f16
+- [x] 3.8 `README.md` includes WeatherAPI.com setup instructions — 6903f16
 - [ ] 3.9 Visit `/dashboard`: weather API status appears in config health check UI
