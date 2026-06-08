@@ -662,15 +662,15 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npm run typecheck`
-- [ ] 2.2 Linting passes: `npm run lint`
-- [ ] 2.3 Build passes: `npm run build`
+- [x] 2.1 Type checking passes: `npm run typecheck`
+- [x] 2.2 Linting passes: `npm run lint`
+- [x] 2.3 Build passes: `npm run build`
 
 #### Manual
 
-- [ ] 2.4 Test valid city returns `true`
-- [ ] 2.5 Test invalid city returns `false`
-- [ ] 2.6 Test network timeout returns `false` gracefully
+- [x] 2.4 Test valid city returns `true`
+- [x] 2.5 Test invalid city returns `false`
+- [x] 2.6 Test network timeout returns `false` gracefully
 
 ### Phase 3: Signup Form Extension
 
