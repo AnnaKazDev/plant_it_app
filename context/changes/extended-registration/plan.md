@@ -693,9 +693,9 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Automated
 
-- [ ] 4.1 Type checking passes: `npm run typecheck`
-- [ ] 4.2 Linting passes: `npm run lint`
-- [ ] 4.3 Build passes: `npm run build`
+- [x] 4.1 Type checking passes: `npm run typecheck` — 90d36a4
+- [x] 4.2 Linting passes: `npm run lint` — 90d36a4
+- [x] 4.3 Build passes: `npm run build` — 90d36a4
 
 #### Manual
 
@@ -709,8 +709,8 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Automated
 
-- [ ] 5.1 All checks pass: `npm run typecheck && npm run lint && npm run build`
-- [ ] 5.2 Integration tests pass: `npm run test:integration` (if exist)
+- [x] 5.1 All checks pass: `npm run typecheck && npm run lint && npm run build` — 90d36a4
+- [ ] 5.2 Integration tests pass: `npm run test:integration` (no signup tests exist yet)
 
 #### Manual
 
