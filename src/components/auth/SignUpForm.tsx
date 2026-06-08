@@ -59,8 +59,12 @@ export default function SignUpForm({ serverError }: Props) {
       next.city = "City name must be between 2 and 100 characters";
     }
 
-    // Garden name validation (optional - no validation needed)
-    // No validation for garden name - it's optional
+    // Garden name validation (required)
+    if (!gardenName.trim()) {
+      next.gardenName = "Garden name is required";
+    } else if (gardenName.length > 100) {
+      next.gardenName = "Garden name must be at most 100 characters";
+    }
 
     // Garden width validation
     if (!gardenWidth.trim()) {
@@ -186,7 +190,7 @@ export default function SignUpForm({ serverError }: Props) {
       <FormField
         id="gardenName"
         name="garden_name"
-        label="Garden name (optional)"
+        label="Garden name"
         value={gardenName}
         onChange={(v) => {
           setGardenName(v);
@@ -203,7 +207,7 @@ export default function SignUpForm({ serverError }: Props) {
       <FormField
         id="gardenWidth"
         name="garden_width"
-        label="Garden width (m)"
+        label="Garden width (0.1-100 m)"
         type="number"
         value={gardenWidth}
         onChange={(v) => {
@@ -216,12 +220,15 @@ export default function SignUpForm({ serverError }: Props) {
           !errors.gardenWidth && <p className="text-muted-foreground mt-1 text-xs">Width of your garden in meters</p>
         }
         icon={<Ruler className="size-4" />}
+        min="0.1"
+        max="100"
+        step="0.1"
       />
 
       <FormField
         id="gardenHeight"
         name="garden_height"
-        label="Garden height (m)"
+        label="Garden height (0.1-100 m)"
         type="number"
         value={gardenHeight}
         onChange={(v) => {
@@ -234,6 +241,9 @@ export default function SignUpForm({ serverError }: Props) {
           !errors.gardenHeight && <p className="text-muted-foreground mt-1 text-xs">Height of your garden in meters</p>
         }
         icon={<Ruler className="size-4" />}
+        min="0.1"
+        max="100"
+        step="0.1"
       />
 
       <ServerError message={serverError} />

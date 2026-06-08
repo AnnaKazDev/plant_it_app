@@ -12,7 +12,7 @@ Minimal signup flow exists: email + password with client-side validation only, n
 
 ## Desired End State
 
-Users register with email + password + city name + garden name (optional) + garden dimensions (width, height in meters). After successful Supabase authentication, a profile row is created with `location_city`, `garden_name`, `garden_width`, `garden_height` populated. Client-side validation provides inline errors (e.g., "Width must be between 0.1 and 100 meters"), server-side zod validation catches malformed data, and WeatherAPI validates that the city name exists before profile insert. Garden name is optional and allows users to label their garden ("My Garden", "Balcony", "Backyard") in MVP, preparing for future multi-garden support. If profile insert fails after auth succeeds, the user sees an error and can retry (orphaned auth account acceptable, handled in future enhancement).
+Users register with email + password + city name + garden name (required friendly label) + garden dimensions (width, height in meters). After successful Supabase authentication, a profile row is created with `location_city`, `garden_name`, `garden_width`, `garden_height` populated. Client-side validation provides inline errors (e.g., "Width must be between 0.1 and 100 meters"), server-side zod validation catches malformed data, and WeatherAPI validates that the city name exists before profile insert. Garden name is required and allows users to label their garden ("My Garden", "Balcony", "Backyard") in MVP, preparing for future multi-garden support. If profile insert fails after auth succeeds, the user sees an error and can retry (orphaned auth account acceptable, handled in future enhancement).
 
 ## Key Decisions Made
 
@@ -20,8 +20,8 @@ Users register with email + password + city name + garden name (optional) + gard
 |----------|--------|------------------|--------|
 | Location input method | City name text input | WeatherAPI supports city name search directly (`q=city_name`), no geocoding API needed — fastest path to MVP. | Plan |
 | Location storage | Add `location_city` TEXT column | Matches input UX and WeatherAPI usage; lat/lng columns exist but unused for now. | Plan |
-| Garden name | Add `garden_name` TEXT column (optional) | Allows users to label their garden in MVP; prepares for future multi-garden support without over-engineering now. | Plan |
-| Field requirements | All required except garden_name | Weather API needs location, garden map needs dimensions — partial profiles break downstream features; garden name is optional friendly label. | Plan |
+| Garden name | Add `garden_name` TEXT column (required) | Allows users to label their garden in MVP; prepares for future multi-garden support without over-engineering now. | Plan |
+| Field requirements | All required including garden_name | Weather API needs location, garden map needs dimensions, garden name distinguishes multiple gardens in future — partial profiles break downstream features. | Plan |
 | Validation strategy | Both client + server (zod) | Follows photo upload API pattern (best practice); prevents DB constraint violations. | Plan |
 | Profile creation timing | In signup API after auth.signUp | Atomic from user perspective — one request completes both auth and profile setup. | Plan |
 | Profile insert failure handling | Show error, allow retry | User can fix issue and retry; orphaned auth accounts handled later. | Plan |

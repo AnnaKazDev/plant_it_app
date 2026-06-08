@@ -411,7 +411,7 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   city: z.string().min(2, "City name must be at least 2 characters").max(100, "City name too long"),
-  garden_name: z.string().max(100, "Garden name too long").optional().or(z.literal("")),
+  garden_name: z.string().min(1, "Garden name is required").max(100, "Garden name too long"),
   garden_width: z.coerce.number().min(0.1, "Width must be at least 0.1m").max(100, "Width must be at most 100m"),
   garden_height: z.coerce.number().min(0.1, "Height must be at least 0.1m").max(100, "Height must be at most 100m"),
 });
@@ -662,24 +662,24 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npm run typecheck`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Build passes: `npm run build`
+- [x] 2.1 Type checking passes: `npm run typecheck` — 2f189f0
+- [x] 2.2 Linting passes: `npm run lint` — 2f189f0
+- [x] 2.3 Build passes: `npm run build` — 2f189f0
 
 #### Manual
 
-- [x] 2.4 Test valid city returns `true`
-- [x] 2.5 Test invalid city returns `false`
-- [x] 2.6 Test network timeout returns `false` gracefully
+- [x] 2.4 Test valid city returns `true` — 2f189f0
+- [x] 2.5 Test invalid city returns `false` — 2f189f0
+- [x] 2.6 Test network timeout returns `false` gracefully — 2f189f0
 
 ### Phase 3: Signup Form Extension
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npm run typecheck`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Build passes: `npm run build`
-- [ ] 3.4 Component renders: form loads without errors at `/auth/signup`
+- [x] 3.1 Type checking passes: `npm run typecheck`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Build passes: `npm run build`
+- [x] 3.4 Component renders: form loads without errors at `/auth/signup`
 
 #### Manual
 
