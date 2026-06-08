@@ -121,4 +121,25 @@ export class WeatherService {
 
     return await this.fetchWeatherForDate(date, latitude, longitude);
   }
+
+  async validateCityName(cityName: string): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 5000);
+
+      const url = `http://api.weatherapi.com/v1/current.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}`;
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
 }

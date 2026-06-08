@@ -163,6 +163,7 @@ export interface Database {
           garden_height: number | null;
           garden_width: number | null;
           id: string;
+          location_city: string | null;
           location_lat: number | null;
           location_lng: number | null;
           updated_at: string | null;
@@ -172,6 +173,7 @@ export interface Database {
           garden_height?: number | null;
           garden_width?: number | null;
           id: string;
+          location_city?: string | null;
           location_lat?: number | null;
           location_lng?: number | null;
           updated_at?: string | null;
@@ -181,6 +183,7 @@ export interface Database {
           garden_height?: number | null;
           garden_width?: number | null;
           id?: string;
+          location_city?: string | null;
           location_lat?: number | null;
           location_lng?: number | null;
           updated_at?: string | null;

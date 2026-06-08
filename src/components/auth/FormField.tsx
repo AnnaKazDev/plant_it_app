@@ -17,6 +17,9 @@ interface FormFieldProps {
   hint?: ReactNode;
   icon: ReactNode;
   endContent?: ReactNode;
+  min?: string;
+  max?: string;
+  step?: string;
 }
 
 export function FormField({
@@ -31,6 +34,9 @@ export function FormField({
   hint,
   icon,
   endContent,
+  min,
+  max,
+  step,
 }: FormFieldProps) {
   return (
     <div>
@@ -48,6 +54,9 @@ export function FormField({
             onChange(e.target.value);
           }}
           placeholder={placeholder}
+          min={min}
+          max={max}
+          step={step}
           className={cn(
             inputBase,
             error ? "border-destructive/60 focus:ring-destructive" : "border-border focus:ring-ring",
