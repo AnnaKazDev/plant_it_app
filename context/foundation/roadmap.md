@@ -134,7 +134,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-01: Extended registration with garden setup
 
-- **Outcome:** User can register with email + password + location (city/coordinates) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).
+- **Outcome:** User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).
 - **Change ID:** extended-registration
 - **PRD refs:** FR-001 (user can register and provide location + garden dimensions), FR-012 (provide garden dimensions during registration)
 - **Prerequisites:** F-01 (user profile extension fields must exist in schema)
