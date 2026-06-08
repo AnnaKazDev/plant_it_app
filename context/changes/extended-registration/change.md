@@ -3,7 +3,7 @@ change_id: extended-registration
 title: Extended registration
 status: implementing
 created: 2026-06-07
-updated: 2026-06-07
+updated: 2026-06-08
 archived_at: null
 ---
 

@@ -649,14 +649,14 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `npx supabase migration up`
-- [x] 1.2 TypeScript build passes: `npm run build`
-- [x] 1.3 Type checking passes: `npm run typecheck`
+- [x] 1.1 Migration applies cleanly: `npx supabase migration up` — 59e7da7
+- [x] 1.2 TypeScript build passes: `npm run build` — 59e7da7
+- [x] 1.3 Type checking passes: `npm run typecheck` — 59e7da7
 
 #### Manual
 
-- [x] 1.4 Query profiles table shows `location_city` and `garden_name` columns
-- [x] 1.5 `src/database.types.ts` contains `location_city` and `garden_name` in profiles type
+- [x] 1.4 Query profiles table shows `location_city` and `garden_name` columns — 59e7da7
+- [x] 1.5 `src/database.types.ts` contains `location_city` and `garden_name` in profiles type — 59e7da7
 
 ### Phase 2: WeatherAPI City Validation
 
