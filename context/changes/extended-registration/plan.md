@@ -714,9 +714,9 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Manual
 
-- [ ] 5.3 Happy path: valid signup → confirm-email → profile exists
-- [ ] 5.4 All client validation errors display correctly
-- [ ] 5.5 Server validation catches invalid city and dimensions
-- [ ] 5.6 Error recovery: fix error and retry succeeds
-- [ ] 5.7 Edge cases: special characters, min/max values work
-- [ ] 5.8 Profile orphaning scenario behaves as expected
+- [x] 5.3 Happy path: valid signup → confirm-email → profile exists — cf92a80
+- [x] 5.4 All client validation errors display correctly — cf92a80
+- [x] 5.5 Server validation catches invalid city and dimensions — cf92a80
+- [x] 5.6 Error recovery: fix error and retry succeeds — cf92a80
+- [x] 5.7 Edge cases: special characters, min/max values work — cf92a80
+- [x] 5.8 Profile orphaning scenario behaves as expected — cf92a80
