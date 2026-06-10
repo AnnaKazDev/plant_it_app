@@ -25,7 +25,9 @@ Path alias: `@/*` maps to `./src/*` (see @tsconfig.json).
 
 ## Commands
 
-See @package.json scripts section.
+See @package.json scripts section. Local verification order: `npm run lint` → `npm run check` → `npm run build`.
+
+- `npm run check` — TypeScript + Astro diagnostics via `@astrojs/check`; faster than build, no env secrets required
 
 Pre-commit: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
 

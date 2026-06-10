@@ -52,6 +52,7 @@ npm run dev
 - `npm run dev` - Start development server (Cloudflare workerd runtime)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+- `npm run check` - TypeScript + Astro diagnostics (`.astro` props/frontmatter)
 - `npm run lint` - Run ESLint with type-checked rules
 - `npm run lint:fix` - Auto-fix ESLint issues
 - `npm run format` - Run Prettier
