@@ -30,8 +30,7 @@ export const POST: APIRoute = async (context) => {
   });
 
   if (!parseResult.success) {
-    const errors = parseResult.error.errors as { path: (string | number)[]; message: string }[];
-    const errorMessage = errors.map((e) => `${e.path.join(".")}: ${e.message}`).join("; ");
+    const errorMessage = parseResult.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`).join("; ");
     return context.redirect(`/auth/signup?error=${encodeURIComponent(errorMessage)}`);
   }
 
@@ -55,6 +54,12 @@ export const POST: APIRoute = async (context) => {
   }
 
   // Validate city name via WeatherAPI
+  if (!WEATHER_API_KEY) {
+    return context.redirect(
+      `/auth/signup?error=${encodeURIComponent("Weather API is not configured. Please contact support.")}`,
+    );
+  }
+
   const weatherService = new WeatherService(WEATHER_API_KEY);
   const isCityValid = await weatherService.validateCityName(city);
 

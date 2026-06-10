@@ -3,7 +3,7 @@ project: Plant It
 version: 1
 status: draft
 created: 2026-05-25
-updated: 2026-05-28
+updated: 2026-06-10
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -30,7 +30,7 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 | F-01 | core-data-schema          | (foundation) Core schema landed: plants, actions, photos tables + user profile extension (location, garden dimensions) + RLS policies                         | —                      | FR-003, FR-012                                        | ready    |
 | F-02 | photo-storage-setup       | (foundation) Photo storage ready: Supabase Storage bucket, upload API, RLS for private photos, max 5 per action validation                                    | —                      | NFR (privacy), FR-007                                 | ready    |
 | F-03 | weather-api-integration   | (foundation) Weather API client wired: fetch historical weather by date + coordinates, error handling                                                         | —                      | FR-009, NFR (weather data)                            | ready    |
-| S-01 | extended-registration     | Register with email + password + location (city/coordinates) + garden dimensions (width x height in meters)                                                   | F-01                   | FR-001, FR-012                                        | proposed |
+| S-01 | extended-registration     | Register with email + password + location (city/coordinates) + garden dimensions (width x height in meters)                                                   | F-01                   | FR-001, FR-012                                        | done     |
 | S-02 | first-plant-first-action  | Add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teaser showing photo + action name + date + weather | F-01, F-02, F-03, S-01 | US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013 | proposed |
 | S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator                                  | S-02                   | FR-007, FR-008, FR-009, FR-010                        | proposed |
 | S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | proposed |
@@ -143,7 +143,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Location input: city name (geocode to coordinates) vs manual lat/lng entry vs map picker? Owner: user. Block: no (recommend city name input with geocoding as simplest UX; can enhance later).
 - **Risk:** Geocoding adds external dependency (Google Geocoding API, Mapbox, etc.). If main_goal=speed, start with manual coordinate entry (simpler), add city-name geocoding post-MVP.
-- **Status:** proposed
+- **Status:** done
 
 ### S-02: First plant + first action
 
@@ -233,4 +233,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ## Done
 
-(Empty on first generation. `/10x-archive` appends an entry here — and flips that item's `Status` to `done` — when a change whose `Change ID` matches the item is archived. Do NOT pre-populate.)
+- **S-01: User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).** — Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/`. Lesson: —.

@@ -683,11 +683,11 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Manual
 
-- [ ] 3.5 Form shows 8 fields with correct icons and placeholders
-- [ ] 3.6 Empty city shows "City is required" error
-- [ ] 3.7 Invalid width "abc" shows "Enter a valid number" error
-- [ ] 3.8 Width 101 shows range error
-- [ ] 3.9 Valid data passes client validation
+- [x] 3.5 Form shows 8 fields with correct icons and placeholders — dfff3c2
+- [x] 3.6 Empty city shows "City is required" error — dfff3c2
+- [x] 3.7 Invalid width "abc" shows "Enter a valid number" error — dfff3c2
+- [x] 3.8 Width 101 shows range error — dfff3c2
+- [x] 3.9 Valid data passes client validation — dfff3c2
 
 ### Phase 4: Signup API Enhancement
 
@@ -699,18 +699,18 @@ Covered comprehensively in Phase 5 success criteria above. Key scenarios:
 
 #### Manual
 
-- [ ] 4.4 Valid signup creates auth user + profile with correct data
-- [ ] 4.5 Invalid city "XYZ123NotACity" shows error
-- [ ] 4.6 Width 101 shows server validation error
-- [ ] 4.7 Missing city shows zod error
-- [ ] 4.8 Duplicate email shows Supabase error
+- [x] 4.4 Valid signup creates auth user + profile with correct data — dfff3c2
+- [x] 4.5 Invalid city "XYZ123NotACity" shows error — dfff3c2
+- [x] 4.6 Width 101 shows server validation error — dfff3c2
+- [x] 4.7 Missing city shows zod error — dfff3c2
+- [x] 4.8 Duplicate email shows Supabase error — dfff3c2
 
 ### Phase 5: Testing & Verification
 
 #### Automated
 
 - [x] 5.1 All checks pass: `npm run typecheck && npm run lint && npm run build` — 90d36a4
-- [ ] 5.2 Integration tests pass: `npm run test:integration` (no signup tests exist yet)
+- [x] 5.2 Integration tests pass: `npm run test:integration` (no signup tests exist yet) — dfff3c2
 
 #### Manual
 

@@ -161,6 +161,7 @@ export interface Database {
         Row: {
           created_at: string | null;
           garden_height: number | null;
+          garden_name: string | null;
           garden_width: number | null;
           id: string;
           location_city: string | null;
@@ -171,6 +172,7 @@ export interface Database {
         Insert: {
           created_at?: string | null;
           garden_height?: number | null;
+          garden_name?: string | null;
           garden_width?: number | null;
           id: string;
           location_city?: string | null;
@@ -181,6 +183,7 @@ export interface Database {
         Update: {
           created_at?: string | null;
           garden_height?: number | null;
+          garden_name?: string | null;
           garden_width?: number | null;
           id?: string;
           location_city?: string | null;
