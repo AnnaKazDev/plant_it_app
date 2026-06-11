@@ -54,12 +54,19 @@ export async function seedTestData() {
 
   const userId = authData.user.id;
 
-  // Get first action type
-  const { data: actionType } = await supabase.from("action_types").select("id").limit(1).single();
+  const { error: profileError } = await supabase.from("profiles").insert({
+    id: userId,
+    garden_width: 5,
+    garden_height: 4,
+    garden_name: "Test Garden",
+    location_city: "London",
+  });
 
-  if (!actionType) {
-    throw new Error("No action types found. Run migrations first.");
+  if (profileError) {
+    throw new Error(`Failed to create test profile: ${profileError.message}`);
   }
+
+  const actionTypeId = await getFirstActionTypeId(supabase);
 
   // Create test plant
   const { data: plant, error: plantError } = await supabase
@@ -82,7 +89,7 @@ export async function seedTestData() {
     .from("actions")
     .insert({
       plant_id: plant.id,
-      action_type_id: actionType.id,
+      action_type_id: actionTypeId,
       date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
     })
     .select("id")
@@ -96,10 +103,25 @@ export async function seedTestData() {
     userId,
     plantId: plant.id,
     actionId: action.id,
-    actionTypeId: actionType.id,
+    actionTypeId,
+    gardenWidth: 5,
+    gardenHeight: 4,
     email,
     password,
   };
+}
+
+/**
+ * Fetch the first seeded action type ID (for action API tests).
+ */
+export async function getFirstActionTypeId(supabase = createTestClient()) {
+  const { data: actionType, error } = await supabase.from("action_types").select("id").limit(1).single();
+
+  if (error) {
+    throw new Error(`No action types found. Run migrations first: ${error.message}`);
+  }
+
+  return actionType.id;
 }
 
 /**

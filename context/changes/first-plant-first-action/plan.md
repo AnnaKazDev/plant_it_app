@@ -465,29 +465,29 @@ If plant photo paths need stricter RLS later, add migration — not required for
 
 #### Automated
 
-- [x] 3.1 `npm run lint` passes
-- [x] 3.2 `npm run check` passes
-- [x] 3.3 `npm run build` passes
+- [x] 3.1 `npm run lint` passes — 7d3cd0c
+- [x] 3.2 `npm run check` passes — 7d3cd0c
+- [x] 3.3 `npm run build` passes — 7d3cd0c
 
 #### Manual
 
-- [x] 3.4 Predefined action shows emoji + name in teaser
-- [x] 3.5 Custom action name works
-- [x] 3.6 1–5 photos upload; first shown in teaser
-- [x] 3.7 No-photo action shows placeholder icon
-- [x] 3.8 Future action shows Planned badge
-- [x] 3.9 Weather or "Weather unavailable" in teaser
+- [x] 3.4 Predefined action shows emoji + name in teaser — 7d3cd0c
+- [x] 3.5 Custom action name works — 7d3cd0c
+- [x] 3.6 1–5 photos upload; first shown in teaser — 7d3cd0c
+- [x] 3.7 No-photo action shows placeholder icon — 7d3cd0c
+- [x] 3.8 Future action shows Planned badge — 7d3cd0c
+- [x] 3.9 Weather or "Weather unavailable" in teaser — 7d3cd0c
 
 ### Phase 4: Dashboard, Wiring & Tests
 
 #### Automated
 
-- [ ] 4.1 `npm run lint` passes
-- [ ] 4.2 `npm run check` passes
-- [ ] 4.3 `npm run build` passes
-- [ ] 4.4 `npm run test:integration` passes
+- [x] 4.1 `npm run lint` passes
+- [x] 4.2 `npm run check` passes
+- [x] 4.3 `npm run build` passes
+- [x] 4.4 `npm run test:integration` passes
 
 #### Manual
 
-- [ ] 4.5 Full onboarding flow: signup → dashboard → plant → action → teaser
-- [ ] 4.6 Auth and photo upload regressions checked
+- [x] 4.5 Full onboarding flow: signup → dashboard → plant → action → teaser
+- [x] 4.6 Auth and photo upload regressions checked
