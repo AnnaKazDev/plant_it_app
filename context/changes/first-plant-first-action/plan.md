@@ -450,16 +450,16 @@ If plant photo paths need stricter RLS later, add migration — not required for
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 `npm run check` passes
-- [ ] 2.3 `npm run build` passes
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 `npm run check` passes
+- [x] 2.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 2.4 Grid renders correct cell count for garden dimensions
-- [ ] 2.5 Drag-and-drop snaps to cell; coordinates match visual position
-- [ ] 2.6 Plant without photo creates and redirects to plant card
-- [ ] 2.7 Plant with photo displays on plant card
+- [x] 2.4 Grid renders correct cell count for garden dimensions
+- [x] 2.5 Drag-and-drop snaps to cell; coordinates match visual position
+- [x] 2.6 Plant without photo creates and redirects to plant card
+- [x] 2.7 Plant with photo displays on plant card
 
 ### Phase 3: Plant Card Page
 
