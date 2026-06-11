@@ -435,16 +435,16 @@ If plant photo paths need stricter RLS later, add migration — not required for
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 `npm run check` passes
-- [x] 1.3 `npm run build` passes
+- [x] 1.1 `npm run lint` passes — f29f960
+- [x] 1.2 `npm run check` passes — f29f960
+- [x] 1.3 `npm run build` passes — f29f960
 
 #### Manual
 
-- [x] 1.4 `POST /api/plants` creates row with valid grid; rejects out-of-bounds coordinates
-- [x] 1.5 `POST /api/actions` writes weather when available; saves with NULL when not
-- [x] 1.6 Plant photo upload stores under `{user_id}/plants/{plant_id}/`
-- [x] 1.7 Signed URL loads image in browser
+- [x] 1.4 `POST /api/plants` creates row with valid grid; rejects out-of-bounds coordinates — f29f960
+- [x] 1.5 `POST /api/actions` writes weather when available; saves with NULL when not — f29f960
+- [x] 1.6 Plant photo upload stores under `{user_id}/plants/{plant_id}/` — f29f960
+- [x] 1.7 Signed URL loads image in browser — f29f960
 
 ### Phase 2: Add Plant Page
 
