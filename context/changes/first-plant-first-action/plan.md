@@ -482,12 +482,12 @@ If plant photo paths need stricter RLS later, add migration — not required for
 
 #### Automated
 
-- [x] 4.1 `npm run lint` passes
-- [x] 4.2 `npm run check` passes
-- [x] 4.3 `npm run build` passes
-- [x] 4.4 `npm run test:integration` passes
+- [x] 4.1 `npm run lint` passes — daa9525
+- [x] 4.2 `npm run check` passes — daa9525
+- [x] 4.3 `npm run build` passes — daa9525
+- [x] 4.4 `npm run test:integration` passes — daa9525
 
 #### Manual
 
-- [x] 4.5 Full onboarding flow: signup → dashboard → plant → action → teaser
-- [x] 4.6 Auth and photo upload regressions checked
+- [x] 4.5 Full onboarding flow: signup → dashboard → plant → action → teaser — daa9525
+- [x] 4.6 Auth and photo upload regressions checked — daa9525

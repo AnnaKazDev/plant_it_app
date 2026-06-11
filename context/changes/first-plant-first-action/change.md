@@ -1,9 +1,9 @@
 ---
 change_id: first-plant-first-action
 title: First plant first action
-status: implementing
+status: implemented
 created: 2026-06-10
-updated: 2026-06-11
+updated: 2026-06-10
 archived_at: null
 ---
 
