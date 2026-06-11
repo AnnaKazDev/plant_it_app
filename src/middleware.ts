@@ -2,7 +2,7 @@ import { defineMiddleware } from "astro:middleware";
 import { createClient } from "@/lib/supabase";
 import { createTestClient } from "@/lib/test-utils";
 
-const PROTECTED_ROUTES = ["/dashboard", "/api/photos"];
+const PROTECTED_ROUTES = ["/dashboard", "/api/photos", "/plants", "/api/plants", "/api/actions", "/api/action-types"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // TEST MODE: Allow bypassing auth with X-Test-User-Id header (non-production only)

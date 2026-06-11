@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { WeatherService } from "./weather";
 import { seedTestData, cleanupTestData, createTestClient } from "@/lib/test-utils";
+import type { Json } from "@/database.types";
 import type { WeatherData } from "@/types";
 
 describe("WeatherService", () => {
@@ -183,10 +184,9 @@ describe("WeatherService", () => {
       // Insert action with weather data
       const { error: insertError } = await supabase.from("actions").insert({
         plant_id: testData.plantId,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         action_type_id: testData.actionTypeId,
         date: TEST_DATE,
-        weather_data: weatherData,
+        weather_data: weatherData as Json,
       });
 
       // Skip test if database insert fails (e.g., Supabase not running)
@@ -230,10 +230,9 @@ describe("WeatherService", () => {
       // Insert cached action
       const { error: insertError } = await supabase.from("actions").insert({
         plant_id: testData.plantId,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         action_type_id: testData.actionTypeId,
         date: "2024-02-20",
-        weather_data: cachedWeather,
+        weather_data: cachedWeather as Json,
       });
 
       // Skip test if database insert fails (e.g., Supabase not running)

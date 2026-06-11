@@ -96,6 +96,7 @@ export async function seedTestData() {
     userId,
     plantId: plant.id,
     actionId: action.id,
+    actionTypeId: actionType.id,
     email,
     password,
   };
