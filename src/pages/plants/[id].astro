@@ -1,0 +1,40 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import PlantCardContent from "@/components/plants/PlantCardContent";
+import { loadPlantCardPageData } from "@/lib/plant-page";
+
+const { user } = Astro.locals;
+const plantId = Astro.params.id ?? "";
+
+const pageData =
+  user && plantId
+    ? await loadPlantCardPageData(Astro.request.headers, Astro.cookies, plantId)
+    : { found: false as const };
+
+const plant = pageData.found ? pageData.plant : undefined;
+const isNotFound = !plant;
+
+if (isNotFound) {
+  Astro.response.status = 404;
+}
+---
+
+<Layout title={isNotFound ? "Plant not found" : plant.display_name}>
+  <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
+    <div class="border-border bg-card/50 w-full max-w-2xl rounded-2xl border p-8 backdrop-blur-xl">
+      {
+        isNotFound ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Plant not found</h1>
+            <p class="text-muted-foreground text-sm">This plant does not exist or you do not have access to it.</p>
+            <a href="/plants/new" class="text-primary text-sm hover:underline">
+              Add a new plant
+            </a>
+          </div>
+        ) : (
+          <PlantCardContent plant={plant} client:only="react" />
+        )
+      }
+    </div>
+  </div>
+</Layout>

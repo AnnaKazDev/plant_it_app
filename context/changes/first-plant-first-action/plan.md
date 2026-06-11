@@ -450,33 +450,33 @@ If plant photo paths need stricter RLS later, add migration — not required for
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 `npm run check` passes
-- [x] 2.3 `npm run build` passes
+- [x] 2.1 `npm run lint` passes — 080342b
+- [x] 2.2 `npm run check` passes — 080342b
+- [x] 2.3 `npm run build` passes — 080342b
 
 #### Manual
 
-- [x] 2.4 Grid renders correct cell count for garden dimensions
-- [x] 2.5 Drag-and-drop snaps to cell; coordinates match visual position
-- [x] 2.6 Plant without photo creates and redirects to plant card
-- [x] 2.7 Plant with photo displays on plant card
+- [x] 2.4 Grid renders correct cell count for garden dimensions — 080342b
+- [x] 2.5 Drag-and-drop snaps to cell; coordinates match visual position — 080342b
+- [x] 2.6 Plant without photo creates and redirects to plant card — 080342b
+- [x] 2.7 Plant with photo displays on plant card — 080342b
 
 ### Phase 3: Plant Card Page
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` passes
-- [ ] 3.2 `npm run check` passes
-- [ ] 3.3 `npm run build` passes
+- [x] 3.1 `npm run lint` passes
+- [x] 3.2 `npm run check` passes
+- [x] 3.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 3.4 Predefined action shows emoji + name in teaser
-- [ ] 3.5 Custom action name works
-- [ ] 3.6 1–5 photos upload; first shown in teaser
-- [ ] 3.7 No-photo action shows placeholder icon
-- [ ] 3.8 Future action shows Planned badge
-- [ ] 3.9 Weather or "Weather unavailable" in teaser
+- [x] 3.4 Predefined action shows emoji + name in teaser
+- [x] 3.5 Custom action name works
+- [x] 3.6 1–5 photos upload; first shown in teaser
+- [x] 3.7 No-photo action shows placeholder icon
+- [x] 3.8 Future action shows Planned badge
+- [x] 3.9 Weather or "Weather unavailable" in teaser
 
 ### Phase 4: Dashboard, Wiring & Tests
 
