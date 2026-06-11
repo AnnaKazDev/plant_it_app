@@ -20,6 +20,7 @@ interface FormFieldProps {
   min?: string;
   max?: string;
   step?: string;
+  autoComplete?: string;
 }
 
 export function FormField({
@@ -37,6 +38,7 @@ export function FormField({
   min,
   max,
   step,
+  autoComplete,
 }: FormFieldProps) {
   return (
     <div>
@@ -57,6 +59,7 @@ export function FormField({
           min={min}
           max={max}
           step={step}
+          autoComplete={autoComplete}
           className={cn(
             inputBase,
             error ? "border-destructive/60 focus:ring-destructive" : "border-border focus:ring-ring",

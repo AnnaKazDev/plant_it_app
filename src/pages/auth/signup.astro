@@ -13,7 +13,7 @@ const error = Astro.url.searchParams.get("error");
       >
         Sign up
       </h1>
-      <SignUpForm serverError={error} client:load />
+      <SignUpForm serverError={error} client:only="react" />
       <p class="text-muted-foreground mt-4 text-center text-sm">
         Already have an account? <a href="/auth/signin" class="text-primary hover:underline">Sign in</a>
       </p>

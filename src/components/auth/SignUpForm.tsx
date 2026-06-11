@@ -124,6 +124,7 @@ export default function SignUpForm({ serverError }: Props) {
           clearError("email");
         }}
         placeholder="you@example.com"
+        autoComplete="email"
         error={errors.email}
         icon={<Mail className="size-4" />}
       />
@@ -138,6 +139,7 @@ export default function SignUpForm({ serverError }: Props) {
           clearError("password");
         }}
         placeholder="Min. 6 characters"
+        autoComplete="new-password"
         error={errors.password}
         hint={passwordHint}
         icon={<Lock className="size-4" />}
@@ -162,6 +164,7 @@ export default function SignUpForm({ serverError }: Props) {
           clearError("confirmPassword");
         }}
         placeholder="Re-enter your password"
+        autoComplete="new-password"
         error={errors.confirmPassword}
         icon={<Lock className="size-4" />}
         endContent={

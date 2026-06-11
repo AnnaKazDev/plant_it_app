@@ -21,7 +21,7 @@ const { user } = Astro.locals;
             </button>
           </form>
           <span class="h-4 border border-l" />
-          <ThemeToggle client:load />
+          <ThemeToggle client:only="react" />
         </div>
       </>
     ) : (
@@ -35,7 +35,7 @@ const { user } = Astro.locals;
             Sign up
           </a>
           <span class="h-4 border border-l" />
-          <ThemeToggle client:load />
+          <ThemeToggle client:only="react" />
         </div>
       </>
     )
