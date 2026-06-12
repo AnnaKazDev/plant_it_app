@@ -246,20 +246,20 @@ No database migration. Existing `actions.date` TIMESTAMPTZ values work unchanged
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 `npm run check` passes
-- [x] 1.3 `npm run build` passes
+- [x] 1.1 `npm run lint` passes — c00e040
+- [x] 1.2 `npm run check` passes — c00e040
+- [x] 1.3 `npm run build` passes — c00e040
 
 #### Manual
 
-- [x] 1.4 Plant card shows actions newest-first with Planned badge unchanged
+- [x] 1.4 Plant card shows actions newest-first with Planned badge unchanged — c00e040
 
 ### Phase 2: Integration Test Coverage
 
 #### Automated
 
-- [ ] 2.1 `npm run test:integration` passes
-- [ ] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run test:integration` passes
+- [x] 2.2 `npm run lint` passes
 
 ### Phase 3: Verification & Close-Out
 
