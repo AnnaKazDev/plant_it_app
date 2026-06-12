@@ -206,7 +206,7 @@ describe("POST /api/photos/upload", () => {
     });
 
     // Middleware redirects to /auth/signin (302) or endpoint returns 401
-    expect([302, 401]).toContain(response.status);
+    expect(response.status).toBe(401);
   });
 
   // NOTE: This test is skipped because the X-Test-User-Id approach uses service role

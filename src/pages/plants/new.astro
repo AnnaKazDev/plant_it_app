@@ -1,0 +1,58 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AddPlantForm from "@/components/plants/AddPlantForm";
+import { loadAddPlantPageData } from "@/lib/plant-page";
+
+const { user } = Astro.locals;
+const pageData = user
+  ? await loadAddPlantPageData(Astro.request.headers, Astro.cookies, user.id)
+  : { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false };
+---
+
+<Layout title="Add plant">
+  <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
+    <div class="border-border bg-card/50 w-full max-w-lg rounded-2xl border p-8 backdrop-blur-xl">
+      {
+        !user ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Sign in required</h1>
+            <p class="text-muted-foreground text-sm">
+              <a href="/auth/signin" class="text-primary hover:underline">
+                Sign in
+              </a>{" "}
+              to add a plant.
+            </p>
+          </div>
+        ) : !pageData.hasGardenSetup ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Garden setup required</h1>
+            <p class="text-muted-foreground text-sm">
+              Complete registration with garden dimensions before adding plants.
+            </p>
+            <a
+              href="/auth/signup"
+              class="bg-primary text-primary-foreground inline-flex rounded-md px-4 py-2 text-sm font-medium"
+            >
+              Complete setup
+            </a>
+          </div>
+        ) : (
+          <div>
+            <h1 class="from-primary to-secondary mb-2 bg-gradient-to-r bg-clip-text text-2xl font-bold text-transparent">
+              Add your plant
+            </h1>
+            <p class="text-muted-foreground mb-6 text-sm">
+              Give it a name, optional photo, and place it on your garden grid.
+            </p>
+            <AddPlantForm
+              gardenWidth={pageData.gardenWidth}
+              gardenHeight={pageData.gardenHeight}
+              gardenName={pageData.gardenName}
+              client:only="react"
+            />
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>

@@ -1,14 +1,13 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase";
+import { validatePhotoFile } from "@/lib/photo-validation";
 import { uploadPhoto } from "@/lib/storage";
 import { ERROR_CODES } from "@/types";
 import type { ApiError } from "@/types";
 
 export const prerender = false;
 
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_PHOTOS_PER_ACTION = 5;
 
 const uploadSchema = z.object({
@@ -58,7 +57,7 @@ export const POST: APIRoute = async (context) => {
         error: {
           code: "VALIDATION_ERROR",
           message: "Invalid input",
-          details: { errors: parseResult.error.errors },
+          details: { errors: parseResult.error.issues },
         } satisfies ApiError,
       },
       { status: 400 },
@@ -67,31 +66,17 @@ export const POST: APIRoute = async (context) => {
 
   const { action_id, file } = parseResult.data;
 
-  // Validate file type
-  if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
+  const fileValidation = validatePhotoFile(file);
+  if (!fileValidation.valid) {
     return Response.json(
       {
         error: {
-          code: ERROR_CODES.INVALID_FILE_TYPE,
-          message: `Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.join(", ")}`,
-          details: { received: file.type },
+          code: fileValidation.code,
+          message: fileValidation.message,
+          details: { received: file.type, size_bytes: file.size },
         } satisfies ApiError,
       },
-      { status: 400 },
-    );
-  }
-
-  // Validate file size
-  if (file.size > MAX_FILE_SIZE) {
-    return Response.json(
-      {
-        error: {
-          code: ERROR_CODES.FILE_TOO_LARGE,
-          message: `File too large. Maximum size: ${MAX_FILE_SIZE / 1024 / 1024}MB`,
-          details: { size_bytes: file.size, max_size_bytes: MAX_FILE_SIZE },
-        } satisfies ApiError,
-      },
-      { status: 413 },
+      { status: fileValidation.code === ERROR_CODES.FILE_TOO_LARGE ? 413 : 400 },
     );
   }
 

@@ -1,6 +1,15 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 
+export const prerender = false;
+
+function formatAuthError(message: string): string {
+  if (message === "Network connection lost." || message === "Failed to fetch") {
+    return "Cannot connect to Supabase. If developing locally, run: npx supabase start";
+  }
+  return message;
+}
+
 export const POST: APIRoute = async (context) => {
   const form = await context.request.formData();
   const email = form.get("email") as string;
@@ -13,7 +22,7 @@ export const POST: APIRoute = async (context) => {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return context.redirect(`/auth/signin?error=${encodeURIComponent(error.message)}`);
+    return context.redirect(`/auth/signin?error=${encodeURIComponent(formatAuthError(error.message))}`);
   }
 
   return context.redirect("/");
