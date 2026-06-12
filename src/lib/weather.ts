@@ -43,7 +43,7 @@ export class WeatherService {
         controller.abort();
       }, 5000);
 
-      const url = `http://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${latitude},${longitude}&dt=${date}`;
+      const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${latitude},${longitude}&dt=${date}`;
 
       const response = await fetch(url, {
         signal: controller.signal,
@@ -117,7 +117,7 @@ export class WeatherService {
         controller.abort();
       }, 5000);
 
-      const url = `http://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}&dt=${date}`;
+      const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}&dt=${date}`;
 
       const response = await fetch(url, {
         signal: controller.signal,
@@ -193,7 +193,7 @@ export class WeatherService {
         controller.abort();
       }, 5000);
 
-      const url = `http://api.weatherapi.com/v1/current.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}`;
+      const url = `https://api.weatherapi.com/v1/current.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}`;
 
       const response = await fetch(url, {
         signal: controller.signal,

@@ -162,6 +162,8 @@ export const POST: APIRoute = async (context) => {
         .single();
 
       if (updateError) {
+        await supabase.storage.from("plant-photos").remove([uploadResult.storage_path]);
+        await supabase.from("plants").delete().eq("id", plant.id);
         return jsonError(
           {
             code: "DATABASE_ERROR",

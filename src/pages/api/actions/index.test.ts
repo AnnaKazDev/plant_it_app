@@ -180,6 +180,6 @@ describe("POST /api/actions", () => {
       }),
     });
 
-    expect([302, 401]).toContain(response.status);
+    expect(response.status).toBe(401);
   });
 });

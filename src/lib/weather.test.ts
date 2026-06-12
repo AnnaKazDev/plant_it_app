@@ -23,7 +23,7 @@ describe("WeatherService", () => {
 
   beforeAll(async () => {
     testData = await seedTestData();
-    supabase = createTestClient();
+    supabase = createTestClient(true);
   });
 
   afterAll(async () => {
@@ -83,7 +83,7 @@ describe("WeatherService", () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        `http://api.weatherapi.com/v1/history.json?key=${TEST_API_KEY}&q=${TEST_LAT},${TEST_LON}&dt=${TEST_DATE}`,
+        `https://api.weatherapi.com/v1/history.json?key=${TEST_API_KEY}&q=${TEST_LAT},${TEST_LON}&dt=${TEST_DATE}`,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );

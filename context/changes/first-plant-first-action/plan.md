@@ -427,6 +427,12 @@ If plant photo paths need stricter RLS later, add migration — not required for
 - Weather plan: `context/changes/weather-api-integration/plan.md`
 - Extended registration (archived): `context/archive/2026-06-07-extended-registration/plan.md`
 
+## Addendum (2026-06-12, impl-review F1)
+
+**UI simplification accepted:** Phase 3 specified shadcn Command/Popover/Calendar for action type combobox and date picker. Implementation uses native `<select>` and `<input type="date">` in `AddActionForm.tsx`. Manual verification passed; shadcn combobox/calendar deferred to S-03 polish slice.
+
+**SSR data loading accepted:** Plant card page uses `loadPlantCardPageData` in `src/lib/plant-page.ts` (direct Supabase + signed URLs) instead of self-fetching `GET /api/plants/[id]`. Intentional SSR optimization — one round-trip, no self-HTTP. API route retained for tests and external clients.
+
 ## Progress
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands.

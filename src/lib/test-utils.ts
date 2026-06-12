@@ -37,24 +37,24 @@ export function createTestClient(useServiceRole = false) {
  * Returns user auth session, plant ID, action ID, and auth cookies
  */
 export async function seedTestData() {
-  const supabase = createTestClient();
+  const admin = createTestClient(true);
 
-  // Create test user
-  const email = `test-${Date.now()}@example.com`;
+  const email = `test-${crypto.randomUUID()}@example.com`;
   const password = "testpass123";
 
-  const { data: authData, error: signUpError } = await supabase.auth.signUp({
+  const { data: authData, error: signUpError } = await admin.auth.admin.createUser({
     email,
     password,
+    email_confirm: true,
   });
 
-  if (signUpError || !authData.user || !authData.session) {
-    throw new Error(`Failed to create test user: ${signUpError?.message}`);
+  if (signUpError || !authData.user) {
+    throw new Error(`Failed to create test user: ${signUpError?.message ?? "unknown error"}`);
   }
 
   const userId = authData.user.id;
 
-  const { error: profileError } = await supabase.from("profiles").insert({
+  const { error: profileError } = await admin.from("profiles").insert({
     id: userId,
     garden_width: 5,
     garden_height: 4,
@@ -66,10 +66,10 @@ export async function seedTestData() {
     throw new Error(`Failed to create test profile: ${profileError.message}`);
   }
 
-  const actionTypeId = await getFirstActionTypeId(supabase);
+  const actionTypeId = await getFirstActionTypeId(admin);
 
   // Create test plant
-  const { data: plant, error: plantError } = await supabase
+  const { data: plant, error: plantError } = await admin
     .from("plants")
     .insert({
       user_id: userId,
@@ -85,7 +85,7 @@ export async function seedTestData() {
   }
 
   // Create test action
-  const { data: action, error: actionError } = await supabase
+  const { data: action, error: actionError } = await admin
     .from("actions")
     .insert({
       plant_id: plant.id,

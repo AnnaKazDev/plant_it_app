@@ -130,6 +130,6 @@ describe("POST /api/plants", () => {
       }),
     });
 
-    expect([302, 401]).toContain(response.status);
+    expect(response.status).toBe(401);
   });
 });
