@@ -48,8 +48,8 @@ export async function seedTestData() {
     email_confirm: true,
   });
 
-  if (signUpError || !authData.user) {
-    throw new Error(`Failed to create test user: ${signUpError?.message ?? "unknown error"}`);
+  if (signUpError) {
+    throw new Error(`Failed to create test user: ${signUpError.message}`);
   }
 
   const userId = authData.user.id;
