@@ -258,15 +258,15 @@ No database migration. Existing `actions.date` TIMESTAMPTZ values work unchanged
 
 #### Automated
 
-- [x] 2.1 `npm run test:integration` passes
-- [x] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run test:integration` passes — d9a047a
+- [x] 2.2 `npm run lint` passes — d9a047a
 
 ### Phase 3: Verification & Close-Out
 
 #### Automated
 
-- [ ] 3.1 `npm run lint`, `npm run check`, `npm run build` pass
+- [x] 3.1 `npm run lint`, `npm run check`, `npm run build` pass
 
 #### Manual
 
-- [ ] 3.2 Multi-action manual walkthrough (past/today/future) succeeds
+- [x] 3.2 Multi-action manual walkthrough (past/today/future) succeeds
