@@ -53,6 +53,7 @@ export default function ActionTeaser({ action }: ActionTeaserProps) {
           ) : null}
         </div>
         <p className="text-muted-foreground text-sm">{formatActionDate(action.date)}</p>
+        {action.additional_data ? <p className="text-muted-foreground text-sm">{action.additional_data}</p> : null}
         <p className="text-muted-foreground text-sm">{formatWeather(action.weather_data)}</p>
       </div>
     </article>

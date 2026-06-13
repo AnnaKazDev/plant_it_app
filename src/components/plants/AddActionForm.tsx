@@ -18,12 +18,14 @@ interface Props {
 
 const CUSTOM_ACTION_VALUE = "__custom__";
 const MAX_PHOTOS = 5;
+const MAX_NOTES_LENGTH = 1000;
 
 export default function AddActionForm({ plantId }: Props) {
   const [actionTypes, setActionTypes] = useState<ActionTypeOption[]>([]);
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [customName, setCustomName] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [notes, setNotes] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,6 +61,11 @@ export default function AddActionForm({ plantId }: Props) {
       next.date = "Date is required";
     }
 
+    const trimmedNotes = notes.trim();
+    if (trimmedNotes.length > MAX_NOTES_LENGTH) {
+      next.notes = `Notes must be at most ${String(MAX_NOTES_LENGTH)} characters`;
+    }
+
     if (photoFiles.length > MAX_PHOTOS) {
       next.photos = `Maximum ${String(MAX_PHOTOS)} photos per action`;
     }
@@ -86,10 +93,18 @@ export default function AddActionForm({ plantId }: Props) {
     setErrors({});
 
     try {
+      const trimmedNotes = notes.trim();
+      const notesPayload = trimmedNotes.length > 0 ? { additional_data: trimmedNotes } : {};
+
       const actionBody =
         selectedTypeId === CUSTOM_ACTION_VALUE
-          ? { plant_id: plantId, custom_action_name: customName.trim(), date: new Date(date).toISOString() }
-          : { plant_id: plantId, action_type_id: selectedTypeId, date: new Date(date).toISOString() };
+          ? {
+              plant_id: plantId,
+              custom_action_name: customName.trim(),
+              date: new Date(date).toISOString(),
+              ...notesPayload,
+            }
+          : { plant_id: plantId, action_type_id: selectedTypeId, date: new Date(date).toISOString(), ...notesPayload };
 
       const actionResponse = await fetch("/api/actions", {
         method: "POST",
@@ -189,6 +204,27 @@ export default function AddActionForm({ plantId }: Props) {
           aria-invalid={Boolean(errors.date)}
         />
         {errors.date ? <p className="text-destructive text-xs">{errors.date}</p> : null}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="action-notes">Notes (optional)</Label>
+        <textarea
+          id="action-notes"
+          value={notes}
+          onChange={(event) => {
+            setNotes(event.target.value);
+            if (errors.notes) setErrors((prev) => ({ ...prev, notes: "" }));
+          }}
+          placeholder="e.g., Used organic fertilizer, 5L water"
+          maxLength={MAX_NOTES_LENGTH}
+          rows={3}
+          aria-invalid={Boolean(errors.notes)}
+          className={cn(
+            "border-input bg-background placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-[3px]",
+            errors.notes && "border-destructive",
+          )}
+        />
+        {errors.notes ? <p className="text-destructive text-xs">{errors.notes}</p> : null}
       </div>
 
       <div className="space-y-2">

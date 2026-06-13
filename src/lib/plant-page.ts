@@ -22,6 +22,7 @@ export interface PlantCardAction {
   id: string;
   date: string;
   custom_action_name: string | null;
+  additional_data: string | null;
   action_type: { name: string; icon_emoji: string } | null;
   weather_data: WeatherData | null;
   photos: PlantCardActionPhoto[];
@@ -104,6 +105,7 @@ export async function loadPlantCardPageData(
         id,
         action_type_id,
         custom_action_name,
+        additional_data,
         date,
         weather_data,
         photos (
@@ -143,6 +145,7 @@ export async function loadPlantCardPageData(
         id: action.id,
         date: action.date,
         custom_action_name: action.custom_action_name,
+        additional_data: action.additional_data,
         action_type: action.action_types,
         weather_data: action.weather_data as WeatherData | null,
         photos,
