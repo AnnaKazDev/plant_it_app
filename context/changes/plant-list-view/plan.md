@@ -318,24 +318,24 @@ No database migration. Existing RLS on `plants` and `actions` covers list querie
 
 #### Automated
 
-- [x] 2.1 `npm run check` passes
-- [x] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run check` passes — 19d4c2c
+- [x] 2.2 `npm run lint` passes — 19d4c2c
 
 #### Manual
 
-- [x] 2.3 List page renders correctly for multi-plant, no-action, and planned-count cases
-- [x] 2.4 Row navigation opens correct plant card
+- [x] 2.3 List page renders correctly for multi-plant, no-action, and planned-count cases — 19d4c2c
+- [x] 2.4 Row navigation opens correct plant card — 19d4c2c
 
 ### Phase 3: Navigation + Empty States
 
 #### Automated
 
-- [ ] 3.1 `npm run build` passes
+- [x] 3.1 `npm run build` passes
 
 #### Manual
 
-- [ ] 3.2 Dashboard list CTA and empty-state journey verified
-- [ ] 3.3 Full two-plant PRD journey walkthrough
+- [x] 3.2 Dashboard list CTA and empty-state journey verified
+- [x] 3.3 Full two-plant PRD journey walkthrough
 
 ### Phase 4: Tests & Verification
 
