@@ -1,0 +1,31 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import PlantListContent from "@/components/plants/PlantListContent";
+import { loadPlantListPageData } from "@/lib/plant-page";
+
+const { user } = Astro.locals;
+
+const pageData = user ? await loadPlantListPageData(Astro.request.headers, Astro.cookies, user.id) : { plants: [] };
+---
+
+<Layout title="My plants">
+  <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
+    <div class="border-border bg-card/50 w-full max-w-2xl rounded-2xl border p-8 backdrop-blur-xl">
+      {
+        user ? (
+          <PlantListContent plants={pageData.plants} client:only="react" />
+        ) : (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Sign in required</h1>
+            <p class="text-muted-foreground text-sm">
+              <a href="/auth/signin" class="text-primary hover:underline">
+                Sign in
+              </a>{" "}
+              to view your plants.
+            </p>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>

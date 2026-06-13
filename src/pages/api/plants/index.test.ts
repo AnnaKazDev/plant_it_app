@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { seedTestData, cleanupTestData } from "@/lib/test-utils";
+import { createTestClient, getFirstActionTypeId, seedTestData, cleanupTestData } from "@/lib/test-utils";
 
 interface PlantSuccessResponse {
   success: true;
@@ -131,5 +131,250 @@ describe("POST /api/plants", () => {
     });
 
     expect(response.status).toBe(401);
+  });
+});
+
+interface PlantListSuccessResponse {
+  success: true;
+  plants: {
+    id: string;
+    display_name: string;
+    signed_photo_url: string | null;
+    last_action: {
+      id: string;
+      date: string;
+    } | null;
+    planned_action_count: number;
+  }[];
+}
+
+async function seedUserWithProfile() {
+  const admin = createTestClient(true);
+  const email = `list-test-${crypto.randomUUID()}@example.com`;
+  const password = "testpass123";
+
+  const { data: authData, error: signUpError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+
+  if (signUpError) {
+    throw new Error(`Failed to create test user: ${signUpError.message}`);
+  }
+
+  const userId = authData.user.id;
+
+  const { error: profileError } = await admin.from("profiles").insert({
+    id: userId,
+    garden_width: 5,
+    garden_height: 4,
+    garden_name: "List Test Garden",
+    location_city: "London",
+  });
+
+  if (profileError) {
+    throw new Error(`Failed to create test profile: ${profileError.message}`);
+  }
+
+  return { userId, admin };
+}
+
+function listAuthHeaders(userId: string, apiUrl: string) {
+  return {
+    "X-Test-User-Id": userId,
+    Origin: apiUrl,
+  };
+}
+
+describe("GET /api/plants", () => {
+  let apiUrl: string;
+  let listTestUserId: string;
+  let plantNoActionsId: string;
+  let plantMultiActionId: string;
+  let plantRecentId: string;
+
+  beforeAll(async () => {
+    apiUrl = process.env.API_URL ?? "http://localhost:4321";
+
+    const { userId, admin } = await seedUserWithProfile();
+    listTestUserId = userId;
+    const actionTypeId = await getFirstActionTypeId(admin);
+
+    const { data: plantNoActions, error: noActionsError } = await admin
+      .from("plants")
+      .insert({
+        user_id: listTestUserId,
+        name: "Silent Plant",
+        grid_x: 0,
+        grid_y: 0,
+        created_at: "2010-01-01T00:00:00Z",
+      })
+      .select("id")
+      .single();
+
+    if (noActionsError) {
+      throw new Error(`Failed to create plant without actions: ${noActionsError.message}`);
+    }
+
+    plantNoActionsId = plantNoActions.id;
+
+    const { data: plantMulti, error: multiError } = await admin
+      .from("plants")
+      .insert({
+        user_id: listTestUserId,
+        name: "Busy Plant",
+        grid_x: 1,
+        grid_y: 1,
+      })
+      .select("id")
+      .single();
+
+    if (multiError) {
+      throw new Error(`Failed to create multi-action plant: ${multiError.message}`);
+    }
+
+    plantMultiActionId = plantMulti.id;
+
+    const { error: actionsError } = await admin.from("actions").insert([
+      { plant_id: plantMultiActionId, action_type_id: actionTypeId, date: "2018-03-01" },
+      { plant_id: plantMultiActionId, action_type_id: actionTypeId, date: "2020-01-15" },
+      { plant_id: plantMultiActionId, action_type_id: actionTypeId, date: "2030-06-01" },
+    ]);
+
+    if (actionsError) {
+      throw new Error(`Failed to seed multi-action plant: ${actionsError.message}`);
+    }
+
+    const { data: plantRecent, error: recentError } = await admin
+      .from("plants")
+      .insert({
+        user_id: listTestUserId,
+        name: "Recent Plant",
+        grid_x: 2,
+        grid_y: 0,
+      })
+      .select("id")
+      .single();
+
+    if (recentError) {
+      throw new Error(`Failed to create recent plant: ${recentError.message}`);
+    }
+
+    plantRecentId = plantRecent.id;
+
+    const { error: recentActionError } = await admin.from("actions").insert({
+      plant_id: plantRecentId,
+      action_type_id: actionTypeId,
+      date: "2026-05-20",
+    });
+
+    if (recentActionError) {
+      throw new Error(`Failed to seed recent plant action: ${recentActionError.message}`);
+    }
+  });
+
+  afterAll(async () => {
+    if (listTestUserId) {
+      await cleanupTestData(listTestUserId);
+    }
+  });
+
+  it("should reject unauthenticated request with 401", async () => {
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      headers: { Origin: apiUrl },
+    });
+
+    expect(response.status).toBe(401);
+  });
+
+  it("should return an empty list for a user with no plants", async () => {
+    const { userId } = await seedUserWithProfile();
+
+    try {
+      const response = await fetch(`${apiUrl}/api/plants`, {
+        headers: listAuthHeaders(userId, apiUrl),
+      });
+
+      expect(response.status).toBe(200);
+
+      const json = (await response.json()) as PlantListSuccessResponse;
+      expect(json.success).toBe(true);
+      expect(json.plants).toEqual([]);
+    } finally {
+      await cleanupTestData(userId);
+    }
+  });
+
+  it("should return last_action null when a plant has no actions", async () => {
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      headers: listAuthHeaders(listTestUserId, apiUrl),
+    });
+
+    expect(response.status).toBe(200);
+
+    const json = (await response.json()) as PlantListSuccessResponse;
+    const plant = json.plants.find((item) => item.id === plantNoActionsId);
+    expect(plant).toBeDefined();
+    expect(plant?.last_action).toBeNull();
+  });
+
+  it("should return the newest action as last_action when multiple actions exist", async () => {
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      headers: listAuthHeaders(listTestUserId, apiUrl),
+    });
+
+    expect(response.status).toBe(200);
+
+    const json = (await response.json()) as PlantListSuccessResponse;
+    const plant = json.plants.find((item) => item.id === plantMultiActionId);
+    expect(plant).toBeDefined();
+    expect(plant?.last_action?.date.slice(0, 10)).toBe("2030-06-01");
+  });
+
+  it("should return planned_action_count matching future-dated actions", async () => {
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      headers: listAuthHeaders(listTestUserId, apiUrl),
+    });
+
+    expect(response.status).toBe(200);
+
+    const json = (await response.json()) as PlantListSuccessResponse;
+    const busyPlant = json.plants.find((item) => item.id === plantMultiActionId);
+    const recentPlant = json.plants.find((item) => item.id === plantRecentId);
+
+    expect(busyPlant?.planned_action_count).toBe(1);
+    expect(recentPlant?.planned_action_count).toBe(0);
+  });
+
+  it("should return plants sorted by activity date descending", async () => {
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      headers: listAuthHeaders(listTestUserId, apiUrl),
+    });
+
+    expect(response.status).toBe(200);
+
+    const json = (await response.json()) as PlantListSuccessResponse;
+    expect(json.plants.length).toBe(3);
+
+    const activityDates = json.plants.map((plant) => {
+      if (plant.last_action) {
+        return new Date(plant.last_action.date).getTime();
+      }
+
+      if (plant.id === plantNoActionsId) {
+        return new Date("2010-01-01T00:00:00Z").getTime();
+      }
+
+      return 0;
+    });
+
+    for (let i = 0; i < activityDates.length - 1; i++) {
+      expect(activityDates[i]).toBeGreaterThanOrEqual(activityDates[i + 1]);
+    }
+
+    expect(json.plants[0]?.id).toBe(plantMultiActionId);
+    expect(json.plants[1]?.id).toBe(plantRecentId);
+    expect(json.plants[2]?.id).toBe(plantNoActionsId);
   });
 });

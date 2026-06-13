@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
+import { fetchPlantListForUser } from "@/lib/plant-page";
 import { createClient } from "@/lib/supabase";
 import { isWithinGardenBounds } from "@/lib/grid";
 import { formatPlantDisplayName } from "@/lib/plants";
@@ -19,6 +20,21 @@ const plantBodySchema = z.object({
 function jsonError(error: ApiError, status: number): Response {
   return Response.json({ error }, { status });
 }
+
+export const GET: APIRoute = async (context) => {
+  if (!context.locals.user) {
+    return jsonError({ code: ERROR_CODES.UNAUTHORIZED, message: "Authentication required" }, 401);
+  }
+
+  const supabase = createClient(context.request.headers, context.cookies);
+  if (!supabase) {
+    return jsonError({ code: "INTERNAL_ERROR", message: "Failed to initialize database client" }, 500);
+  }
+
+  const plants = await fetchPlantListForUser(supabase, context.locals.user.id);
+
+  return Response.json({ success: true, plants });
+};
 
 export const POST: APIRoute = async (context) => {
   if (!context.locals.user) {

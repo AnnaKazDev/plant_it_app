@@ -3,7 +3,7 @@ project: Plant It
 version: 1
 status: draft
 created: 2026-05-25
-updated: 2026-06-12
+updated: 2026-06-13
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -34,7 +34,7 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 | S-02 | first-plant-first-action  | Add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teaser showing photo + action name + date + weather | F-01, F-02, F-03, S-01 | US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013 | proposed |
 | S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator                                  | S-02                   | FR-007, FR-008, FR-009, FR-010                        | done     |
 | S-03b | action-notes               | Add optional notes when creating an action, see notes on plant card action teaser                                                                             | S-03                   | FR-007                                                | ready    |
-| S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | proposed |
+| S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | done     |
 | S-05 | garden-map-view           | See garden map with all plants at their grid locations, click plant on map to open plant card                                                                 | S-02                   | FR-013, FR-014, FR-015                                | proposed |
 
 ## Routing structure
@@ -194,7 +194,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** List performance with many plants (10+). If each plant loads last action + weather + photo separately, this could be slow. Ensure one query fetches all plants + their last actions in bulk. PRD NFR says "list loads within 2 seconds".
-- **Status:** proposed
+- **Status:** done
 
 ### S-05: Garden map view with spatial layout
 
@@ -249,3 +249,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **S-01: User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).** — Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/`. Lesson: —.
 - **S-03: User can add multiple actions to a plant (past/today/future dates), see plant card with all action teasers in chronological order, planned actions (future dates) show visual indicator (badge/count) in plant list. Route: `/plants/[id]` (extends plant card from S-02 to show action timeline + repeated "add action" flow).** — Archived 2026-06-12 → `context/archive/2026-06-12-multiple-actions-tracking/`. Lesson: —.
+- **S-04: User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions. Route: `/plants` (main plant list view, likely linked from `/dashboard`).** — Archived 2026-06-13 → `context/archive/2026-06-13-plant-list-view/`. Lesson: —.
