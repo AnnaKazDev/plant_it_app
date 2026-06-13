@@ -50,6 +50,24 @@ export interface PlantListPageData {
   plants: PlantListItem[];
 }
 
+export interface GardenMapPlant {
+  id: string;
+  display_name: string;
+  grid_x: number;
+  grid_y: number;
+  icon_name: string;
+  signed_photo_url: string | null;
+  last_action: PlantCardAction | null;
+}
+
+export interface GardenMapPageData {
+  gardenWidth: number;
+  gardenHeight: number;
+  gardenName?: string;
+  hasGardenSetup: boolean;
+  plants: GardenMapPlant[];
+}
+
 type SupabaseClient = NonNullable<ReturnType<typeof createClient>>;
 
 interface RawActionRow {
@@ -169,6 +187,71 @@ export async function fetchPlantListForUser(supabase: SupabaseClient, userId: st
     .map(({ activityDate: _activityDate, ...item }) => item);
 }
 
+export async function fetchGardenMapPlantsForUser(supabase: SupabaseClient, userId: string): Promise<GardenMapPlant[]> {
+  const { data: plants, error: plantsError } = await supabase
+    .from("plants")
+    .select("id, name, photo_url, grid_x, grid_y, icon_name, created_at")
+    .eq("user_id", userId);
+
+  if (plantsError || plants.length === 0) {
+    return [];
+  }
+
+  const plantIds = plants.map((plant) => plant.id);
+
+  const { data: actions, error: actionsError } = await supabase
+    .from("actions")
+    .select(
+      `
+      id,
+      plant_id,
+      custom_action_name,
+      additional_data,
+      date,
+      weather_data,
+      photos (
+        id,
+        photo_url,
+        order_index
+      ),
+      action_types (
+        name,
+        icon_emoji
+      )
+    `,
+    )
+    .in("plant_id", plantIds);
+
+  if (actionsError) {
+    return [];
+  }
+
+  const actionsByPlantId = new Map<string, RawActionRow[]>();
+  for (const action of actions) {
+    const plantActions = actionsByPlantId.get(action.plant_id) ?? [];
+    plantActions.push(action);
+    actionsByPlantId.set(action.plant_id, plantActions);
+  }
+
+  return Promise.all(
+    plants.map(async (plant) => {
+      const plantActions = (actionsByPlantId.get(plant.id) ?? []).sort(compareActionsByDateDesc);
+      const signedPhotoUrl = plant.photo_url ? await signPhotoUrl(supabase, plant.photo_url) : null;
+      const lastAction = plantActions.length > 0 ? await mapLastActionToCardAction(supabase, plantActions[0]) : null;
+
+      return {
+        id: plant.id,
+        display_name: formatPlantDisplayName(plant.name, plant.grid_x, plant.grid_y),
+        grid_x: plant.grid_x,
+        grid_y: plant.grid_y,
+        icon_name: plant.icon_name,
+        signed_photo_url: signedPhotoUrl,
+        last_action: lastAction,
+      };
+    }),
+  );
+}
+
 export async function loadPlantListPageData(
   requestHeaders: Headers,
   cookies: AstroCookies,
@@ -214,6 +297,42 @@ export async function loadAddPlantPageData(
     gardenHeight: profile.garden_height,
     gardenName: profile.garden_name ?? undefined,
     hasGardenSetup: true,
+  };
+}
+
+export async function loadGardenMapPageData(
+  requestHeaders: Headers,
+  cookies: AstroCookies,
+  userId: string,
+): Promise<GardenMapPageData> {
+  const supabase = createClient(requestHeaders, cookies);
+
+  if (!supabase) {
+    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
+  }
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("garden_width, garden_height, garden_name")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
+  }
+
+  if (!profile.garden_width || !profile.garden_height) {
+    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
+  }
+
+  const plants = await fetchGardenMapPlantsForUser(supabase, userId);
+
+  return {
+    gardenWidth: profile.garden_width,
+    gardenHeight: profile.garden_height,
+    gardenName: profile.garden_name ?? undefined,
+    hasGardenSetup: true,
+    plants,
   };
 }
 

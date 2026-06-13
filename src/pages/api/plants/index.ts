@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { fetchPlantListForUser } from "@/lib/plant-page";
+import { DEFAULT_PLANT_ICON_ID, PLANT_ICON_IDS } from "@/lib/plant-icons";
 import { createClient } from "@/lib/supabase";
 import { isWithinGardenBounds } from "@/lib/grid";
 import { formatPlantDisplayName } from "@/lib/plants";
@@ -15,6 +16,7 @@ const plantBodySchema = z.object({
   name: z.string().min(1, "Name is required").max(200, "Name too long"),
   grid_x: z.coerce.number().int().min(0),
   grid_y: z.coerce.number().int().min(0),
+  icon_name: z.enum(PLANT_ICON_IDS).optional().default(DEFAULT_PLANT_ICON_ID),
 });
 
 function jsonError(error: ApiError, status: number): Response {
@@ -50,6 +52,7 @@ export const POST: APIRoute = async (context) => {
   let name: string;
   let gridX: number;
   let gridY: number;
+  let iconName: string;
   let photoFile: File | null = null;
 
   if (contentType.includes("multipart/form-data")) {
@@ -64,6 +67,7 @@ export const POST: APIRoute = async (context) => {
       name: formData.get("name"),
       grid_x: formData.get("grid_x"),
       grid_y: formData.get("grid_y"),
+      icon_name: formData.get("icon_name") ?? undefined,
     });
 
     if (!parseResult.success) {
@@ -77,7 +81,7 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    ({ name, grid_x: gridX, grid_y: gridY } = parseResult.data);
+    ({ name, grid_x: gridX, grid_y: gridY, icon_name: iconName } = parseResult.data);
     const fileField = formData.get("file");
     if (fileField instanceof File && fileField.size > 0) {
       photoFile = fileField;
@@ -102,7 +106,7 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    ({ name, grid_x: gridX, grid_y: gridY } = parseResult.data);
+    ({ name, grid_x: gridX, grid_y: gridY, icon_name: iconName } = parseResult.data);
   }
 
   const { data: profile } = await supabase
@@ -150,8 +154,9 @@ export const POST: APIRoute = async (context) => {
       name,
       grid_x: gridX,
       grid_y: gridY,
+      icon_name: iconName,
     })
-    .select("id, name, grid_x, grid_y, photo_url")
+    .select("id, name, grid_x, grid_y, icon_name, photo_url")
     .single();
 
   if (insertError) {
@@ -211,6 +216,7 @@ export const POST: APIRoute = async (context) => {
         name: plant.name,
         grid_x: plant.grid_x,
         grid_y: plant.grid_y,
+        icon_name: plant.icon_name,
         photo_url: photoUrl,
         display_name: formatPlantDisplayName(plant.name, plant.grid_x, plant.grid_y),
       },
