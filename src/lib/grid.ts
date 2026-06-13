@@ -77,6 +77,22 @@ export function computeCellSize(rows: number, cols: number, preset: GridDisplayP
   return Math.max(preset.minCellPx, Math.min(preset.maxCellPx, Math.floor(preset.viewportPx / Math.max(cols, rows))));
 }
 
+export const GARDEN_GRID_MAP_LABEL_WIDTH_PX = 28;
+const GARDEN_GRID_MAP_CONTAINER_PADDING_PX = 16;
+const GARDEN_GRID_MAP_ROW_GAP_PX = 4;
+
+export function computeMapCellSizeFromContainer(rows: number, cols: number, containerWidthPx: number): number {
+  const gridAreaWidth =
+    containerWidthPx -
+    GARDEN_GRID_MAP_LABEL_WIDTH_PX -
+    GARDEN_GRID_MAP_CONTAINER_PADDING_PX -
+    GARDEN_GRID_MAP_ROW_GAP_PX;
+  const fromContainer = Math.floor(Math.max(0, gridAreaWidth) / cols);
+  const fallback = computeCellSize(rows, cols, GRID_DISPLAY_MAP);
+
+  return Math.max(GRID_DISPLAY_MAP.minCellPx, Math.max(fromContainer, fallback));
+}
+
 export function formatRowLabel(gridX: number): string {
   return formatGridLabel(gridX, 0).replace(/\d+$/, "");
 }

@@ -8,7 +8,7 @@ interface PlantIconPickerProps {
 
 export default function PlantIconPicker({ value, onChange }: PlantIconPickerProps) {
   return (
-    <div role="group" aria-label="Plant icon" className="grid grid-cols-5 gap-2 sm:grid-cols-10">
+    <div role="group" aria-label="Plant icon" className="grid grid-cols-5 gap-2 sm:grid-cols-8">
       {PLANT_ICON_OPTIONS.map(({ id, label, Icon }) => {
         const isSelected = value === id;
 

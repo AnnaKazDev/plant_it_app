@@ -40,12 +40,20 @@ if (user) {
       <div class="mt-6 flex flex-col items-center gap-3">
         {
           plantCount > 0 ? (
-            <a
-              href="/plants"
-              class="border-border bg-muted hover:bg-muted/80 inline-flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors"
-            >
-              View my plants
-            </a>
+            <>
+              <a
+                href="/plants"
+                class="border-border bg-muted hover:bg-muted/80 inline-flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+              >
+                View my plants
+              </a>
+              <a
+                href="/garden-map"
+                class="border-border bg-muted hover:bg-muted/80 inline-flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+              >
+                View garden map
+              </a>
+            </>
           ) : null
         }
         <a

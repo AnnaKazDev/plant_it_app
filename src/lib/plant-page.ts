@@ -10,6 +10,7 @@ export interface AddPlantPageData {
   gardenHeight: number;
   gardenName?: string;
   hasGardenSetup: boolean;
+  plants: GardenMapPlant[];
 }
 
 export interface PlantCardActionPhoto {
@@ -275,7 +276,7 @@ export async function loadAddPlantPageData(
   const supabase = createClient(requestHeaders, cookies);
 
   if (!supabase) {
-    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false };
+    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
   }
 
   const { data: profile, error } = await supabase
@@ -285,18 +286,21 @@ export async function loadAddPlantPageData(
     .single();
 
   if (error) {
-    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false };
+    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
   }
 
   if (!profile.garden_width || !profile.garden_height) {
-    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false };
+    return { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
   }
+
+  const plants = await fetchGardenMapPlantsForUser(supabase, userId);
 
   return {
     gardenWidth: profile.garden_width,
     gardenHeight: profile.garden_height,
     gardenName: profile.garden_name ?? undefined,
     hasGardenSetup: true,
+    plants,
   };
 }
 

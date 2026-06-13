@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEFAULT_PLANT_ICON_ID, type PlantIconId } from "@/lib/plant-icons";
+import type { GardenMapPlant } from "@/lib/plant-page";
 import { ALLOWED_PHOTO_MIME_TYPES, MAX_PHOTO_FILE_SIZE } from "@/lib/photo-validation";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ interface Props {
   gardenWidth: number;
   gardenHeight: number;
   gardenName?: string;
+  existingPlants: GardenMapPlant[];
 }
 
 interface FormErrors {
@@ -21,7 +23,7 @@ interface FormErrors {
   submit?: string;
 }
 
-export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName }: Props) {
+export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, existingPlants }: Props) {
   const [name, setName] = useState("");
   const [iconName, setIconName] = useState<PlantIconId>(DEFAULT_PLANT_ICON_ID);
   const [gridX, setGridX] = useState(0);
@@ -176,6 +178,7 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName }: 
           gridX={gridX}
           gridY={gridY}
           iconName={iconName}
+          existingPlants={existingPlants}
           onChange={(x, y) => {
             setGridX(x);
             setGridY(y);

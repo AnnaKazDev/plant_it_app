@@ -396,23 +396,23 @@ Link map from dashboard and plant list; integration tests for `icon_name`; full 
 
 #### Automated
 
-- [x] 3.1 `npm run lint` passes
-- [x] 3.2 `npm run check` passes
-- [x] 3.3 `npm run build` passes
+- [x] 3.1 `npm run lint` passes — 0204e0a
+- [x] 3.2 `npm run check` passes — 0204e0a
+- [x] 3.3 `npm run build` passes — 0204e0a
 
 #### Manual
 
-- [x] 3.4 Map markers, tooltips, collisions, and navigation verified
+- [x] 3.4 Map markers, tooltips, collisions, and navigation verified — 0204e0a
 
 ### Phase 4: Navigation, Tests, and Verification
 
 #### Automated
 
-- [ ] 4.1 `npm run test:integration` passes
-- [ ] 4.2 `npm run lint` passes
-- [ ] 4.3 `npm run check` passes
-- [ ] 4.4 `npm run build` passes
+- [x] 4.1 `npm run test:integration` passes
+- [x] 4.2 `npm run lint` passes
+- [x] 4.3 `npm run check` passes
+- [x] 4.4 `npm run build` passes
 
 #### Manual
 
-- [ ] 4.5 Dashboard → map → card journey verified; no regressions on list/add-plant
+- [x] 4.5 Dashboard → map → card journey verified; no regressions on list/add-plant
