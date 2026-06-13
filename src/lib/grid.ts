@@ -59,12 +59,22 @@ export function isWithinGardenBounds(gridX: number, gridY: number, gardenWidth: 
   return gridX >= 0 && gridX < rows && gridY >= 0 && gridY < cols;
 }
 
-export const MIN_CELL_PX = 20;
-export const MAX_CELL_PX = 28;
-export const DEFAULT_GRID_VIEWPORT_PX = 320;
+export const GRID_DISPLAY_PICKER = {
+  viewportPx: 320,
+  minCellPx: 20,
+  maxCellPx: 28,
+} as const;
 
-export function computeCellSize(rows: number, cols: number, maxViewportPx: number = DEFAULT_GRID_VIEWPORT_PX): number {
-  return Math.max(MIN_CELL_PX, Math.min(MAX_CELL_PX, Math.floor(maxViewportPx / Math.max(cols, rows))));
+export const GRID_DISPLAY_MAP = {
+  viewportPx: 640,
+  minCellPx: 24,
+  maxCellPx: 48,
+} as const;
+
+export type GridDisplayPreset = typeof GRID_DISPLAY_PICKER | typeof GRID_DISPLAY_MAP;
+
+export function computeCellSize(rows: number, cols: number, preset: GridDisplayPreset = GRID_DISPLAY_PICKER): number {
+  return Math.max(preset.minCellPx, Math.min(preset.maxCellPx, Math.floor(preset.viewportPx / Math.max(cols, rows))));
 }
 
 export function formatRowLabel(gridX: number): string {

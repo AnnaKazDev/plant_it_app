@@ -384,25 +384,25 @@ Link map from dashboard and plant list; integration tests for `icon_name`; full 
 
 #### Automated
 
-- [x] 2.1 `npm run lint` passes
-- [x] 2.2 `npm run check` passes
-- [x] 2.3 `npm run build` passes
+- [x] 2.1 `npm run lint` passes — 2864c72
+- [x] 2.2 `npm run check` passes — 2864c72
+- [x] 2.3 `npm run build` passes — 2864c72
 
 #### Manual
 
-- [x] 2.4 Picker UX verified on `/plants/new` with icon selection
+- [x] 2.4 Picker UX verified on `/plants/new` with icon selection — 2864c72
 
 ### Phase 3: Garden Map Page and View
 
 #### Automated
 
-- [ ] 3.1 `npm run lint` passes
-- [ ] 3.2 `npm run check` passes
-- [ ] 3.3 `npm run build` passes
+- [x] 3.1 `npm run lint` passes
+- [x] 3.2 `npm run check` passes
+- [x] 3.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 3.4 Map markers, tooltips, collisions, and navigation verified
+- [x] 3.4 Map markers, tooltips, collisions, and navigation verified
 
 ### Phase 4: Navigation, Tests, and Verification
 

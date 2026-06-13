@@ -15,6 +15,9 @@ export default defineConfig({
     resolve: {
       dedupe: ["react", "react-dom"],
     },
+    optimizeDeps: {
+      include: ["@radix-ui/react-tooltip"],
+    },
   },
   adapter: cloudflare(),
   env: {

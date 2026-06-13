@@ -1,0 +1,80 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import GardenMapView from "@/components/plants/GardenMapView";
+import { loadGardenMapPageData } from "@/lib/plant-page";
+
+const { user } = Astro.locals;
+const pageData = user
+  ? await loadGardenMapPageData(Astro.request.headers, Astro.cookies, user.id)
+  : { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
+---
+
+<Layout title="Garden map">
+  <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
+    <div class="border-border bg-card/50 w-full max-w-4xl rounded-2xl border p-8 backdrop-blur-xl">
+      {
+        !user ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Sign in required</h1>
+            <p class="text-muted-foreground text-sm">
+              <a href="/auth/signin" class="text-primary hover:underline">
+                Sign in
+              </a>{" "}
+              to view your garden map.
+            </p>
+          </div>
+        ) : !pageData.hasGardenSetup ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Garden setup required</h1>
+            <p class="text-muted-foreground text-sm">
+              Complete registration with garden dimensions before viewing the map.
+            </p>
+            <a
+              href="/auth/signup"
+              class="bg-primary text-primary-foreground inline-flex rounded-md px-4 py-2 text-sm font-medium"
+            >
+              Complete setup
+            </a>
+          </div>
+        ) : pageData.plants.length === 0 ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">No plants on the map yet</h1>
+            <p class="text-muted-foreground text-sm">Add your first plant to see it on the garden grid.</p>
+            <a
+              href="/plants/new"
+              class="bg-primary text-primary-foreground inline-flex rounded-md px-4 py-2 text-sm font-medium"
+            >
+              Add a plant
+            </a>
+          </div>
+        ) : (
+          <div>
+            <div class="mb-6 space-y-1">
+              <h1 class="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold text-transparent">
+                Garden map
+              </h1>
+              {pageData.gardenName ? (
+                <p class="text-muted-foreground text-sm">
+                  {pageData.gardenName} ({pageData.gardenWidth}×{pageData.gardenHeight} m)
+                </p>
+              ) : (
+                <p class="text-muted-foreground text-sm">
+                  {pageData.gardenWidth}×{pageData.gardenHeight} m
+                </p>
+              )}
+              <p class="text-muted-foreground text-xs">
+                {pageData.plants.length} plant{pageData.plants.length === 1 ? "" : "s"}
+              </p>
+            </div>
+            <GardenMapView
+              gardenWidth={pageData.gardenWidth}
+              gardenHeight={pageData.gardenHeight}
+              plants={pageData.plants}
+              client:only="react"
+            />
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>

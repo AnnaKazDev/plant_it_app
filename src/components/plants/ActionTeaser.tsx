@@ -16,7 +16,7 @@ function formatWeather(weather: WeatherData | null): string {
   return `${String(weather.temp_min)}–${String(weather.temp_max)}°C, rain ${String(weather.precip)} mm`;
 }
 
-function getActionLabel(action: PlantCardAction): string {
+export function getActionLabel(action: PlantCardAction): string {
   if (action.action_type) {
     return `${action.action_type.icon_emoji} ${action.action_type.name.replace(/_/g, " ")}`;
   }

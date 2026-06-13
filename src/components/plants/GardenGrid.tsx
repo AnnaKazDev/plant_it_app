@@ -1,8 +1,16 @@
 import { forwardRef, useCallback, useRef, type ReactNode } from "react";
-import { computeCellSize, formatRowLabel, getGardenGridDimensions, snapPointerToGridCell } from "@/lib/grid";
+import {
+  computeCellSize,
+  formatRowLabel,
+  getGardenGridDimensions,
+  GRID_DISPLAY_MAP,
+  GRID_DISPLAY_PICKER,
+  snapPointerToGridCell,
+} from "@/lib/grid";
 import { cn } from "@/lib/utils";
 
 const ROW_LABEL_WIDTH_PX = 24;
+const ROW_LABEL_WIDTH_MAP_PX = 28;
 
 interface GardenGridProps {
   gardenWidth: number;
@@ -14,6 +22,7 @@ interface GardenGridProps {
   selectedGridY?: number;
   onKeyDown?: (event: React.KeyboardEvent) => void;
   gridAriaLabel?: string;
+  variant?: "picker" | "map";
 }
 
 const GardenGrid = forwardRef<HTMLDivElement, GardenGridProps>(function GardenGrid(
@@ -27,11 +36,15 @@ const GardenGrid = forwardRef<HTMLDivElement, GardenGridProps>(function GardenGr
     selectedGridY,
     onKeyDown,
     gridAriaLabel = "Garden grid",
+    variant = "picker",
   },
   forwardedRef,
 ) {
   const { rows, cols } = getGardenGridDimensions(gardenWidth, gardenHeight);
-  const cellSize = computeCellSize(rows, cols);
+  const preset = variant === "map" ? GRID_DISPLAY_MAP : GRID_DISPLAY_PICKER;
+  const cellSize = computeCellSize(rows, cols, preset);
+  const rowLabelWidth = variant === "map" ? ROW_LABEL_WIDTH_MAP_PX : ROW_LABEL_WIDTH_PX;
+  const labelClassName = variant === "map" ? "text-xs" : "text-[10px]";
   const internalRef = useRef<HTMLDivElement>(null);
 
   const setGridRef = useCallback(
@@ -63,13 +76,18 @@ const GardenGrid = forwardRef<HTMLDivElement, GardenGridProps>(function GardenGr
   const rowLabels = Array.from({ length: rows }, (_, index) => formatRowLabel(index));
 
   return (
-    <div className="border-border bg-muted/20 max-h-96 overflow-auto rounded-lg border p-2">
+    <div
+      className={cn(
+        "border-border bg-muted/20 rounded-lg border p-2",
+        variant === "map" ? "overflow-x-auto overflow-y-visible" : "max-h-96 overflow-auto",
+      )}
+    >
       <div className="inline-flex flex-col gap-1">
-        <div className="flex items-end" style={{ paddingLeft: ROW_LABEL_WIDTH_PX }}>
+        <div className="flex items-end" style={{ paddingLeft: rowLabelWidth }}>
           {colLabels.map((label) => (
             <span
               key={label}
-              className="text-muted-foreground text-center text-[10px] font-medium"
+              className={cn("text-muted-foreground text-center font-medium", labelClassName)}
               style={{ width: cellSize }}
             >
               {label}
@@ -78,11 +96,11 @@ const GardenGrid = forwardRef<HTMLDivElement, GardenGridProps>(function GardenGr
         </div>
 
         <div className="flex gap-1">
-          <div className="flex flex-col" style={{ width: ROW_LABEL_WIDTH_PX }}>
+          <div className="flex flex-col" style={{ width: rowLabelWidth }}>
             {rowLabels.map((label) => (
               <span
                 key={label}
-                className="text-muted-foreground flex items-center justify-end pr-1 text-[10px] font-medium"
+                className={cn("text-muted-foreground flex items-center justify-end pr-1 font-medium", labelClassName)}
                 style={{ height: cellSize }}
               >
                 {label}

@@ -3,7 +3,15 @@ import { createClient } from "@/lib/supabase";
 import { createTestClient } from "@/lib/test-utils";
 import { ERROR_CODES } from "@/types";
 
-const PROTECTED_ROUTES = ["/dashboard", "/api/photos", "/plants", "/api/plants", "/api/actions", "/api/action-types"];
+const PROTECTED_ROUTES = [
+  "/dashboard",
+  "/api/photos",
+  "/plants",
+  "/api/plants",
+  "/api/actions",
+  "/api/action-types",
+  "/garden-map",
+];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // TEST MODE: Allow bypassing auth with X-Test-User-Id header (local dev only)
