@@ -330,22 +330,22 @@ No database migration. Existing RLS on `plants` and `actions` covers list querie
 
 #### Automated
 
-- [x] 3.1 `npm run build` passes
+- [x] 3.1 `npm run build` passes — de0823a
 
 #### Manual
 
-- [x] 3.2 Dashboard list CTA and empty-state journey verified
-- [x] 3.3 Full two-plant PRD journey walkthrough
+- [x] 3.2 Dashboard list CTA and empty-state journey verified — de0823a
+- [x] 3.3 Full two-plant PRD journey walkthrough — de0823a
 
 ### Phase 4: Tests & Verification
 
 #### Automated
 
-- [ ] 4.1 `npm run test:integration` passes
-- [ ] 4.2 `npm run lint` passes
-- [ ] 4.3 `npm run check` passes
-- [ ] 4.4 `npm run build` passes
+- [x] 4.1 `npm run test:integration` passes
+- [x] 4.2 `npm run lint` passes
+- [x] 4.3 `npm run check` passes
+- [x] 4.4 `npm run build` passes
 
 #### Manual
 
-- [ ] 4.5 List performance acceptable with 10+ plants in local dev
+- [x] 4.5 List performance acceptable with 10+ plants in local dev
