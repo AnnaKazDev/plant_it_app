@@ -35,7 +35,7 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 | S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator                                  | S-02                   | FR-007, FR-008, FR-009, FR-010                        | done     |
 | S-03b | action-notes               | Add optional notes when creating an action, see notes on plant card action teaser                                                                             | S-03                   | FR-007                                                | ready    |
 | S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | done     |
-| S-05 | garden-map-view           | See garden map with plant icons at grid locations (hover tooltip, click → card); add-plant picker shares map styling + `icon_name` | S-02                   | FR-013, FR-014, FR-015                                | implementing |
+| S-05 | garden-map-view           | See garden map with plant icons at grid locations (hover tooltip, click → card); add-plant picker shares map styling + `icon_name` | S-02                   | FR-013, FR-014, FR-015                                | done     |
 | S-06 | garden-multi-cell         | Place a plant across multiple grid cells (e.g. raised bed spanning A1–A4); map shows occupied area                                                            | S-05                   | FR-013 (extends)                                      | proposed |
 
 ## Routing structure
@@ -208,8 +208,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - ~~Map visualization approach: HTML canvas / SVG / CSS grid?~~ **Resolved (S-05):** sparse CSS background grid + N marker nodes — see `context/changes/garden-map-view/research.md`.
 - **Risk:** Garden map could become complex (drag-and-drop plant repositioning, zoom, pan). PRD Non-Goals explicitly defers advanced map features. Keep it simple: static grid, click to navigate, no dragging on map (placement drag only on `/plants/new` picker). **Multi-cell placement (grządki spanning several cells) deferred to S-06** — S-05 stays single-cell anchor point only.
-- **Implementation:** `context/changes/garden-map-view/` — phases 1–3 landed (`c57cf1f`, `2864c72`, `0204e0a`); phase 4 (nav, integration tests, final verification) in progress on branch `garden-map-view`.
-- **Status:** implementing
+- **Status:** done
 
 ### S-06: Multi-cell plant placement on garden grid
 
@@ -238,7 +237,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-03       | multiple-actions-tracking | Track multiple actions per plant (past/future dates)                   | no                    | Blocked on S-02                         |
 | S-03b      | action-notes              | Optional notes on actions (create + teaser display)                    | yes                   | Run `/10x-implement action-notes`       |
 | S-04       | plant-list-view           | Plant list view with last-action teasers                               | no                    | Blocked on S-02                         |
-| S-05       | garden-map-view           | Garden map view with plant positions                                   | no                    | In progress — `context/changes/garden-map-view/`; archive when manual 4.5 done |
+| S-05       | garden-map-view           | Garden map view with plant positions                                   | yes                   | Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/` |
 | S-06       | garden-multi-cell         | Multi-cell plant placement (raised beds / grządki)                     | no                    | Blocked on S-05; see `garden-map-view/research.md`    |
 
 ## Open Roadmap Questions
@@ -268,3 +267,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-01: User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).** — Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/`. Lesson: —.
 - **S-03: User can add multiple actions to a plant (past/today/future dates), see plant card with all action teasers in chronological order, planned actions (future dates) show visual indicator (badge/count) in plant list. Route: `/plants/[id]` (extends plant card from S-02 to show action timeline + repeated "add action" flow).** — Archived 2026-06-12 → `context/archive/2026-06-12-multiple-actions-tracking/`. Lesson: —.
 - **S-04: User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions. Route: `/plants` (main plant list view, likely linked from `/dashboard`).** — Archived 2026-06-13 → `context/archive/2026-06-13-plant-list-view/`. Lesson: —.
+- **S-05: User can see a styled garden map at `/garden-map` with all plants as lucide icon markers at `(grid_x, grid_y)` on a sparse CSS grid matching profile dimensions (axis labels, soil-tone background). Hover a marker → tooltip with display name, last-action label, date, and photo thumbnail. Click → `/plants/[id]`. Multiple plants in one cell remain visible via collision offsets. Entry points: **Garden map** on `/dashboard` (when `plantCount > 0`) and header link on `/plants`. Same slice upgrades `/plants/new`: shared `GardenGrid`, ~23 curated `icon_name` icons (`POST /api/plants`), map-style picker showing existing plants + draggable new-plant marker; desktop map/picker grids scale to container width (`ResizeObserver`).** — Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/`. Lesson: —.
