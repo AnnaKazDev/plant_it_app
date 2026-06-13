@@ -1,7 +1,7 @@
 ---
 change_id: action-notes
 title: Optional notes on plant actions
-status: implementing
+status: implemented
 created: 2026-06-12
 updated: 2026-06-13
 archived_at: null

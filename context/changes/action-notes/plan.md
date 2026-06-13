@@ -155,5 +155,5 @@ Automate create-with-notes and verify GET/SSR path returns the value.
 
 #### Automated
 
-- [x] 2.1 `npm run test:integration` passes
-- [x] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run test:integration` passes — 9dbd4b5
+- [x] 2.2 `npm run lint` passes — 9dbd4b5
