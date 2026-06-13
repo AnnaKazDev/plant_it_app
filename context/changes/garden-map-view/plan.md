@@ -372,25 +372,25 @@ Link map from dashboard and plant list; integration tests for `icon_name`; full 
 
 #### Automated
 
-- [x] 1.1 Migration applies locally
-- [x] 1.2 `npm run lint` passes
-- [x] 1.3 `npm run check` passes
+- [x] 1.1 Migration applies locally — c57cf1f
+- [x] 1.2 `npm run lint` passes — c57cf1f
+- [x] 1.3 `npm run check` passes — c57cf1f
 
 #### Manual
 
-- [x] 1.4 Existing plants have `icon_name = 'sprout'` after migration
+- [x] 1.4 Existing plants have `icon_name = 'sprout'` after migration — c57cf1f
 
 ### Phase 2: Shared GardenGrid and Picker Upgrade
 
 #### Automated
 
-- [ ] 2.1 `npm run lint` passes
-- [ ] 2.2 `npm run check` passes
-- [ ] 2.3 `npm run build` passes
+- [x] 2.1 `npm run lint` passes
+- [x] 2.2 `npm run check` passes
+- [x] 2.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 2.4 Picker UX verified on `/plants/new` with icon selection
+- [x] 2.4 Picker UX verified on `/plants/new` with icon selection
 
 ### Phase 3: Garden Map Page and View
 

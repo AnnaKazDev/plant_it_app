@@ -58,3 +58,37 @@ export function isWithinGardenBounds(gridX: number, gridY: number, gardenWidth: 
   const { rows, cols } = getGardenGridDimensions(gardenWidth, gardenHeight);
   return gridX >= 0 && gridX < rows && gridY >= 0 && gridY < cols;
 }
+
+export const MIN_CELL_PX = 20;
+export const MAX_CELL_PX = 28;
+export const DEFAULT_GRID_VIEWPORT_PX = 320;
+
+export function computeCellSize(rows: number, cols: number, maxViewportPx: number = DEFAULT_GRID_VIEWPORT_PX): number {
+  return Math.max(MIN_CELL_PX, Math.min(MAX_CELL_PX, Math.floor(maxViewportPx / Math.max(cols, rows))));
+}
+
+export function formatRowLabel(gridX: number): string {
+  return formatGridLabel(gridX, 0).replace(/\d+$/, "");
+}
+
+export function snapPointerToGridCell(
+  clientX: number,
+  clientY: number,
+  gridElement: HTMLElement,
+  rows: number,
+  cols: number,
+  cellSize: number,
+): { gridX: number; gridY: number } | null {
+  const rect = gridElement.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+
+  const gridY = Math.floor(x / cellSize);
+  const gridX = Math.floor(y / cellSize);
+
+  if (gridX >= 0 && gridX < rows && gridY >= 0 && gridY < cols) {
+    return { gridX, gridY };
+  }
+
+  return null;
+}
