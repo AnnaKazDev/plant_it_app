@@ -15,6 +15,15 @@ const actionBodySchema = z
     action_type_id: z.uuid().optional(),
     custom_action_name: z.string().min(1).max(300).optional(),
     date: z.string().refine((value) => !Number.isNaN(Date.parse(value)), { message: "Invalid date" }),
+    additional_data: z
+      .string()
+      .max(1000)
+      .optional()
+      .transform((value) => {
+        if (value === undefined) return undefined;
+        const trimmed = value.trim();
+        return trimmed.length === 0 ? undefined : trimmed;
+      }),
   })
   .refine((data) => Boolean(data.action_type_id) !== Boolean(data.custom_action_name), {
     message: "Provide either action_type_id or custom_action_name, not both",
@@ -53,7 +62,7 @@ export const POST: APIRoute = async (context) => {
     );
   }
 
-  const { plant_id, action_type_id, custom_action_name, date } = parseResult.data;
+  const { plant_id, action_type_id, custom_action_name, date, additional_data } = parseResult.data;
 
   const supabase = createClient(context.request.headers, context.cookies);
   if (!supabase) {
@@ -86,9 +95,10 @@ export const POST: APIRoute = async (context) => {
       action_type_id: action_type_id ?? null,
       custom_action_name: custom_action_name ?? null,
       date,
+      additional_data: additional_data ?? null,
       weather_data: weatherData as Json | null,
     })
-    .select("id, plant_id, action_type_id, custom_action_name, date, weather_data, created_at")
+    .select("id, plant_id, action_type_id, custom_action_name, date, additional_data, weather_data, created_at")
     .single();
 
   if (insertError) {

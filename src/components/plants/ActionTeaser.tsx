@@ -1,25 +1,11 @@
 import { ImageOff, Sprout } from "lucide-react";
+import { formatActionDate, isPlannedAction } from "@/lib/action-dates";
 import type { PlantCardAction } from "@/lib/plant-page";
 import type { WeatherData } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface ActionTeaserProps {
   action: PlantCardAction;
-}
-
-function formatActionDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function isPlannedAction(isoDate: string): boolean {
-  const actionDate = new Date(isoDate);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
-  return actionDate.getTime() > todayEnd.getTime();
 }
 
 function formatWeather(weather: WeatherData | null): string {
@@ -67,6 +53,7 @@ export default function ActionTeaser({ action }: ActionTeaserProps) {
           ) : null}
         </div>
         <p className="text-muted-foreground text-sm">{formatActionDate(action.date)}</p>
+        {action.additional_data ? <p className="text-muted-foreground text-sm">{action.additional_data}</p> : null}
         <p className="text-muted-foreground text-sm">{formatWeather(action.weather_data)}</p>
       </div>
     </article>

@@ -1,4 +1,5 @@
 import type { AstroCookies } from "astro";
+import { compareActionsByDateDesc } from "@/lib/action-dates";
 import { formatPlantDisplayName } from "@/lib/plants";
 import { createClient } from "@/lib/supabase";
 import { extractStoragePathFromPublicUrl, getSignedPhotoUrl } from "@/lib/storage";
@@ -21,6 +22,7 @@ export interface PlantCardAction {
   id: string;
   date: string;
   custom_action_name: string | null;
+  additional_data: string | null;
   action_type: { name: string; icon_emoji: string } | null;
   weather_data: WeatherData | null;
   photos: PlantCardActionPhoto[];
@@ -103,6 +105,7 @@ export async function loadPlantCardPageData(
         id,
         action_type_id,
         custom_action_name,
+        additional_data,
         date,
         weather_data,
         photos (
@@ -127,28 +130,27 @@ export async function loadPlantCardPageData(
   const signedPlantPhotoUrl = plant.photo_url ? await signPhotoUrl(supabase, plant.photo_url) : null;
 
   const actions: PlantCardAction[] = await Promise.all(
-    plant.actions
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .map(async (action) => {
-        const photos = await Promise.all(
-          action.photos
-            .sort((a, b) => a.order_index - b.order_index)
-            .map(async (photo) => ({
-              id: photo.id,
-              order_index: photo.order_index,
-              signed_photo_url: await signPhotoUrl(supabase, photo.photo_url),
-            })),
-        );
+    plant.actions.sort(compareActionsByDateDesc).map(async (action) => {
+      const photos = await Promise.all(
+        action.photos
+          .sort((a, b) => a.order_index - b.order_index)
+          .map(async (photo) => ({
+            id: photo.id,
+            order_index: photo.order_index,
+            signed_photo_url: await signPhotoUrl(supabase, photo.photo_url),
+          })),
+      );
 
-        return {
-          id: action.id,
-          date: action.date,
-          custom_action_name: action.custom_action_name,
-          action_type: action.action_types,
-          weather_data: action.weather_data as WeatherData | null,
-          photos,
-        };
-      }),
+      return {
+        id: action.id,
+        date: action.date,
+        custom_action_name: action.custom_action_name,
+        additional_data: action.additional_data,
+        action_type: action.action_types,
+        weather_data: action.weather_data as WeatherData | null,
+        photos,
+      };
+    }),
   );
 
   return {
