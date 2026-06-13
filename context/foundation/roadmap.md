@@ -33,6 +33,7 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 | S-01 | extended-registration     | Register with email + password + location (city/coordinates) + garden dimensions (width x height in meters)                                                   | F-01                   | FR-001, FR-012                                        | done     |
 | S-02 | first-plant-first-action  | Add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teaser showing photo + action name + date + weather | F-01, F-02, F-03, S-01 | US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013 | proposed |
 | S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator                                  | S-02                   | FR-007, FR-008, FR-009, FR-010                        | done     |
+| S-03b | action-notes               | Add optional notes when creating an action, see notes on plant card action teaser                                                                             | S-03                   | FR-007                                                | ready    |
 | S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | proposed |
 | S-05 | garden-map-view           | See garden map with all plants at their grid locations, click plant on map to open plant card                                                                 | S-02                   | FR-013, FR-014, FR-015                                | proposed |
 
@@ -49,7 +50,7 @@ File-based routing (Astro `src/pages/`). Auth middleware protects routes listed 
 | `/dashboard`          | protected | baseline   | Post-login entry point (existing)                                      |
 | `/plants`             | protected | S-04       | Plant list view with last-action teasers                               |
 | `/plants/new`         | protected | S-02       | Add first plant form (photo + name + grid coordinates)                 |
-| `/plants/[id]`        | protected | S-02, S-03 | Plant card: view plant details + action timeline + add new action      |
+| `/plants/[id]`        | protected | S-02, S-03, S-03b | Plant card: view plant details + action timeline + add new action (+ optional action notes) |
 | `/garden-map`         | protected | S-05       | Garden map view with plant positions                                   |
 
 **Navigation flow (MVP):**
@@ -71,7 +72,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | Stream | Theme                   | Chain                                               | Note                                                                     |
 | ------ | ----------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
 | A      | Foundation & onboarding | `F-01` → `S-01`                                     | Enables user registration with garden setup; joins Stream B at `S-02`    |
-| B      | Growth tracking         | `F-02` / `F-03` → `S-02` → `S-03` / `S-04` / `S-05` | Core product (visual story = photo + weather + actions); north star path |
+| B      | Growth tracking         | `F-02` / `F-03` → `S-02` → `S-03` → `S-03b` / `S-04` / `S-05` | Core product (visual story = photo + weather + actions); north star path |
 
 ## Baseline
 
@@ -171,6 +172,18 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Chronological ordering of actions + distinguishing planned (future) vs historical (past) actions requires date logic. Ensure timezone handling is correct (user's garden location timezone vs server timezone).
 - **Status:** done
 
+### S-03b: Action notes on plant actions
+
+- **Outcome:** User can add optional free-text notes when creating an action (e.g. fertilizer amount, observations), and see notes on the plant card action teaser when present. Route: `/plants/[id]` (extends add-action form + `ActionTeaser` from S-02/S-03). Uses existing `actions.additional_data` column — no schema migration.
+- **Change ID:** action-notes
+- **PRD refs:** FR-007 (add action — shape notes / user journey mention “additional text”)
+- **Prerequisites:** S-03 (multi-action plant card flow)
+- **Parallel with:** S-04, S-05
+- **Blockers:** —
+- **Unknowns:** —
+- **Risk:** Low scope — deferred from S-02 (`additional_data` column existed without UI). Keep optional; max length enforced at API (e.g. 1000 chars).
+- **Status:** ready
+
 ### S-04: Plant list view with multiple plants
 
 - **Outcome:** User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions. Route: `/plants` (main plant list view, likely linked from `/dashboard`).
@@ -206,6 +219,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-01       | extended-registration     | Extended registration: location + garden dimensions                    | no                    | Blocked on F-01                         |
 | S-02       | first-plant-first-action  | Add first plant + first action with weather                            | no                    | Blocked on F-01, F-02, F-03, S-01       |
 | S-03       | multiple-actions-tracking | Track multiple actions per plant (past/future dates)                   | no                    | Blocked on S-02                         |
+| S-03b      | action-notes              | Optional notes on actions (create + teaser display)                    | yes                   | Run `/10x-implement action-notes`       |
 | S-04       | plant-list-view           | Plant list view with last-action teasers                               | no                    | Blocked on S-02                         |
 | S-05       | garden-map-view           | Garden map view with plant positions                                   | no                    | Blocked on S-02                         |
 
