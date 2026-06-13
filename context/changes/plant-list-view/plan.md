@@ -307,24 +307,24 @@ No database migration. Existing RLS on `plants` and `actions` covers list querie
 
 #### Automated
 
-- [x] 1.1 `npm run check` passes
-- [x] 1.2 `npm run lint` passes
+- [x] 1.1 `npm run check` passes — 2504316
+- [x] 1.2 `npm run lint` passes — 2504316
 
 #### Manual
 
-- [x] 1.3 Loader output verified in dev (sort, last action, planned counts)
+- [x] 1.3 Loader output verified in dev (sort, last action, planned counts) — 2504316
 
 ### Phase 2: List UI
 
 #### Automated
 
-- [ ] 2.1 `npm run check` passes
-- [ ] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run check` passes
+- [x] 2.2 `npm run lint` passes
 
 #### Manual
 
-- [ ] 2.3 List page renders correctly for multi-plant, no-action, and planned-count cases
-- [ ] 2.4 Row navigation opens correct plant card
+- [x] 2.3 List page renders correctly for multi-plant, no-action, and planned-count cases
+- [x] 2.4 Row navigation opens correct plant card
 
 ### Phase 3: Navigation + Empty States
 
