@@ -341,11 +341,11 @@ No database migration. Existing RLS on `plants` and `actions` covers list querie
 
 #### Automated
 
-- [x] 4.1 `npm run test:integration` passes
-- [x] 4.2 `npm run lint` passes
-- [x] 4.3 `npm run check` passes
-- [x] 4.4 `npm run build` passes
+- [x] 4.1 `npm run test:integration` passes — fd37052
+- [x] 4.2 `npm run lint` passes — fd37052
+- [x] 4.3 `npm run check` passes — fd37052
+- [x] 4.4 `npm run build` passes — fd37052
 
 #### Manual
 
-- [x] 4.5 List performance acceptable with 10+ plants in local dev
+- [x] 4.5 List performance acceptable with 10+ plants in local dev — fd37052
