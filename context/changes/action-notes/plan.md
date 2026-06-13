@@ -143,17 +143,17 @@ Automate create-with-notes and verify GET/SSR path returns the value.
 
 #### Automated
 
-- [x] 1.1 `npm run lint` passes
-- [x] 1.2 `npm run check` passes
-- [x] 1.3 `npm run build` passes
+- [x] 1.1 `npm run lint` passes — a4d95a3
+- [x] 1.2 `npm run check` passes — a4d95a3
+- [x] 1.3 `npm run build` passes — a4d95a3
 
 #### Manual
 
-- [x] 1.4 Notes visible on plant card after add; empty notes leave teaser unchanged
+- [x] 1.4 Notes visible on plant card after add; empty notes leave teaser unchanged — a4d95a3
 
 ### Phase 2: Integration Tests and Close-Out
 
 #### Automated
 
-- [ ] 2.1 `npm run test:integration` passes
-- [ ] 2.2 `npm run lint` passes
+- [x] 2.1 `npm run test:integration` passes
+- [x] 2.2 `npm run lint` passes
