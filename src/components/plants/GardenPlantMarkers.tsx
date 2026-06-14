@@ -1,4 +1,4 @@
-import { getActionLabel } from "@/components/plants/ActionTeaser";
+import { getActionLabel, PlantPlaceholderImage } from "@/components/plants/ActionTeaser";
 import { useGardenGridCellSize } from "@/components/plants/garden-grid-context";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatActionDate } from "@/lib/action-dates";
@@ -7,7 +7,6 @@ import { formatGridLabel } from "@/lib/grid";
 import type { GardenMapPlant } from "@/lib/plant-page";
 import { PlantIcon } from "@/lib/plant-icons";
 import { cn } from "@/lib/utils";
-import { ImageOff } from "lucide-react";
 
 interface GardenPlantMarkersProps {
   plants: GardenMapPlant[];
@@ -72,7 +71,7 @@ export default function GardenPlantMarkers({ plants, linkable = true }: GardenPl
                   {tooltipPhotoUrl ? (
                     <img src={tooltipPhotoUrl} alt="" className="size-full object-cover" />
                   ) : (
-                    <ImageOff className="text-muted-foreground size-5" aria-hidden />
+                    <PlantPlaceholderImage alt={plant.display_name} />
                   )}
                 </div>
                 <div className="min-w-0 space-y-0.5">

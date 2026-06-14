@@ -7,11 +7,19 @@ import { getVisibleNavItems, isNavItemActive } from "@/lib/navigation";
 interface Props {
   userEmail: string | null;
   currentPath: string;
+  plantCount?: number | null;
 }
 
-const { userEmail, currentPath } = Astro.props;
+const { userEmail, currentPath, plantCount = null } = Astro.props;
 const isAuthenticated = Boolean(userEmail);
 const navItems = getVisibleNavItems(isAuthenticated);
+
+function getNavItemLabel(href: string, label: string): string {
+  if (href === "/plants" && plantCount !== null) {
+    return `${label} (${plantCount})`;
+  }
+  return label;
+}
 ---
 
 <button
@@ -99,15 +107,16 @@ const navItems = getVisibleNavItems(isAuthenticated);
     {
       navItems.map((item) => {
         const active = isNavItemActive(item.href, currentPath);
+        const label = getNavItemLabel(item.href, item.label);
         return (
           <a
             href={item.href}
             class:list={["app-sidebar-link", { "app-sidebar-link-active": active }]}
             aria-current={active ? "page" : undefined}
-            title={item.label}
+            title={label}
           >
             <NavIcon name={item.icon} />
-            <span class="app-sidebar-link-label">{item.label}</span>
+            <span class="app-sidebar-link-label">{label}</span>
           </a>
         );
       })

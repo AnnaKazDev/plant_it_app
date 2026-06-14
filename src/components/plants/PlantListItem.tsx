@@ -1,4 +1,4 @@
-import ActionTeaser, { PlantAvatar } from "@/components/plants/ActionTeaser";
+import ActionTeaser, { EmptyActionTeaser, teaserElevationClass } from "@/components/plants/ActionTeaser";
 import type { PlantListItem as PlantListItemData } from "@/lib/plant-page";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ export default function PlantListItem({ plant }: PlantListItemProps) {
       href={`/plants/${plant.id}`}
       className={cn(
         "border-border bg-card/40 block rounded-xl border p-4 transition-colors",
+        teaserElevationClass,
         "hover:bg-card/60 focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
       )}
     >
@@ -25,12 +26,9 @@ export default function PlantListItem({ plant }: PlantListItemProps) {
       </div>
 
       {plant.last_action ? (
-        <ActionTeaser action={plant.last_action} />
+        <ActionTeaser action={plant.last_action} nested />
       ) : (
-        <div className="flex items-center gap-4">
-          <PlantAvatar signedPhotoUrl={plant.signed_photo_url} alt={plant.display_name} />
-          <p className="text-muted-foreground text-sm">No actions yet</p>
-        </div>
+        <EmptyActionTeaser signedPhotoUrl={plant.signed_photo_url} alt={plant.display_name} nested />
       )}
     </a>
   );

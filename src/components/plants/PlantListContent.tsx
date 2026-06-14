@@ -9,8 +9,8 @@ export default function PlantListContent({ plants }: PlantListContentProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold text-transparent">
-          My plants
+        <h1 className="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold">
+          Plant List
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           {plants.length > 0 ? (

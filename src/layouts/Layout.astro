@@ -3,6 +3,8 @@ import "../styles/global.css";
 import Banner from "@/components/Banner.astro";
 import AppSidebar from "@/components/AppSidebar.astro";
 import { missingConfigs } from "@/lib/config-status";
+import { getUserPlantCount } from "@/lib/plants";
+import { createClient } from "@/lib/supabase";
 
 interface Props {
   title?: string;
@@ -11,6 +13,15 @@ interface Props {
 const { title = "Plant It" } = Astro.props;
 const { user } = Astro.locals;
 const currentPath = Astro.url.pathname;
+
+let plantCount: number | null = null;
+
+if (user) {
+  const supabase = createClient(Astro.request.headers, Astro.cookies);
+  if (supabase) {
+    plantCount = await getUserPlantCount(supabase, user.id);
+  }
+}
 ---
 
 <!doctype html>
@@ -18,7 +29,7 @@ const currentPath = Astro.url.pathname;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/plant_it_.png" />
     <title>{title}</title>
     <script is:inline>
       (() => {
@@ -47,7 +58,7 @@ const currentPath = Astro.url.pathname;
         </Banner>
       ))
     }
-    <AppSidebar userEmail={user?.email ?? null} currentPath={currentPath} />
+    <AppSidebar userEmail={user?.email ?? null} currentPath={currentPath} plantCount={plantCount} />
     <main class="app-shell-main min-h-screen w-full">
       <slot />
     </main>

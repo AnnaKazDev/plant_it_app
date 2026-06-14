@@ -11,7 +11,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: "home", auth: "any" },
-  { href: "/plants", label: "My Plants", icon: "plants", auth: "authenticated" },
+  { href: "/plants", label: "Plant List", icon: "plants", auth: "authenticated" },
   { href: "/plants/new", label: "Add Plant", icon: "plus", auth: "authenticated" },
   { href: "/garden-map", label: "Garden Map", icon: "map", auth: "authenticated" },
   { href: "/auth/signin", label: "Sign In", icon: "sign-in", auth: "guest" },
