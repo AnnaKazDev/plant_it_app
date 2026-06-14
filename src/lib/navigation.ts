@@ -28,5 +28,17 @@ export function getVisibleNavItems(isAuthenticated: boolean): NavItem[] {
 
 export function isNavItemActive(href: string, currentPath: string): boolean {
   if (href === "/") return currentPath === "/";
-  return currentPath === href || currentPath.startsWith(`${href}/`);
+
+  const matches = currentPath === href || currentPath.startsWith(`${href}/`);
+  if (!matches) return false;
+
+  const hasMoreSpecificNavMatch = NAV_ITEMS.some(
+    (item) =>
+      item.href !== href &&
+      item.href !== "/" &&
+      item.href.startsWith(`${href}/`) &&
+      (currentPath === item.href || currentPath.startsWith(`${item.href}/`)),
+  );
+
+  return !hasMoreSpecificNavMatch;
 }

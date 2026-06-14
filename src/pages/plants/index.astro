@@ -8,7 +8,7 @@ const { user } = Astro.locals;
 const pageData = user ? await loadPlantListPageData(Astro.request.headers, Astro.cookies, user.id) : { plants: [] };
 ---
 
-<Layout title="Plant List">
+<Layout title="Plant List - Plant It App">
   <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
     <div class="border-border bg-card/50 w-full max-w-2xl rounded-2xl border p-8 backdrop-blur-xl">
       {

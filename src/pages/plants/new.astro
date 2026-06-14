@@ -9,40 +9,40 @@ const pageData = user
   : { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
 ---
 
-<Layout title="Add plant">
+<Layout title="Add new plant - Plant It App">
   <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
     <div class="border-border bg-card/50 w-full max-w-4xl rounded-2xl border p-8 backdrop-blur-xl">
       {
         !user ? (
           <div class="space-y-4 text-center">
-            <h1 class="text-foreground text-2xl font-bold">Sign in required</h1>
+            <h1 class="text-foreground text-2xl font-bold">Who&apos;s gardening here?</h1>
             <p class="text-muted-foreground text-sm">
               <a href="/auth/signin" class="text-primary hover:underline">
                 Sign in
               </a>{" "}
-              to add a plant.
+              first — then we&apos;ll get you planting.
             </p>
           </div>
         ) : !pageData.hasGardenSetup ? (
           <div class="space-y-4 text-center">
-            <h1 class="text-foreground text-2xl font-bold">Garden setup required</h1>
+            <h1 class="text-foreground text-2xl font-bold">Your plot needs a size first</h1>
             <p class="text-muted-foreground text-sm">
-              Complete registration with garden dimensions before adding plants.
+              Tell us how big your garden is — then your plants can move in.
             </p>
             <a
               href="/auth/signup"
               class="bg-primary text-primary-foreground inline-flex rounded-md px-4 py-2 text-sm font-medium"
             >
-              Complete setup
+              Finish garden setup
             </a>
           </div>
         ) : (
           <div>
             <h1 class="from-primary to-secondary mb-2 bg-gradient-to-r bg-clip-text text-2xl font-bold text-transparent">
-              Add your plant
+              Add new plant
             </h1>
             <p class="text-muted-foreground mb-6 text-sm">
-              Give it a name, optional photo, and place it on your garden grid.
+              Name it, snap a pic if you&apos;re feeling photogenic, then drop it on your garden map. Enjoy!
             </p>
             <AddPlantForm
               gardenWidth={pageData.gardenWidth}

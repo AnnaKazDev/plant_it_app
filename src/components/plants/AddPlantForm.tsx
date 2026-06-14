@@ -37,7 +37,7 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, ex
     const trimmed = name.trim();
 
     if (!trimmed) {
-      next.name = "Plant name is required";
+      next.name = "Every plant needs a name!";
     } else if (trimmed.length > 200) {
       next.name = "Name must be at most 200 characters";
     }
@@ -114,12 +114,13 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, ex
     <form className="space-y-6" onSubmit={handleSubmit} noValidate>
       {gardenName ? (
         <p className="text-muted-foreground text-sm">
-          Garden: <span className="text-foreground font-medium">{gardenName}</span> ({gardenWidth}×{gardenHeight} m)
+          Plotting in <span className="text-foreground font-medium">{gardenName}</span> ({gardenWidth}×{gardenHeight}{" "}
+          m)
         </p>
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="plant-name">Plant name</Label>
+        <Label htmlFor="plant-name">What&apos;s its name?</Label>
         <Input
           id="plant-name"
           value={name}
@@ -127,7 +128,7 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, ex
             setName(event.target.value);
             if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
           }}
-          placeholder="e.g., Calendula"
+          placeholder="Calendula, Basil the Bold, your call"
           aria-invalid={Boolean(errors.name)}
           autoComplete="off"
         />
@@ -140,7 +141,7 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, ex
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="plant-photo">Plant photo (optional)</Label>
+        <Label htmlFor="plant-photo">Glamour shot (optional)</Label>
         <div className="relative">
           <Input
             id="plant-photo"
@@ -161,17 +162,17 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, ex
             {errors.photo}
           </p>
         ) : (
-          <p className="text-muted-foreground text-xs">JPEG, PNG, or WebP — max 10 MB</p>
+          <p className="text-muted-foreground text-xs">JPEG, PNG, or WebP · up to 10 MB</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label>Plant icon</Label>
+        <Label>Pick its icon</Label>
         <PlantIconPicker value={iconName} onChange={setIconName} />
       </div>
 
       <div className="space-y-2">
-        <Label>Garden location</Label>
+        <Label>Place the plant on the map of your garden</Label>
         <GardenGridPicker
           gardenWidth={gardenWidth}
           gardenHeight={gardenHeight}
@@ -197,12 +198,12 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, ex
         {isSubmitting ? (
           <span className="flex items-center gap-2">
             <span className="border-primary-foreground/30 border-t-primary-foreground size-4 animate-spin rounded-full border-2" />
-            Adding plant...
+            Planting…
           </span>
         ) : (
           <span className="flex items-center gap-2">
             <Sprout className="size-4" />
-            Add plant
+            Plant it!
           </span>
         )}
       </Button>
