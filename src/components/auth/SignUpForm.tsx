@@ -30,6 +30,7 @@ export default function SignUpForm({ serverError }: Props) {
     gardenWidth?: string;
     gardenHeight?: string;
   }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function validate() {
     const next: typeof errors = {};
@@ -101,7 +102,9 @@ export default function SignUpForm({ serverError }: Props) {
   function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     if (!validate()) {
       e.preventDefault();
+      return;
     }
+    setIsSubmitting(true);
   }
 
   const passwordHint =
@@ -251,7 +254,7 @@ export default function SignUpForm({ serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText="Creating account..." icon={<UserPlus className="size-4" />}>
+      <SubmitButton pending={isSubmitting} pendingText="Creating account..." icon={<UserPlus className="size-4" />}>
         Create account
       </SubmitButton>
     </form>
