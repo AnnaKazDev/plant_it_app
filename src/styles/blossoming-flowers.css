@@ -21,9 +21,55 @@
   mask-composite: intersect;
   -webkit-mask-composite: source-in;
   --dark-color: transparent;
-  --blossom-stem: #14757a;
-  --blossom-leaf: #39c6d6;
-  --blossom-petal: #a7ffee;
+
+  /* ========================================
+     COLOR PALETTE — Choose one version below
+     ======================================== */
+
+  /* VERSION 1: Original CodePen colors (comment to disable) */
+  
+  --blossom-stem: #5a4a42;
+  --blossom-leaf: #7cb342;
+  --blossom-petal: #f48fb1;
+  --blossom-petal-light: #f8bbd0;
+  --blossom-petal-deep: #e91e63;
+  --blossom-grass: #9ccc65;
+  --blossom-frond: #558b2f;
+  --blossom-foliage: #689f38;
+  --blossom-glow: #ffc1e3;
+  --blossom-glow-alt: #ce93d8;
+  --blossom-center: #fffde7;
+  --blossom-pollen: #fff9c4;
+  --blossom-pollen-deep: #f9a825;
+ 
+
+  /* VERSION 2: Sage Garden theme (adaptive colors) */
+  /* --blossom-stem: color-mix(in oklch, var(--primary) 72%, black);
+  --blossom-leaf: var(--primary);
+  --blossom-petal: var(--secondary);
+  --blossom-petal-light: var(--accent);
+  --blossom-petal-deep: color-mix(in oklch, var(--primary) 50%, var(--secondary));
+  --blossom-grass: var(--chart-3);
+  --blossom-frond: color-mix(in oklch, var(--primary) 78%, black);
+  --blossom-foliage: var(--chart-2);
+  --blossom-glow: color-mix(in oklch, var(--secondary) 80%, white);
+  --blossom-glow-alt: var(--accent);
+  --blossom-center: var(--card);
+  --blossom-pollen: color-mix(in oklch, var(--secondary) 88%, white);
+  --blossom-pollen-deep: color-mix(in oklch, var(--chart-2) 65%, var(--secondary)); */
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .blossom-scene {
+    padding-right: 0;
+    mask-image:
+      linear-gradient(to top, black 20%, transparent 70%),
+      linear-gradient(to left, black 30%, transparent 80%);
+    -webkit-mask-image:
+      linear-gradient(to top, black 20%, transparent 70%),
+      linear-gradient(to left, black 30%, transparent 80%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -45,6 +91,15 @@
   right: -2vmin;
   transform: scale(0.85);
   transform-origin: bottom right;
+}
+
+/* Mobile: larger scale to reach bottom of screen */
+@media (max-width: 768px) {
+  .blossom-scene .flowers {
+    transform: scale(2.6);
+    right: -10vmin;
+    bottom: -15vmin;
+  }
 }
 
 .blossom-scene .flower {
@@ -165,7 +220,7 @@
   transform: translate(-50%, -100%);
   width: 8vmin;
   height: 8vmin;
-  background-color: #6bf0ff;
+  background-color: var(--blossom-glow-alt);
   filter: blur(10vmin);
 }
 .blossom-scene .flower__leaf {
@@ -175,8 +230,8 @@
   width: 8vmin;
   height: 11vmin;
   border-radius: 51% 49% 47% 53%/44% 45% 55% 69%;
-  background-color: #a7ffee;
-  background-image: linear-gradient(to top, #54b8aa, #a7ffee);
+  background-color: var(--blossom-petal-light);
+  background-image: linear-gradient(to top, var(--blossom-petal-deep), var(--blossom-petal-light));
   transform-origin: bottom center;
   opacity: 0.9;
   box-shadow: inset 0 0 2vmin rgba(255, 255, 255, 0.5);
@@ -196,7 +251,7 @@
   transform-origin: bottom left;
   border-radius: 4vmin 10vmin 4vmin 4vmin;
   transform: translate(0%, 18%) rotateX(70deg) rotate(-43deg);
-  background-image: linear-gradient(to top, #39c6d6, #a7ffee);
+  background-image: linear-gradient(to top, var(--blossom-leaf), var(--blossom-petal-light));
   z-index: 1;
   opacity: 0.8;
 }
@@ -207,7 +262,7 @@
   width: 9vmin;
   height: 4vmin;
   border-radius: 50%;
-  background-color: #fff;
+  background-color: var(--blossom-center);
 }
 .blossom-scene .flower__white-circle::after {
   content: "";
@@ -218,12 +273,12 @@
   width: 60%;
   height: 60%;
   border-radius: inherit;
-  background-image: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(67.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(112.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(112.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(22.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(22.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(157.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(67.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(67.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), linear-gradient(90deg, rgb(255, 235, 18), rgb(255, 206, 0));
+  background-image: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(67.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(112.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(112.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(22.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(22.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(157.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(67.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), repeating-linear-gradient(67.5deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 12px), linear-gradient(90deg, var(--blossom-pollen), var(--blossom-pollen-deep));
 }
 .blossom-scene .flower__line {
   height: 55vmin;
   width: 1.5vmin;
-  background-image: linear-gradient(to left, rgba(0, 0, 0, 0.2), transparent, rgba(255, 255, 255, 0.2)), linear-gradient(to top, transparent 10%, #14757a, #39c6d6);
+  background-image: linear-gradient(to left, rgba(0, 0, 0, 0.2), transparent, rgba(255, 255, 255, 0.2)), linear-gradient(to top, transparent 10%, var(--blossom-stem), var(--blossom-leaf));
   box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
   -webkit-animation: grow-flower-tree 4s backwards;
           animation: grow-flower-tree 4s backwards;
@@ -238,7 +293,7 @@
   height: var(--h);
   border-top-right-radius: var(--h);
   border-bottom-left-radius: var(--h);
-  background-image: linear-gradient(to top, rgba(20, 117, 122, 0.4), #39c6d6);
+  background-image: linear-gradient(to top, color-mix(in oklch, var(--blossom-stem) 40%, transparent), var(--blossom-leaf));
 }
 .blossom-scene .flower__line__leaf--1 {
   transform: rotate(70deg) rotateY(30deg);
@@ -275,14 +330,14 @@
   bottom: 0vmin;
   width: 1vmin;
   height: 1vmin;
-  background-color: rgb(255, 251, 0);
+  background-color: var(--blossom-glow);
   border-radius: 50%;
   filter: blur(0.2vmin);
   -webkit-animation: light-ans 4s linear infinite backwards;
           animation: light-ans 4s linear infinite backwards;
 }
 .blossom-scene .flower__light:nth-child(odd) {
-  background-color: #17d3e1;
+  background-color: var(--blossom-glow-alt);
 }
 .blossom-scene .flower__light--1 {
   left: -2vmin;
@@ -325,7 +380,7 @@
           animation-delay: 3.5s;
 }
 .blossom-scene .flower__grass {
-  --c: #159faa;
+  --c: var(--blossom-grass);
   --line-w: 1.5vmin;
   position: absolute;
   bottom: 12vmin;
@@ -547,7 +602,7 @@
 .blossom-scene .flower__g-long {
   --w: 2vmin;
   --h: 6vmin;
-  --c: #159faa;
+  --c: var(--blossom-grass);
   position: absolute;
   bottom: 10vmin;
   left: -3vmin;
@@ -603,9 +658,9 @@
   width: 30vmin;
   height: 50vmin;
   border-top-left-radius: 100%;
-  border-left: 2vmin solid #079097;
+  border-left: 2vmin solid var(--blossom-frond);
   background-image: linear-gradient(to bottom, transparent, var(--dark-color) 60%);
-  -webkit-mask-image: linear-gradient(to top, transparent 30%, #079097 60%);
+  -webkit-mask-image: linear-gradient(to top, transparent 30%, var(--blossom-frond) 60%);
 }
 .blossom-scene .flower__g-right--1 {
   -webkit-animation: flower-g-right-ans 2.5s linear infinite;
@@ -683,7 +738,7 @@
 .blossom-scene .flower__g-front__line {
   width: 0.3vmin;
   height: 20vmin;
-  background-image: linear-gradient(to top, transparent, #079097, transparent 100%);
+  background-image: linear-gradient(to top, transparent, var(--blossom-frond), transparent 100%);
   position: relative;
 }
 .blossom-scene .flower__g-front__leaf-wrapper {
@@ -791,9 +846,9 @@
   height: 10vmin;
   border-radius: 100% 0% 0% 100%/100% 100% 0% 0%;
   box-shadow: inset 0 2px 1vmin hsla(184deg, 97%, 58%, 0.2);
-  background-image: linear-gradient(to bottom left, transparent, var(--dark-color)), linear-gradient(to bottom right, #159faa 50%, transparent 50%, transparent);
-  -webkit-mask-image: linear-gradient(to bottom right, #159faa 50%, transparent 50%, transparent);
-  mask-image: linear-gradient(to bottom right, #159faa 50%, transparent 50%, transparent);
+  background-image: linear-gradient(to bottom left, transparent, var(--dark-color)), linear-gradient(to bottom right, var(--blossom-grass) 50%, transparent 50%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom right, var(--blossom-grass) 50%, transparent 50%, transparent);
+  mask-image: linear-gradient(to bottom right, var(--blossom-grass) 50%, transparent 50%, transparent);
 }
 .blossom-scene .flower__g-fr {
   position: absolute;
@@ -824,8 +879,8 @@
   width: 30vmin;
   height: 50vmin;
   border-top-left-radius: 100%;
-  border-left: 2vmin solid #079097;
-  -webkit-mask-image: linear-gradient(to top, transparent 25%, #079097 50%);
+  border-left: 2vmin solid var(--blossom-frond);
+  -webkit-mask-image: linear-gradient(to top, transparent 25%, var(--blossom-frond) 50%);
   position: relative;
   z-index: 1;
 }
@@ -837,8 +892,8 @@
   height: 10vmin;
   border-radius: 100% 0% 0% 100%/100% 100% 0% 0%;
   box-shadow: inset 0 2px 1vmin hsla(184deg, 97%, 58%, 0.2);
-  background-image: linear-gradient(to bottom left, transparent, var(--dark-color) 98%), linear-gradient(to bottom right, #23f0ff 45%, transparent 50%, transparent);
-  -webkit-mask-image: linear-gradient(135deg, #159faa 40%, transparent 50%, transparent);
+  background-image: linear-gradient(to bottom left, transparent, var(--dark-color) 98%), linear-gradient(to bottom right, var(--blossom-glow-alt) 45%, transparent 50%, transparent);
+  -webkit-mask-image: linear-gradient(135deg, var(--blossom-grass) 40%, transparent 50%, transparent);
 }
 .blossom-scene .flower__g-fr__leaf--1 {
   left: 20vmin;
@@ -967,7 +1022,7 @@
   transform: scale(0.8) rotate(-5deg);
 }
 .blossom-scene .long-g--1 .leaf {
-  -webkit-mask-image: linear-gradient(to top, transparent 40%, #079097 80%) !important;
+  -webkit-mask-image: linear-gradient(to top, transparent 40%, var(--blossom-frond) 80%) !important;
 }
 .blossom-scene .long-g--1 .leaf--1 {
   --w: 5vmin;
@@ -982,7 +1037,7 @@
   transform: scale(0.6) rotateX(60deg);
 }
 .blossom-scene .long-g--2 .leaf, .blossom-scene .long-g--3 .leaf {
-  -webkit-mask-image: linear-gradient(to top, transparent 50%, #079097 80%) !important;
+  -webkit-mask-image: linear-gradient(to top, transparent 50%, var(--blossom-frond) 80%) !important;
 }
 .blossom-scene .long-g--2 .leaf--1, .blossom-scene .long-g--3 .leaf--1 {
   left: -1vmin;
@@ -993,7 +1048,7 @@
   bottom: 0vmin;
 }
 .blossom-scene .long-g--3 .leaf {
-  -webkit-mask-image: linear-gradient(to top, transparent 40%, #079097 80%) !important;
+  -webkit-mask-image: linear-gradient(to top, transparent 40%, var(--blossom-frond) 80%) !important;
 }
 .blossom-scene .long-g--4 {
   left: 25vmin;
@@ -1002,7 +1057,7 @@
   transform: scale(0.6) rotateX(60deg);
 }
 .blossom-scene .long-g--4 .leaf {
-  -webkit-mask-image: linear-gradient(to top, transparent 50%, #079097 80%) !important;
+  -webkit-mask-image: linear-gradient(to top, transparent 50%, var(--blossom-frond) 80%) !important;
 }
 .blossom-scene .long-g--5 {
   left: 42vmin;
@@ -1027,7 +1082,7 @@
 .blossom-scene .long-g .leaf {
   --w: 15vmin;
   --h: 40vmin;
-  --c: #1aaa15;
+  --c: var(--blossom-foliage);
   position: absolute;
   bottom: 0;
   width: var(--w);
@@ -1329,4 +1384,4 @@
 .blossom-scene .container * {
   -webkit-animation-play-state: paused !important;
           animation-play-state: paused !important;
-}/*# sourceMappingURL=main.css.map */
+}
