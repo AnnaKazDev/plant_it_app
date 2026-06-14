@@ -1,8 +1,22 @@
 ---
 import Welcome from "@/components/Welcome.astro";
+import HomeDashboard from "@/components/HomeDashboard.astro";
 import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
+
+const { user } = Astro.locals;
+
+let plantCount = 0;
+
+if (user) {
+  const supabase = createClient(Astro.request.headers, Astro.cookies);
+  if (supabase) {
+    const { count } = await supabase.from("plants").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+    plantCount = count ?? 0;
+  }
+}
 ---
 
-<Layout>
-  <Welcome />
+<Layout title="Home">
+  {user ? <HomeDashboard user={user} plantCount={plantCount} /> : <Welcome />}
 </Layout>

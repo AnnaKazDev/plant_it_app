@@ -4,7 +4,6 @@ import { createTestClient } from "@/lib/test-utils";
 import { ERROR_CODES } from "@/types";
 
 const PROTECTED_ROUTES = [
-  "/dashboard",
   "/api/photos",
   "/plants",
   "/api/plants",
