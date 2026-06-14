@@ -5,7 +5,6 @@
  * MIT License
  */
 import blossomingFlowersMarkup from "./blossoming-flowers-markup.html?raw";
-import "@/styles/blossoming-flowers.css";
 ---
 
 <div
@@ -16,9 +15,12 @@ import "@/styles/blossoming-flowers.css";
 />
 
 <script>
-  function startBlossomAnimation() {
+  async function startBlossomAnimation() {
     const scene = document.getElementById("blossom-scene");
     if (!scene) return;
+
+    // Load CSS client-side only to avoid SSR CPU overhead
+    await import("@/styles/blossoming-flowers.css");
 
     window.setTimeout(() => {
       scene.classList.remove("not-loaded");
