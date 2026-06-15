@@ -12,11 +12,11 @@ export default function PlantListContent({ plants }: PlantListContentProps) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-2xl">
             <h1 className="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold">
-              Plant list
+              My plants
             </h1>
             <p className="text-muted-foreground mt-2 text-sm">
-              Your full roster in one place. Each card shows the latest action — open a plant for the full story, or
-              jump straight to adding a new entry.
+              Your garden roster in one place. Each card highlights the latest care activity for that plant — open it
+              for the full timeline, or add a new entry right away.
             </p>
           </div>
         </div>

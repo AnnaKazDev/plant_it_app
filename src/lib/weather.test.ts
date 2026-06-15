@@ -49,6 +49,8 @@ describe("WeatherService", () => {
                 maxwind_kph: 25.3,
                 totalprecip_mm: 2.4,
                 avghumidity: 75,
+                uv: 4.2,
+                condition: { text: "Partly cloudy" },
               },
               astro: {
                 sunrise: "06:45 AM",
@@ -80,6 +82,8 @@ describe("WeatherService", () => {
         moonrise: "08:15 PM",
         moonset: "07:20 AM",
         moon_phase: "Waxing Gibbous",
+        condition_text: "Partly cloudy",
+        uv: 4.2,
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
@@ -208,6 +212,66 @@ describe("WeatherService", () => {
     });
   });
 
+  describe("fetchTodayWeatherByCity()", () => {
+    it("should fetch current and today forecast weather", async () => {
+      const mockResponse = {
+        current: {
+          temp_c: 11.5,
+          condition: { text: "Partly cloudy", icon: "//cdn.weatherapi.com/weather/64x64/day/116.png" },
+        },
+        forecast: {
+          forecastday: [
+            {
+              day: {
+                maxtemp_c: 15.5,
+                mintemp_c: 8.2,
+                maxwind_kph: 25.3,
+                totalprecip_mm: 2.4,
+                avghumidity: 75,
+                uv: 3.5,
+                condition: { text: "Partly cloudy" },
+              },
+              astro: {
+                sunrise: "06:45 AM",
+                sunset: "06:30 PM",
+                moonrise: "08:15 PM",
+                moonset: "07:20 AM",
+                moon_phase: "Waxing Gibbous",
+              },
+            },
+          ],
+        },
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => Promise.resolve(mockResponse),
+      });
+
+      const result = await weatherService.fetchTodayWeatherByCity("Warsaw");
+
+      expect(result).toEqual({
+        current_temp_c: 11.5,
+        condition_text: "Partly cloudy",
+        condition_icon_url: "https://cdn.weatherapi.com/weather/64x64/day/116.png",
+        forecast: {
+          temp_max: 15.5,
+          temp_min: 8.2,
+          wind: 25.3,
+          precip: 2.4,
+          humidity: 75,
+          sunrise: "06:45 AM",
+          sunset: "06:30 PM",
+          moonrise: "08:15 PM",
+          moonset: "07:20 AM",
+          moon_phase: "Waxing Gibbous",
+          condition_text: "Partly cloudy",
+          uv: 3.5,
+        },
+      });
+    });
+  });
+
   describe("getWeatherForDate()", () => {
     it("should use cache first when available", async () => {
       if (!testData) {
@@ -262,6 +326,8 @@ describe("WeatherService", () => {
                 maxwind_kph: 18.5,
                 totalprecip_mm: 0.5,
                 avghumidity: 60,
+                uv: 6,
+                condition: { text: "Sunny" },
               },
               astro: {
                 sunrise: "06:15 AM",
@@ -293,6 +359,8 @@ describe("WeatherService", () => {
         moonrise: "09:30 PM",
         moonset: "08:30 AM",
         moon_phase: "New Moon",
+        condition_text: "Sunny",
+        uv: 6,
       });
 
       expect(global.fetch).toHaveBeenCalled();

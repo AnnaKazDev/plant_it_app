@@ -20,15 +20,15 @@ if (isNotFound) {
 ---
 
 <Layout title={`${isNotFound ? "Plant not found" : plant.display_name} - Plant It App`}>
-  <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
+  <div class="bg-cosmic flex min-h-screen justify-center p-4 sm:pt-8">
     <div class="border-border bg-card/50 w-full max-w-2xl rounded-2xl border p-8 backdrop-blur-xl">
       {
         isNotFound ? (
           <div class="space-y-4 text-center">
             <h1 class="text-foreground text-2xl font-bold">Plant not found</h1>
             <p class="text-muted-foreground text-sm">This plant does not exist or you do not have access to it.</p>
-            <a href="/plants/new" class="text-primary text-sm hover:underline">
-              Add a new plant
+            <a href="/plants" class="text-primary text-sm hover:underline">
+              Back to my plants
             </a>
           </div>
         ) : (

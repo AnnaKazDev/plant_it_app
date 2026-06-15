@@ -33,6 +33,8 @@ export interface WeatherData {
   moonrise: string;
   moonset: string;
   moon_phase: string;
+  condition_text?: string;
+  uv?: number;
   // Additional fields as needed; store full API response as JSONB
   [key: string]: unknown;
 }

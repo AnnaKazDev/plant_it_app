@@ -18,3 +18,7 @@ export function isPlannedAction(isoDate: string): boolean {
 export function compareActionsByDateDesc(a: { date: string }, b: { date: string }): number {
   return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
+
+export function compareActionsByDateAsc(a: { date: string }, b: { date: string }): number {
+  return new Date(a.date).getTime() - new Date(b.date).getTime();
+}

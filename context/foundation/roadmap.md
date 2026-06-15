@@ -3,7 +3,7 @@ project: Plant It
 version: 1
 status: draft
 created: 2026-05-25
-updated: 2026-06-13
+updated: 2026-06-15
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -27,13 +27,13 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 
 | ID   | Change ID                 | Outcome (user can …)                                                                                                                                          | Prerequisites          | PRD refs                                              | Status   |
 | ---- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------- | -------- |
-| F-01 | core-data-schema          | (foundation) Core schema landed: plants, actions, photos tables + user profile extension (location, garden dimensions) + RLS policies                         | —                      | FR-003, FR-012                                        | ready    |
-| F-02 | photo-storage-setup       | (foundation) Photo storage ready: Supabase Storage bucket, upload API, RLS for private photos, max 5 per action validation                                    | —                      | NFR (privacy), FR-007                                 | ready    |
-| F-03 | weather-api-integration   | (foundation) Weather API client wired: fetch historical weather by date + coordinates, error handling                                                         | —                      | FR-009, NFR (weather data)                            | ready    |
+| F-01 | core-data-schema          | (foundation) Core schema landed: plants, actions, photos tables + user profile extension (location, garden dimensions) + RLS policies                         | —                      | FR-003, FR-012                                        | done     |
+| F-02 | photo-storage-setup       | (foundation) Photo storage ready: Supabase Storage bucket, upload API, RLS for private photos, max 5 per action validation                                    | —                      | NFR (privacy), FR-007                                 | done     |
+| F-03 | weather-api-integration   | (foundation) Weather API client wired: fetch historical weather by date + coordinates, error handling                                                         | —                      | FR-009, NFR (weather data)                            | done     |
 | S-01 | extended-registration     | Register with email + password + location (city/coordinates) + garden dimensions (width x height in meters)                                                   | F-01                   | FR-001, FR-012                                        | done     |
-| S-02 | first-plant-first-action  | Add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teaser showing photo + action name + date + weather | F-01, F-02, F-03, S-01 | US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013 | proposed |
+| S-02 | first-plant-first-action  | Add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teaser showing photo + action name + date + weather | F-01, F-02, F-03, S-01 | US-01, FR-004, FR-006, FR-007, FR-009, FR-011, FR-013 | done     |
 | S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator                                  | S-02                   | FR-007, FR-008, FR-009, FR-010                        | done     |
-| S-03b | action-notes               | Add optional notes when creating an action, see notes on plant card action teaser                                                                             | S-03                   | FR-007                                                | ready    |
+| S-03b | action-notes               | Add optional notes when creating an action, see notes on plant card action teaser                                                                             | S-03                   | FR-007                                                | done     |
 | S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | done     |
 | S-05 | garden-map-view           | See garden map with plant icons at grid locations (hover tooltip, click → card); add-plant picker shares map styling + `icon_name` | S-02                   | FR-013, FR-014, FR-015                                | done     |
 | S-06 | garden-multi-cell         | Place a plant across multiple grid cells (e.g. raised bed spanning A1–A4); map shows occupied area                                                            | S-05                   | FR-013 (extends)                                      | proposed |
@@ -49,10 +49,10 @@ File-based routing (Astro `src/pages/`). Auth middleware protects routes listed 
 | `/auth/signup`        | public    | S-01       | Extended registration: email + password + location + garden dimensions |
 | `/auth/confirm-email` | public    | baseline   | Email confirmation page (existing)                                     |
 | `/dashboard`          | protected | baseline   | Post-login entry point (existing)                                      |
-| `/plants`             | protected | S-04       | Plant list view with last-action teasers                               |
+| `/plants`             | protected | S-04       | **My plants** list with last-action teasers                               |
 | `/plants/new`         | protected | S-02, S-05 | Add plant form (photo + name + grid coordinates); S-05 upgrades picker to map-style grid + plant icons |
-| `/plants/[id]`        | protected | S-02, S-03, S-03b | Plant card: view plant details + action timeline + add new action (+ optional action notes) |
-| `/garden-map`         | protected | S-05       | Garden map view: sparse CSS grid, plant icon markers, tooltips, links to plant cards                  |
+| `/plants/[id]`        | protected | S-02, S-03, S-03b | Plant card: stats, growth timeline, Upcoming/History teasers, add action (+ optional notes), delete plant (no per-action edit/delete in UI) |
+| `/garden-map`         | protected | S-05       | Garden map: grid + markers + tooltips; context bar (garden name, location, today's weather) |
 
 **Navigation flow (MVP):**
 
@@ -61,10 +61,13 @@ File-based routing (Astro `src/pages/`). Auth middleware protects routes listed 
 
 **API routes (outside file-based routing):**
 
-- `/api/auth/{signin,signup,signout}` — existing auth endpoints
-- `/api/plants` — future CRUD (POST /plants, GET /plants, GET /plants/[id], PATCH /plants/[id], DELETE /plants/[id])
-- `/api/actions` — future CRUD (POST /actions, GET /actions, PATCH /actions/[id], DELETE /actions/[id])
-- `/api/photos/upload` — future photo upload endpoint (Supabase Storage wrapper)
+- `/api/auth/{signin,signup,signout}` — auth endpoints
+- `/api/plants` — `GET` (list), `POST` (create with photo)
+- `/api/plants/[id]` — `GET` (card payload), `DELETE` (plant + cascading actions)
+- `/api/actions` — `POST` (create with weather fetch)
+- `/api/actions/[id]` — `PATCH`, `DELETE` (API only; no edit/delete UI on action teasers)
+- `/api/action-types` — `GET` (predefined action types)
+- `/api/photos/upload` — `POST` (multipart upload to Supabase Storage)
 
 ## Streams
 
@@ -116,7 +119,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Supabase Storage free tier limits vs expected usage (50 GB storage, 2 GB bandwidth/month) — will this suffice for testing + early MVP use? Owner: user (you). Block: no (free tier is generous for solo dev testing; monitor usage, upgrade if needed).
 - **Risk:** Storage quotas could be hit during testing if many large images are uploaded. Monitor bucket size, compress images client-side if needed.
-- **Status:** ready
+- **Status:** done
 
 ### F-03: Weather API integration
 
@@ -130,7 +133,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Which weather API to use? OpenWeatherMap (free tier 1,000 calls/day), WeatherAPI.com (free tier 1M calls/month), or other? Owner: user. Block: no (recommend WeatherAPI.com for higher free tier; can swap later if needed).
 - **Risk:** Weather API rate limits or costs. Check pricing before committing; cache weather data per (date, location) pair to avoid redundant API calls.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -149,7 +152,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-02: First plant + first action
 
-- **Outcome:** User can add plant with photo + name + grid coordinates (e.g., "A3"), add action with photos (max 5) + action name (from predefined list or typed, max 300 chars) + date (selected from calendar), see plant card with action teaser showing first photo + action name + date + weather info (temperature, rain/sun). Routes: `/plants/new` (add plant form), `/plants/[id]` (plant card with action timeline + add action form).
+- **Outcome:** User can add plant with photo + name + grid coordinates (e.g., "A3"), add action with photos (max 5) + action name (from predefined list or typed, max 300 chars) + date (selected from calendar), see plant card with action teaser showing first photo + action name + date + weather info (temperature, rain/sun). Routes: `/plants/new` (add plant form), `/plants/[id]` (plant card with action timeline + add action form). **Post-slice polish:** stats panel, growth timeline, Upcoming/History sections, richer weather details on teasers, delete plant (not individual actions).
 - **Change ID:** first-plant-first-action
 - **PRD refs:** US-01, FR-004 (add plant with name, photo, grid location), FR-006 (see plant card), FR-007 (add action with photos, action name, date), FR-009 (action teaser shows photo, action name, date, weather), FR-011 (placeholder icon if no photo), FR-013 (place plant at grid coordinates when adding)
 - **Prerequisites:** F-01 (plants/actions/photos schema), F-02 (photo upload), F-03 (weather fetch), S-01 (user has garden dimensions + location for weather)
@@ -158,8 +161,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Grid coordinate input: dropdown (A-Z rows, 1-N cols) vs text field ("A3") vs click-on-map? Owner: user. Block: no (recommend text field "A3" for simplicity; validate format, show grid preview if time allows).
   - Predefined action list (~30 actions): see F-01 for schema decision (action_types table). Action examples: "watering", "fertilizing", "pruning", "planted from seed", "transplanting", "removing diseased leaves", etc. Full list to be defined during F-01 planning.
-- **Risk:** Most complex slice — touches all layers (data, API, UI, storage, external weather API). Could expand scope during planning. Keep tightly scoped: single plant, single action, no editing yet. Split into smaller changes if `/10x-plan` reveals hidden complexity.
-- **Status:** proposed
+- **Risk:** Most complex slice — touches all layers (data, API, UI, storage, external weather API). Could expand scope during planning. Keep tightly scoped: single plant, single action, no per-action editing in UI. Split into smaller changes if `/10x-plan` reveals hidden complexity.
+- **Status:** done
 
 ### S-03: Track multiple actions per plant
 
@@ -183,7 +186,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low scope — deferred from S-02 (`additional_data` column existed without UI). Keep optional; max length enforced at API (e.g. 1000 chars).
-- **Status:** ready
+- **Status:** done
 
 ### S-04: Plant list view with multiple plants
 
@@ -199,7 +202,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-05: Garden map view with spatial layout
 
-- **Outcome:** User can see a styled garden map at `/garden-map` with all plants as lucide icon markers at `(grid_x, grid_y)` on a sparse CSS grid matching profile dimensions (axis labels, soil-tone background). Hover a marker → tooltip with display name, last-action label, date, and photo thumbnail. Click → `/plants/[id]`. Multiple plants in one cell remain visible via collision offsets. Entry points: **Garden map** on `/dashboard` (when `plantCount > 0`) and header link on `/plants`. Same slice upgrades `/plants/new`: shared `GardenGrid`, ~23 curated `icon_name` icons (`POST /api/plants`), map-style picker showing existing plants + draggable new-plant marker; desktop map/picker grids scale to container width (`ResizeObserver`).
+- **Outcome:** User can see a styled garden map at `/garden-map` with all plants as lucide icon markers at `(grid_x, grid_y)` on a sparse CSS grid matching profile dimensions (axis labels, soil-tone background). Hover a marker → tooltip with display name, last-action label, date, and photo thumbnail. Click → `/plants/[id]`. Multiple plants in one cell remain visible via collision offsets. **Context bar** above the map: garden name, location city, dimensions, plant count, and today's weather (compact on mobile). Entry points: **Garden map** on `/dashboard` (when `plantCount > 0`) and nav link **My plants** / **Garden Map**. Same slice upgrades `/plants/new`: shared `GardenGrid`, ~23 curated `icon_name` icons (`POST /api/plants`), map-style picker showing existing plants + draggable new-plant marker; desktop map/picker grids scale to container width (`ResizeObserver`).
 - **Change ID:** garden-map-view
 - **PRD refs:** FR-013 (place plant at grid coordinates — visualization + picker upgrade; input started in S-02), FR-014 (see garden map with all plants), FR-015 (click plant on map → open plant card)
 - **Prerequisites:** S-02 (plants must have grid coordinates)
@@ -229,22 +232,22 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 | Roadmap ID | Change ID                 | Suggested issue title                                                  | Ready for `/10x-plan` | Notes                                   |
 | ---------- | ------------------------- | ---------------------------------------------------------------------- | --------------------- | --------------------------------------- |
-| F-01       | core-data-schema          | Database schema: plants, actions, photos, user profile extension + RLS | yes                   | Run `/10x-plan core-data-schema`        |
-| F-02       | photo-storage-setup       | Photo storage: Supabase Storage bucket + upload API + RLS              | yes                   | Run `/10x-plan photo-storage-setup`     |
-| F-03       | weather-api-integration   | Weather API integration: historical fetch by date + coordinates        | yes                   | Run `/10x-plan weather-api-integration` |
-| S-01       | extended-registration     | Extended registration: location + garden dimensions                    | no                    | Blocked on F-01                         |
-| S-02       | first-plant-first-action  | Add first plant + first action with weather                            | no                    | Blocked on F-01, F-02, F-03, S-01       |
-| S-03       | multiple-actions-tracking | Track multiple actions per plant (past/future dates)                   | no                    | Blocked on S-02                         |
-| S-03b      | action-notes              | Optional notes on actions (create + teaser display)                    | yes                   | Run `/10x-implement action-notes`       |
-| S-04       | plant-list-view           | Plant list view with last-action teasers                               | no                    | Blocked on S-02                         |
-| S-05       | garden-map-view           | Garden map view with plant positions                                   | yes                   | Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/` |
+| F-01       | core-data-schema          | Database schema: plants, actions, photos, user profile extension + RLS | no                    | Done; `context/changes/core-data-schema/` |
+| F-02       | photo-storage-setup       | Photo storage: Supabase Storage bucket + upload API + RLS              | no                    | Done; `context/changes/photo-storage-setup/` |
+| F-03       | weather-api-integration   | Weather API integration: historical fetch by date + coordinates        | no                    | Done; `context/changes/weather-api-integration/` |
+| S-01       | extended-registration     | Extended registration: location + garden dimensions                    | no                    | Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/` |
+| S-02       | first-plant-first-action  | Add first plant + first action with weather                            | no                    | Done; change folder `context/changes/first-plant-first-action/` |
+| S-03       | multiple-actions-tracking | Track multiple actions per plant (past/future dates)                   | no                    | Archived 2026-06-12 → `context/archive/2026-06-12-multiple-actions-tracking/` |
+| S-03b      | action-notes              | Optional notes on actions (create + teaser display)                    | no                    | Done; change folder `context/changes/action-notes/` |
+| S-04       | plant-list-view           | Plant list view with last-action teasers                               | no                    | Archived 2026-06-13 → `context/archive/2026-06-13-plant-list-view/` |
+| S-05       | garden-map-view           | Garden map view with plant positions                                   | no                    | Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/` |
 | S-06       | garden-multi-cell         | Multi-cell plant placement (raised beds / grządki)                     | no                    | Blocked on S-05; see `garden-map-view/research.md`    |
 
 ## Open Roadmap Questions
 
-1. **Weather API selection** — Which weather service? OpenWeatherMap (free tier 1,000 calls/day), WeatherAPI.com (free tier 1M calls/month), or other? Owner: user. Block: F-03 (recommend WeatherAPI.com for higher free tier; proceed with that default unless you prefer another).
+1. ~~**Weather API selection** — Which weather service?~~ **Resolved:** WeatherAPI.com (`src/lib/weather.ts`); historical fetch on action create + today's forecast on garden map.
 
-2. **Location input UX** — City name (with geocoding) vs manual lat/lng entry vs map picker? Owner: user. Block: S-01 (recommend city name input if geocoding service is acceptable; manual coordinates if keeping dependencies minimal).
+2. ~~**Location input UX** — City name (with geocoding) vs manual lat/lng entry vs map picker?~~ **Resolved in S-01:** city name (`location_city`) stored at signup; weather fetched by city.
 
 3. **Grid coordinate input UX** — Dropdown (A-Z rows, 1-N cols) vs text field ("A3") vs click-on-map preview? Owner: user. Block: S-02 (recommend text field "A3" for MVP speed; enhance with visual grid later). **Partially resolved in S-05:** `/plants/new` uses map-style click/drag grid picker; text label still shown for selected cell.
 
@@ -260,11 +263,16 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Advanced map features** — Why parked: PRD §Non-Goals. MVP uses simple rectangular grid (width x height in meters). Non-rectangular garden shapes, custom boundaries, drag-and-drop plant repositioning on the map, sunlight zone mapping, and freeform drawing are deferred. **Exception:** multi-cell plant footprint (grządka spanning several cells) is tracked as **S-06** (`garden-multi-cell`) — post–S-05 enhancement, not part of initial map MVP.
 
-- **Full account deletion** — Why parked: PRD §Non-Goals. Users can delete individual plants or actions, but full account deletion with data purge is out of MVP scope (data retention policy + GDPR-compliant deletion add legal/technical complexity beyond 3-week timeline).
+- **Full account deletion** — Why parked: PRD §Non-Goals. Users can delete a plant (and its actions) from the plant card; per-action delete/edit is not exposed in UI. Full account deletion with data purge is out of MVP scope (data retention policy + GDPR-compliant deletion add legal/technical complexity beyond 3-week timeline).
 
 ## Done
 
+- **F-01: Core data schema** — plants, actions, photos, action_types, profile extension, RLS. Migrations in `supabase/migrations/`. Change folder: `context/changes/core-data-schema/`.
+- **F-02: Photo storage** — `plant-photos` bucket, `/api/photos/upload`, helpers in `src/lib/storage.ts`. Change folder: `context/changes/photo-storage-setup/`.
+- **F-03: Weather API** — `WeatherService` in `src/lib/weather.ts` (WeatherAPI.com); historical + today's forecast. Change folder: `context/changes/weather-api-integration/`.
+- **S-02: User can add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teasers (photo + action + date + weather). Routes: `/plants/new`, `/plants/[id]`. Includes stats panel, growth timeline, Upcoming/History, delete plant.** — Change folder: `context/changes/first-plant-first-action/` (not yet archived).
+- **S-03b: User can add optional notes when creating an action and see notes on action teasers.** — Change folder: `context/changes/action-notes/` (not yet archived).
 - **S-01: User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).** — Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/`. Lesson: —.
 - **S-03: User can add multiple actions to a plant (past/today/future dates), see plant card with all action teasers in chronological order, planned actions (future dates) show visual indicator (badge/count) in plant list. Route: `/plants/[id]` (extends plant card from S-02 to show action timeline + repeated "add action" flow).** — Archived 2026-06-12 → `context/archive/2026-06-12-multiple-actions-tracking/`. Lesson: —.
 - **S-04: User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions. Route: `/plants` (main plant list view, likely linked from `/dashboard`).** — Archived 2026-06-13 → `context/archive/2026-06-13-plant-list-view/`. Lesson: —.
-- **S-05: User can see a styled garden map at `/garden-map` with all plants as lucide icon markers at `(grid_x, grid_y)` on a sparse CSS grid matching profile dimensions (axis labels, soil-tone background). Hover a marker → tooltip with display name, last-action label, date, and photo thumbnail. Click → `/plants/[id]`. Multiple plants in one cell remain visible via collision offsets. Entry points: **Garden map** on `/dashboard` (when `plantCount > 0`) and header link on `/plants`. Same slice upgrades `/plants/new`: shared `GardenGrid`, ~23 curated `icon_name` icons (`POST /api/plants`), map-style picker showing existing plants + draggable new-plant marker; desktop map/picker grids scale to container width (`ResizeObserver`).** — Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/`. Lesson: —.
+- **S-05: User can see a styled garden map at `/garden-map` with plant icon markers, tooltips, and links to plant cards. Post-polish: context bar (garden name, location city, dimensions, plant count, today's weather).** — Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/`. Lesson: —.

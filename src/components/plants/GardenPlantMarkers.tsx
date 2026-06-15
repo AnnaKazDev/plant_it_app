@@ -69,28 +69,32 @@ export default function GardenPlantMarkers({ plants, linkable = true }: GardenPl
             <TooltipContent
               side={tooltipSide}
               sideOffset={10}
-              collisionPadding={24}
-              className="max-w-[36rem] p-0 text-base"
+              collisionPadding={16}
+              className="max-w-[14rem] p-0 text-base sm:max-w-[18rem] lg:max-w-[36rem]"
             >
-              <div className="flex gap-6 p-6">
-                <div className="bg-muted flex size-36 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+              <div className="flex gap-3 p-3 sm:gap-4 sm:p-4 lg:gap-6 lg:p-6">
+                <div className="bg-muted flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg sm:size-24 lg:size-36 lg:rounded-xl">
                   {tooltipPhotoUrl ? (
                     <img src={tooltipPhotoUrl} alt="" className="size-full object-cover" />
                   ) : (
                     <PlantPlaceholderImage alt={plant.display_name} />
                   )}
                 </div>
-                <div className="min-w-0 space-y-2 py-1">
-                  <p className="text-primary-foreground text-xl leading-snug font-semibold">{plant.display_name}</p>
+                <div className="min-w-0 space-y-1 py-0.5 sm:space-y-2 sm:py-1">
+                  <p className="text-primary-foreground text-sm leading-snug font-semibold sm:text-base lg:text-xl">
+                    {plant.display_name}
+                  </p>
                   {plant.last_action ? (
                     <>
-                      <p className="text-primary-foreground/90 text-base capitalize">
+                      <p className="text-primary-foreground/90 text-xs capitalize sm:text-sm lg:text-base">
                         {getActionLabel(plant.last_action)}
                       </p>
-                      <p className="text-primary-foreground/75 text-base">{formatActionDate(plant.last_action.date)}</p>
+                      <p className="text-primary-foreground/75 text-xs sm:text-sm lg:text-base">
+                        {formatActionDate(plant.last_action.date)}
+                      </p>
                     </>
                   ) : (
-                    <p className="text-primary-foreground/75 text-base">No actions yet</p>
+                    <p className="text-primary-foreground/75 text-xs sm:text-sm lg:text-base">No actions yet</p>
                   )}
                 </div>
               </div>

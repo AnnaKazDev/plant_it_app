@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { formatActionDate, isPlannedAction } from "@/lib/action-dates";
 import type { PlantCardAction } from "@/lib/plant-page";
-import type { WeatherData } from "@/types";
+import ActionWeatherInfo from "@/components/plants/ActionWeatherInfo";
 import { cn } from "@/lib/utils";
 
 interface ActionTeaserProps {
@@ -24,33 +24,25 @@ export const plannedBadgeClass =
 function TeaserLayout({
   image,
   children,
+  footer,
   nested = false,
 }: {
   image: ReactNode;
   children: ReactNode;
+  footer?: ReactNode;
   nested?: boolean;
 }) {
   return (
-    <article
-      className={cn(
-        "border-border bg-card/40 flex gap-4 rounded-xl p-2",
-        !nested && teaserElevationClass,
-      )}
-    >
+    <article className={cn("border-border bg-card/40 flex gap-4 rounded-xl p-2", !nested && teaserElevationClass)}>
       <div className="bg-muted text-muted-foreground flex size-30 shrink-0 items-center justify-center overflow-hidden rounded-lg">
         {image}
       </div>
-      <div className="min-w-0 flex-1 space-y-1">{children}</div>
+      <div className="flex min-h-30 min-w-0 flex-1 flex-col">
+        <div className="space-y-1">{children}</div>
+        {footer ? <div className="border-border/60 mt-auto border-t pt-2">{footer}</div> : null}
+      </div>
     </article>
   );
-}
-
-function formatWeather(weather: WeatherData | null): string {
-  if (!weather) {
-    return "Weather unavailable";
-  }
-
-  return `${String(weather.temp_min)}–${String(weather.temp_max)}°C, rain ${String(weather.precip)} mm`;
 }
 
 export function getActionLabel(action: PlantCardAction): string {
@@ -68,6 +60,7 @@ export default function ActionTeaser({ action, nested = false }: ActionTeaserPro
   return (
     <TeaserLayout
       nested={nested}
+      footer={!planned ? <ActionWeatherInfo weather={action.weather_data} /> : undefined}
       image={
         firstPhoto ? (
           <img src={firstPhoto.signed_photo_url} alt="" className="size-full object-cover" />
@@ -78,15 +71,10 @@ export default function ActionTeaser({ action, nested = false }: ActionTeaserPro
     >
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-foreground font-medium capitalize">{getActionLabel(action)}</h3>
-        {planned ? (
-          <span className={plannedBadgeClass}>Planned</span>
-        ) : null}
+        {planned ? <span className={plannedBadgeClass}>Planned</span> : null}
       </div>
       <p className="text-muted-foreground text-sm">{formatActionDate(action.date)}</p>
       {action.additional_data ? <p className="text-muted-foreground text-sm">{action.additional_data}</p> : null}
-      {!planned ? (
-        <p className="text-muted-foreground text-sm">{formatWeather(action.weather_data)}</p>
-      ) : null}
     </TeaserLayout>
   );
 }
@@ -117,9 +105,22 @@ export function EmptyActionTeaser({
   );
 }
 
-export function PlantAvatar({ signedPhotoUrl, alt }: { signedPhotoUrl: string | null; alt: string }) {
+export function PlantAvatar({
+  signedPhotoUrl,
+  alt,
+  className,
+}: {
+  signedPhotoUrl: string | null;
+  alt: string;
+  className?: string;
+}) {
   return (
-    <div className="bg-muted text-muted-foreground flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+    <div
+      className={cn(
+        "bg-muted text-muted-foreground flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-xl",
+        className,
+      )}
+    >
       {signedPhotoUrl ? (
         <img src={signedPhotoUrl} alt={alt} className="size-full object-cover" />
       ) : (
