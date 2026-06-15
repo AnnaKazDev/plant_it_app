@@ -1,16 +1,37 @@
 import { createContext, useContext } from "react";
 
-const GardenGridCellSizeContext = createContext<number | null>(null);
-
-export function GardenGridCellSizeProvider({ cellSize, children }: { cellSize: number; children: React.ReactNode }) {
-  return <GardenGridCellSizeContext.Provider value={cellSize}>{children}</GardenGridCellSizeContext.Provider>;
+interface GardenGridContextValue {
+  cellSize: number;
+  rows: number;
 }
 
-export function useGardenGridCellSize(): number {
-  const cellSize = useContext(GardenGridCellSizeContext);
-  if (cellSize === null) {
+const GardenGridContext = createContext<GardenGridContextValue | null>(null);
+
+export function GardenGridCellSizeProvider({
+  cellSize,
+  rows,
+  children,
+}: {
+  cellSize: number;
+  rows: number;
+  children: React.ReactNode;
+}) {
+  return <GardenGridContext.Provider value={{ cellSize, rows }}>{children}</GardenGridContext.Provider>;
+}
+
+function useGardenGridContext(): GardenGridContextValue {
+  const value = useContext(GardenGridContext);
+  if (value === null) {
     throw new Error("useGardenGridCellSize must be used within GardenGrid");
   }
 
-  return cellSize;
+  return value;
+}
+
+export function useGardenGridCellSize(): number {
+  return useGardenGridContext().cellSize;
+}
+
+export function useGardenGridRows(): number {
+  return useGardenGridContext().rows;
 }

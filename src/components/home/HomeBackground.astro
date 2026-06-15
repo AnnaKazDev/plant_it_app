@@ -1,0 +1,25 @@
+---
+import BlossomingFlowers from "@/components/home/BlossomingFlowers.astro";
+---
+
+<div class="bg-cosmic relative min-h-screen w-full overflow-hidden">
+  <BlossomingFlowers />
+  <div
+    class="bg-primary/20 pointer-events-none absolute top-1/4 -left-24 h-[350px] w-[350px] rounded-full blur-[120px]"
+  >
+  </div>
+  <div
+    class="bg-secondary/15 pointer-events-none absolute top-2/3 -right-16 h-[250px] w-[250px] rounded-full blur-[100px]"
+  >
+  </div>
+  <div
+    class="bg-accent/10 pointer-events-none absolute top-0 left-1/2 h-[300px] w-[300px] -translate-x-1/2 rounded-full blur-[140px]"
+  >
+  </div>
+  <div
+    class="pointer-events-none absolute inset-0 opacity-30"
+    style="background-image: radial-gradient(circle, var(--foreground) 1px, transparent 1px); background-size: 150px 150px; background-position: 0 0;"
+  >
+  </div>
+  <slot />
+</div>

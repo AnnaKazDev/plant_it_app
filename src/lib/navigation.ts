@@ -11,8 +11,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Home", icon: "home", auth: "any" },
-  { href: "/dashboard", label: "Dashboard", icon: "dashboard", auth: "authenticated" },
-  { href: "/plants", label: "My Plants", icon: "plants", auth: "authenticated" },
+  { href: "/plants", label: "My plants", icon: "plants", auth: "authenticated" },
   { href: "/plants/new", label: "Add Plant", icon: "plus", auth: "authenticated" },
   { href: "/garden-map", label: "Garden Map", icon: "map", auth: "authenticated" },
   { href: "/auth/signin", label: "Sign In", icon: "sign-in", auth: "guest" },
@@ -29,5 +28,17 @@ export function getVisibleNavItems(isAuthenticated: boolean): NavItem[] {
 
 export function isNavItemActive(href: string, currentPath: string): boolean {
   if (href === "/") return currentPath === "/";
-  return currentPath === href || currentPath.startsWith(`${href}/`);
+
+  const matches = currentPath === href || currentPath.startsWith(`${href}/`);
+  if (!matches) return false;
+
+  const hasMoreSpecificNavMatch = NAV_ITEMS.some(
+    (item) =>
+      item.href !== href &&
+      item.href !== "/" &&
+      item.href.startsWith(`${href}/`) &&
+      (currentPath === item.href || currentPath.startsWith(`${item.href}/`)),
+  );
+
+  return !hasMoreSpecificNavMatch;
 }

@@ -1,5 +1,7 @@
+const APP_LOCALE = "en-US";
+
 export function formatActionDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString(undefined, {
+  return new Date(isoDate).toLocaleDateString(APP_LOCALE, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -15,4 +17,8 @@ export function isPlannedAction(isoDate: string): boolean {
 
 export function compareActionsByDateDesc(a: { date: string }, b: { date: string }): number {
   return new Date(b.date).getTime() - new Date(a.date).getTime();
+}
+
+export function compareActionsByDateAsc(a: { date: string }, b: { date: string }): number {
+  return new Date(a.date).getTime() - new Date(b.date).getTime();
 }

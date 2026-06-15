@@ -1,8 +1,11 @@
 import type { AstroCookies } from "astro";
+import { WEATHER_API_KEY } from "astro:env/server";
 import { compareActionsByDateDesc, isPlannedAction } from "@/lib/action-dates";
+import { formatGridLabel } from "@/lib/grid";
 import { formatPlantDisplayName } from "@/lib/plants";
 import { createClient } from "@/lib/supabase";
 import { extractStoragePathFromPublicUrl, getSignedPhotoUrl } from "@/lib/storage";
+import { WeatherService, type TodayWeatherInfo } from "@/lib/weather";
 import type { WeatherData } from "@/types";
 
 export interface AddPlantPageData {
@@ -29,14 +32,21 @@ export interface PlantCardAction {
   photos: PlantCardActionPhoto[];
 }
 
+export interface PlantCardPlant {
+  id: string;
+  display_name: string;
+  signed_photo_url: string | null;
+  grid_x: number;
+  grid_y: number;
+  grid_label: string;
+  created_at: string;
+  planned_action_count: number;
+  actions: PlantCardAction[];
+}
+
 export interface PlantCardPageData {
   found: boolean;
-  plant?: {
-    id: string;
-    display_name: string;
-    signed_photo_url: string | null;
-    actions: PlantCardAction[];
-  };
+  plant?: PlantCardPlant;
 }
 
 export interface PlantListItem {
@@ -67,6 +77,8 @@ export interface GardenMapPageData {
   gardenName?: string;
   hasGardenSetup: boolean;
   plants: GardenMapPlant[];
+  locationCity?: string;
+  todayWeather?: TodayWeatherInfo | null;
 }
 
 type SupabaseClient = NonNullable<ReturnType<typeof createClient>>;
@@ -317,7 +329,7 @@ export async function loadGardenMapPageData(
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("garden_width, garden_height, garden_name")
+    .select("garden_width, garden_height, garden_name, location_city")
     .eq("id", userId)
     .single();
 
@@ -330,6 +342,13 @@ export async function loadGardenMapPageData(
   }
 
   const plants = await fetchGardenMapPlantsForUser(supabase, userId);
+  const locationCity = profile.location_city ?? undefined;
+
+  let todayWeather: TodayWeatherInfo | null = null;
+  if (locationCity && WEATHER_API_KEY) {
+    const weatherService = new WeatherService(WEATHER_API_KEY);
+    todayWeather = await weatherService.fetchTodayWeatherByCity(locationCity);
+  }
 
   return {
     gardenWidth: profile.garden_width,
@@ -337,6 +356,8 @@ export async function loadGardenMapPageData(
     gardenName: profile.garden_name ?? undefined,
     hasGardenSetup: true,
     plants,
+    locationCity,
+    todayWeather,
   };
 }
 
@@ -360,6 +381,7 @@ export async function loadPlantCardPageData(
       photo_url,
       grid_x,
       grid_y,
+      created_at,
       actions (
         id,
         action_type_id,
@@ -412,12 +434,19 @@ export async function loadPlantCardPageData(
     }),
   );
 
+  const plannedActionCount = actions.filter((action) => isPlannedAction(action.date)).length;
+
   return {
     found: true,
     plant: {
       id: plant.id,
       display_name: formatPlantDisplayName(plant.name, plant.grid_x, plant.grid_y),
       signed_photo_url: signedPlantPhotoUrl,
+      grid_x: plant.grid_x,
+      grid_y: plant.grid_y,
+      grid_label: formatGridLabel(plant.grid_x, plant.grid_y),
+      created_at: plant.created_at ?? "",
+      planned_action_count: plannedActionCount,
       actions,
     },
   };

@@ -1,5 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import NavIcon from "@/components/NavIcon.astro";
+import GardenMapContextBar from "@/components/plants/GardenMapContextBar.astro";
 import GardenMapView from "@/components/plants/GardenMapView";
 import { loadGardenMapPageData } from "@/lib/plant-page";
 
@@ -9,9 +11,9 @@ const pageData = user
   : { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
 ---
 
-<Layout title="Garden map">
-  <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
-    <div class="border-border bg-card/50 w-full max-w-4xl rounded-2xl border p-8 backdrop-blur-xl">
+<Layout title="Garden map - Plant It App">
+  <div class="bg-cosmic flex min-h-screen justify-center p-3 sm:p-4 sm:pt-8">
+    <div class="border-border bg-card/50 w-full max-w-4xl rounded-2xl border p-4 backdrop-blur-xl sm:p-6 lg:p-8">
       {
         !user ? (
           <div class="space-y-4 text-center">
@@ -37,34 +39,67 @@ const pageData = user
             </a>
           </div>
         ) : pageData.plants.length === 0 ? (
-          <div class="space-y-4 text-center">
-            <h1 class="text-foreground text-2xl font-bold">No plants on the map yet</h1>
-            <p class="text-muted-foreground text-sm">Add your first plant to see it on the garden grid.</p>
-            <a
-              href="/plants/new"
-              class="bg-primary text-primary-foreground inline-flex rounded-md px-4 py-2 text-sm font-medium"
-            >
-              Add a plant
-            </a>
+          <div class="space-y-4 lg:space-y-6">
+            <div class="space-y-3 lg:space-y-4">
+              <div class="flex flex-wrap items-start justify-between gap-2 lg:gap-3">
+                <div class="max-w-2xl">
+                  <h1 class="from-primary to-secondary bg-gradient-to-r bg-clip-text text-xl font-bold lg:text-2xl">
+                    Garden map
+                  </h1>
+                  <p class="text-muted-foreground mt-1 text-xs leading-snug lg:mt-2 lg:text-sm">
+                    Your grid is ready and waiting. Add a plant, pin it here, and this map will start to tell your
+                    garden&apos;s story.
+                  </p>
+                </div>
+                <a
+                  href="/plants/new"
+                  class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex shrink-0 items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  <NavIcon name="plus" />
+                  Add new plant
+                </a>
+              </div>
+
+              <GardenMapContextBar
+                locationCity={pageData.locationCity}
+                gardenName={pageData.gardenName}
+                gardenWidth={pageData.gardenWidth}
+                gardenHeight={pageData.gardenHeight}
+                plantCount={0}
+                todayWeather={pageData.todayWeather}
+              />
+            </div>
           </div>
         ) : (
           <div>
-            <div class="mb-6 space-y-1">
-              <h1 class="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold text-transparent">
-                Garden map
-              </h1>
-              {pageData.gardenName ? (
-                <p class="text-muted-foreground text-sm">
-                  {pageData.gardenName} ({pageData.gardenWidth}×{pageData.gardenHeight} m)
-                </p>
-              ) : (
-                <p class="text-muted-foreground text-sm">
-                  {pageData.gardenWidth}×{pageData.gardenHeight} m
-                </p>
-              )}
-              <p class="text-muted-foreground text-xs">
-                {pageData.plants.length} plant{pageData.plants.length === 1 ? "" : "s"}
-              </p>
+            <div class="mb-4 space-y-3 lg:mb-6 lg:space-y-4">
+              <div class="flex flex-wrap items-start justify-between gap-2 lg:gap-3">
+                <div class="max-w-2xl">
+                  <h1 class="from-primary to-secondary bg-gradient-to-r bg-clip-text text-xl font-bold lg:text-2xl">
+                    Garden map
+                  </h1>
+                  <p class="text-muted-foreground mt-1 text-xs leading-snug lg:mt-2 lg:text-sm">
+                    A bird&apos;s-eye view of your patch. Each pin marks a plant you&apos;ve placed on the grid — hover
+                    for a quick peek at their latest action, then click through for the full story.
+                  </p>
+                </div>
+                <a
+                  href="/plants/new"
+                  class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors lg:px-4 lg:py-2"
+                >
+                  <NavIcon name="plus" />
+                  Add new plant
+                </a>
+              </div>
+
+              <GardenMapContextBar
+                locationCity={pageData.locationCity}
+                gardenName={pageData.gardenName}
+                gardenWidth={pageData.gardenWidth}
+                gardenHeight={pageData.gardenHeight}
+                plantCount={pageData.plants.length}
+                todayWeather={pageData.todayWeather}
+              />
             </div>
             <GardenMapView
               gardenWidth={pageData.gardenWidth}

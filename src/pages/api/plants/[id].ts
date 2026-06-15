@@ -120,3 +120,40 @@ export const GET: APIRoute = async (context) => {
     },
   });
 };
+
+export const DELETE: APIRoute = async (context) => {
+  if (!context.locals.user) {
+    return jsonError({ code: ERROR_CODES.UNAUTHORIZED, message: "Authentication required" }, 401);
+  }
+
+  const plantId = context.params.id;
+  if (!plantId) {
+    return jsonError({ code: ERROR_CODES.VALIDATION_ERROR, message: "Plant ID is required" }, 400);
+  }
+
+  const supabase = createClient(context.request.headers, context.cookies);
+  if (!supabase) {
+    return jsonError({ code: "INTERNAL_ERROR", message: "Failed to initialize database client" }, 500);
+  }
+
+  const { error: fetchError } = await supabase.from("plants").select("id").eq("id", plantId).single();
+
+  if (fetchError) {
+    return jsonError({ code: ERROR_CODES.PLANT_NOT_FOUND, message: "Plant not found or access denied" }, 404);
+  }
+
+  const { error: deleteError } = await supabase.from("plants").delete().eq("id", plantId);
+
+  if (deleteError) {
+    return jsonError(
+      {
+        code: "DATABASE_ERROR",
+        message: "Failed to delete plant",
+        details: { error: deleteError.message },
+      },
+      500,
+    );
+  }
+
+  return Response.json({ success: true });
+};

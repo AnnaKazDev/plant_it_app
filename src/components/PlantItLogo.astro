@@ -1,0 +1,19 @@
+---
+import { cn } from "@/lib/utils";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+const alt = "Plant It — Plant. Track. Thrive.";
+---
+
+<img src="/plant_it_logo.png" alt={alt} width={280} height={280} class:list={cn("dark:hidden", className)} />
+<img
+  src="/plant_it_logo_darkmode.png"
+  alt={alt}
+  width={280}
+  height={280}
+  class:list={cn("hidden dark:block", className)}
+/>

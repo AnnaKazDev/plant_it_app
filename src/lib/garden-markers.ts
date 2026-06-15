@@ -96,3 +96,19 @@ export function getNewPlantMarkerLayout(
 export function countPlantsAtCell(plants: GridPositionedPlant[], gridX: number, gridY: number): number {
   return plants.filter((plant) => plant.grid_x === gridX && plant.grid_y === gridY).length;
 }
+
+export function getMarkerTooltipSide(gridX: number, totalRows: number): "top" | "bottom" {
+  if (totalRows <= 1) {
+    return "bottom";
+  }
+
+  if (gridX === 0) {
+    return "bottom";
+  }
+
+  if (gridX >= totalRows - 1) {
+    return "top";
+  }
+
+  return gridX < totalRows / 2 ? "bottom" : "top";
+}

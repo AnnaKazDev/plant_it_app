@@ -1,24 +1,65 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, WeatherData } from "@/types";
 
-interface WeatherApiResponse {
+interface WeatherApiForecastDay {
+  day: {
+    maxtemp_c: number;
+    mintemp_c: number;
+    maxwind_kph: number;
+    totalprecip_mm: number;
+    avghumidity: number;
+    uv?: number;
+    condition?: { text: string };
+  };
+  astro: {
+    sunrise: string;
+    sunset: string;
+    moonrise: string;
+    moonset: string;
+    moon_phase: string;
+  };
+}
+
+interface WeatherApiForecastResponse {
+  current?: {
+    temp_c: number;
+    condition: { text: string; icon: string };
+  };
   forecast: {
-    forecastday: {
-      day: {
-        maxtemp_c: number;
-        mintemp_c: number;
-        maxwind_kph: number;
-        totalprecip_mm: number;
-        avghumidity: number;
-      };
-      astro: {
-        sunrise: string;
-        sunset: string;
-        moonrise: string;
-        moonset: string;
-        moon_phase: string;
-      };
-    }[];
+    forecastday: WeatherApiForecastDay[];
+  };
+}
+
+export interface TodayWeatherInfo {
+  current_temp_c: number | null;
+  condition_text: string | null;
+  condition_icon_url: string | null;
+  forecast: WeatherData | null;
+}
+
+export function normalizeWeatherIconUrl(iconUrl: string): string {
+  if (iconUrl.startsWith("//")) {
+    return `https:${iconUrl}`;
+  }
+  return iconUrl;
+}
+
+function mapForecastDayToWeatherData(forecastDay: WeatherApiForecastDay): WeatherData {
+  const { day, astro } = forecastDay;
+
+  return {
+    temp_max: day.maxtemp_c,
+    temp_min: day.mintemp_c,
+    wind: day.maxwind_kph,
+    precip: day.totalprecip_mm,
+    humidity: day.avghumidity,
+    sunrise: astro.sunrise,
+    sunset: astro.sunset,
+    moonrise: astro.moonrise,
+    moonset: astro.moonset,
+    moon_phase: astro.moon_phase,
+    ...(day.condition?.text ? { condition_text: day.condition.text } : {}),
+    ...(typeof day.uv === "number" ? { uv: day.uv } : {}),
   };
 }
 
@@ -57,7 +98,7 @@ export class WeatherService {
         return null;
       }
 
-      const data = (await response.json()) as WeatherApiResponse;
+      const data = (await response.json()) as WeatherApiForecastResponse;
 
       if (!data.forecast.forecastday[0]) {
         // eslint-disable-next-line no-console
@@ -65,21 +106,9 @@ export class WeatherService {
         return null;
       }
 
-      const day = data.forecast.forecastday[0].day;
-      const astro = data.forecast.forecastday[0].astro;
+      const day = data.forecast.forecastday[0];
 
-      return {
-        temp_max: day.maxtemp_c,
-        temp_min: day.mintemp_c,
-        wind: day.maxwind_kph,
-        precip: day.totalprecip_mm,
-        humidity: day.avghumidity,
-        sunrise: astro.sunrise,
-        sunset: astro.sunset,
-        moonrise: astro.moonrise,
-        moonset: astro.moonset,
-        moon_phase: astro.moon_phase,
-      };
+      return mapForecastDayToWeatherData(day);
     } catch (error) {
       if (error instanceof Error) {
         // eslint-disable-next-line no-console
@@ -131,7 +160,7 @@ export class WeatherService {
         return null;
       }
 
-      const data = (await response.json()) as WeatherApiResponse;
+      const data = (await response.json()) as WeatherApiForecastResponse;
 
       if (!data.forecast.forecastday[0]) {
         // eslint-disable-next-line no-console
@@ -139,21 +168,9 @@ export class WeatherService {
         return null;
       }
 
-      const day = data.forecast.forecastday[0].day;
-      const astro = data.forecast.forecastday[0].astro;
+      const day = data.forecast.forecastday[0];
 
-      return {
-        temp_max: day.maxtemp_c,
-        temp_min: day.mintemp_c,
-        wind: day.maxwind_kph,
-        precip: day.totalprecip_mm,
-        humidity: day.avghumidity,
-        sunrise: astro.sunrise,
-        sunset: astro.sunset,
-        moonrise: astro.moonrise,
-        moonset: astro.moonset,
-        moon_phase: astro.moon_phase,
-      };
+      return mapForecastDayToWeatherData(day);
     } catch (error) {
       if (error instanceof Error) {
         // eslint-disable-next-line no-console
@@ -184,6 +201,53 @@ export class WeatherService {
     if (cached) return cached;
 
     return await this.fetchWeatherForDate(date, latitude, longitude);
+  }
+
+  async fetchTodayWeatherByCity(cityName: string): Promise<TodayWeatherInfo | null> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 5000);
+
+      const url = `https://api.weatherapi.com/v1/forecast.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}&days=1`;
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        // eslint-disable-next-line no-console
+        console.error(`Weather API error: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const data = (await response.json()) as WeatherApiForecastResponse;
+
+      if (!data.forecast.forecastday[0]) {
+        // eslint-disable-next-line no-console
+        console.error("Weather API response missing forecast data");
+        return null;
+      }
+
+      const forecastDay = data.forecast.forecastday[0];
+      const forecast = mapForecastDayToWeatherData(forecastDay);
+
+      return {
+        current_temp_c: data.current?.temp_c ?? null,
+        condition_text: data.current?.condition.text ?? forecast.condition_text ?? null,
+        condition_icon_url: data.current?.condition.icon ? normalizeWeatherIconUrl(data.current.condition.icon) : null,
+        forecast,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        // eslint-disable-next-line no-console
+        console.error("Weather fetch error:", error.message);
+      }
+      return null;
+    }
   }
 
   async validateCityName(cityName: string): Promise<boolean> {

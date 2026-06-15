@@ -14,13 +14,14 @@ interface ActionTypeOption {
 
 interface Props {
   plantId: string;
+  onActionAdded?: () => void;
 }
 
 const CUSTOM_ACTION_VALUE = "__custom__";
 const MAX_PHOTOS = 5;
 const MAX_NOTES_LENGTH = 1000;
 
-export default function AddActionForm({ plantId }: Props) {
+export default function AddActionForm({ plantId, onActionAdded }: Props) {
   const [actionTypes, setActionTypes] = useState<ActionTypeOption[]>([]);
   const [selectedTypeId, setSelectedTypeId] = useState("");
   const [customName, setCustomName] = useState("");
@@ -137,7 +138,10 @@ export default function AddActionForm({ plantId }: Props) {
         }
       }
 
-      window.location.reload();
+      setPhotoFiles([]);
+      setNotes("");
+      setDate(new Date().toISOString().slice(0, 10));
+      onActionAdded?.();
     } catch {
       setErrors({ submit: "Network error. Please try again." });
     } finally {
@@ -146,7 +150,12 @@ export default function AddActionForm({ plantId }: Props) {
   }
 
   return (
-    <form className="border-border space-y-4 rounded-xl border p-4" onSubmit={handleSubmit} noValidate>
+    <form
+      id="add-action"
+      className="border-border scroll-mt-6 space-y-4 rounded-xl border p-4"
+      onSubmit={handleSubmit}
+      noValidate
+    >
       <h2 className="text-foreground text-lg font-semibold">Add action</h2>
 
       <div className="space-y-2">

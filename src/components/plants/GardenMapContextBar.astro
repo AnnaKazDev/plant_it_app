@@ -1,0 +1,149 @@
+---
+import { formatWeatherSummary } from "@/lib/weather-display";
+import WeatherDetailList from "@/components/plants/WeatherDetailList.astro";
+import type { TodayWeatherInfo } from "@/lib/weather";
+
+interface Props {
+  locationCity?: string;
+  gardenName?: string;
+  gardenWidth: number;
+  gardenHeight: number;
+  plantCount: number;
+  todayWeather?: TodayWeatherInfo | null;
+}
+
+const { locationCity, gardenName, gardenWidth, gardenHeight, plantCount, todayWeather } = Astro.props;
+const forecast = todayWeather?.forecast ?? null;
+const plantsOnMapLabel = plantCount === 0 ? "No plants yet" : `${plantCount} plant${plantCount === 1 ? "" : "s"}`;
+const gardenMetaLine = `${gardenWidth}×${gardenHeight} m · ${gardenWidth * gardenHeight} m²`;
+---
+
+<div class="border-border/60 bg-muted/20 rounded-xl border p-3 lg:p-4">
+  <!-- Mobile: dense two-line summary -->
+  <div class="space-y-2 text-sm lg:hidden">
+    <p class="text-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
+      {gardenName ? <span class="font-semibold">{gardenName}</span> : null}
+      {
+        gardenName ? (
+          <span class="text-muted-foreground/60" aria-hidden="true">
+            ·
+          </span>
+        ) : null
+      }
+      <span class="inline-flex items-center gap-1 font-medium">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-primary size-3.5 shrink-0"
+          aria-hidden="true"
+        >
+          <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"
+          ></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        {locationCity ?? "Location not set"}
+      </span>
+      <span class="text-muted-foreground/60" aria-hidden="true">·</span>
+      <span class="text-muted-foreground">{gardenMetaLine}</span>
+      <span class="text-muted-foreground/60" aria-hidden="true">·</span>
+      <span class="text-muted-foreground">{plantsOnMapLabel}</span>
+    </p>
+
+    {
+      todayWeather ? (
+        <p class="text-muted-foreground flex items-center gap-2">
+          {todayWeather.condition_icon_url ? (
+            <img src={todayWeather.condition_icon_url} alt="" width="32" height="32" class="size-7 shrink-0" />
+          ) : null}
+          <span class="min-w-0 leading-snug">
+            {todayWeather.current_temp_c !== null ? (
+              <span class="text-foreground font-semibold tabular-nums">{todayWeather.current_temp_c}°C</span>
+            ) : null}
+            {todayWeather.current_temp_c !== null && todayWeather.condition_text ? (
+              <span aria-hidden="true"> · </span>
+            ) : null}
+            {todayWeather.condition_text ? <span class="text-foreground">{todayWeather.condition_text}</span> : null}
+            {(todayWeather.current_temp_c !== null || todayWeather.condition_text) && forecast ? (
+              <span aria-hidden="true"> · </span>
+            ) : null}
+            {forecast ? <span>{formatWeatherSummary(forecast)}</span> : null}
+          </span>
+        </p>
+      ) : (
+        <p class="text-muted-foreground text-xs leading-snug">
+          {locationCity ? "Weather unavailable right now." : "Add your city during signup to see local weather."}
+        </p>
+      )
+    }
+  </div>
+
+  <!-- Desktop: labeled grid + weather panel -->
+  <div class="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+    <dl class="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-4 text-sm">
+      <div class="space-y-2">
+        <dt class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Garden name</dt>
+        <dd class="space-y-1">
+          {gardenName ? <p class="text-foreground text-base font-semibold">{gardenName}</p> : null}
+          <p class="text-foreground flex items-center gap-2 font-medium">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="text-primary size-4 shrink-0"
+              aria-hidden="true"
+            >
+              <path
+                d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"
+              ></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            {locationCity ?? "Location not set"}
+          </p>
+          <p class="text-muted-foreground">{gardenMetaLine}</p>
+        </dd>
+      </div>
+
+      <div class="border-border/60 space-y-1 border-l pl-6">
+        <dt class="text-muted-foreground text-xs font-medium tracking-wide uppercase">On the map</dt>
+        <dd class="text-foreground font-medium">{plantsOnMapLabel}</dd>
+      </div>
+    </dl>
+
+    <div class="border-border/60 space-y-1 border-l pl-6">
+      <p class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Today&apos;s weather</p>
+      {
+        todayWeather ? (
+          <div class="mt-1 flex items-center gap-3">
+            {todayWeather.condition_icon_url ? (
+              <img src={todayWeather.condition_icon_url} alt="" width="48" height="48" class="size-12 shrink-0" />
+            ) : null}
+            <div class="min-w-0 space-y-1">
+              {todayWeather.current_temp_c !== null ? (
+                <p class="text-foreground text-2xl leading-none font-bold tabular-nums">
+                  {todayWeather.current_temp_c}°C
+                </p>
+              ) : null}
+              {todayWeather.condition_text ? (
+                <p class="text-foreground text-sm font-medium">{todayWeather.condition_text}</p>
+              ) : null}
+              <WeatherDetailList weather={forecast} />
+            </div>
+          </div>
+        ) : (
+          <p class="text-muted-foreground mt-1 text-sm">
+            {locationCity ? "Weather unavailable right now." : "Add your city during signup to see local weather."}
+          </p>
+        )
+      }
+    </div>
+  </div>
+</div>

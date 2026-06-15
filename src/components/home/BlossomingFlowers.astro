@@ -1,0 +1,32 @@
+---
+/**
+ * CSS Blossoming Flowers at Magical Night
+ * Copyright (c) Md Usman Ansari — https://codepen.io/mdusmanansari/pen/BamepLe
+ * MIT License
+ */
+import blossomingFlowersMarkup from "./blossoming-flowers-markup.html?raw";
+---
+
+<div id="blossom-scene" class="blossom-scene not-loaded" aria-hidden="true"></div>
+
+<script define:vars={{ blossomingFlowersMarkup }}>
+  async function startBlossomAnimation() {
+    const scene = document.getElementById("blossom-scene");
+    if (!scene) return;
+
+    scene.innerHTML = blossomingFlowersMarkup;
+
+    // Load CSS client-side only to avoid SSR CPU overhead
+    await import("@/styles/blossoming-flowers.css");
+
+    window.setTimeout(() => {
+      scene.classList.remove("not-loaded");
+    }, 1000);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startBlossomAnimation, { once: true });
+  } else {
+    startBlossomAnimation();
+  }
+</script>
