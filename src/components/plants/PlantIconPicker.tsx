@@ -24,7 +24,7 @@ export default function PlantIconPicker({ value, onChange }: PlantIconPickerProp
             }}
             className={cn(
               "bg-primary text-primary-foreground m-[3px] flex size-10 shrink-0 items-center justify-center rounded-full shadow-md transition-transform hover:scale-105",
-              isSelected && "ring-primary-foreground scale-105 ring-2 ring-offset-2 ring-offset-background",
+              isSelected && "ring-primary-foreground ring-offset-background scale-105 ring-2 ring-offset-2",
             )}
           >
             <Icon className="size-5" aria-hidden="true" />

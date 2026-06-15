@@ -1,5 +1,9 @@
 import { Plus } from "lucide-react";
-import ActionTeaser, { EmptyActionTeaser, plannedBadgeClass, teaserElevationClass } from "@/components/plants/ActionTeaser";
+import ActionTeaser, {
+  EmptyActionTeaser,
+  plannedBadgeClass,
+  teaserElevationClass,
+} from "@/components/plants/ActionTeaser";
 import { Button } from "@/components/ui/button";
 import type { PlantListItem as PlantListItemData } from "@/lib/plant-page";
 import { cn } from "@/lib/utils";
@@ -10,12 +14,7 @@ interface PlantListItemProps {
 
 export default function PlantListItem({ plant }: PlantListItemProps) {
   return (
-    <article
-      className={cn(
-        "border-border bg-card/40 rounded-xl border p-4",
-        teaserElevationClass,
-      )}
-    >
+    <article className={cn("border-border bg-card/40 rounded-xl border p-4", teaserElevationClass)}>
       <div className="mb-3 flex items-start justify-between gap-3">
         <a
           href={`/plants/${plant.id}`}
@@ -23,9 +22,7 @@ export default function PlantListItem({ plant }: PlantListItemProps) {
         >
           <h2 className="text-foreground text-lg font-semibold">{plant.display_name}</h2>
           {plant.planned_action_count > 0 ? (
-            <span className={plannedBadgeClass}>
-              {plant.planned_action_count} planned
-            </span>
+            <span className={plannedBadgeClass}>{plant.planned_action_count} planned</span>
           ) : null}
         </a>
         <Button asChild size="sm" className="shrink-0 shadow-sm">

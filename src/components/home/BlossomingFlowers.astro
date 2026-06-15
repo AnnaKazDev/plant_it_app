@@ -7,17 +7,14 @@
 import blossomingFlowersMarkup from "./blossoming-flowers-markup.html?raw";
 ---
 
-<div
-  id="blossom-scene"
-  class="blossom-scene not-loaded"
-  aria-hidden="true"
-  set:html={blossomingFlowersMarkup}
-/>
+<div id="blossom-scene" class="blossom-scene not-loaded" aria-hidden="true"></div>
 
-<script>
+<script define:vars={{ blossomingFlowersMarkup }}>
   async function startBlossomAnimation() {
     const scene = document.getElementById("blossom-scene");
     if (!scene) return;
+
+    scene.innerHTML = blossomingFlowersMarkup;
 
     // Load CSS client-side only to avoid SSR CPU overhead
     await import("@/styles/blossoming-flowers.css");

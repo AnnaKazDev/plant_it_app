@@ -114,8 +114,7 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, ex
     <form className="space-y-6" onSubmit={handleSubmit} noValidate>
       {gardenName ? (
         <p className="text-muted-foreground text-sm">
-          Plotting in <span className="text-foreground font-medium">{gardenName}</span> ({gardenWidth}×{gardenHeight}{" "}
-          m)
+          Plotting in <span className="text-foreground font-medium">{gardenName}</span> ({gardenWidth}×{gardenHeight} m)
         </p>
       ) : null}
 

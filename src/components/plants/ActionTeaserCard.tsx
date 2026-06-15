@@ -52,9 +52,7 @@ export default function ActionTeaserCard({ action, nested = false }: ActionTease
 
             <p className="text-muted-foreground text-sm">{formatActionDate(action.date)}</p>
 
-            {action.additional_data ? (
-              <p className="text-muted-foreground text-sm">{action.additional_data}</p>
-            ) : null}
+            {action.additional_data ? <p className="text-muted-foreground text-sm">{action.additional_data}</p> : null}
 
             {action.photos.length > 1 ? (
               <div className="flex flex-wrap gap-1.5 pt-1">

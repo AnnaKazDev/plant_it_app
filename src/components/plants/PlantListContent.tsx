@@ -11,9 +11,7 @@ export default function PlantListContent({ plants }: PlantListContentProps) {
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="max-w-2xl">
-            <h1 className="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold">
-              My plants
-            </h1>
+            <h1 className="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold">My plants</h1>
             <p className="text-muted-foreground mt-2 text-sm">
               Your garden roster in one place. Each card highlights the latest care activity for that plant — open it
               for the full timeline, or add a new entry right away.

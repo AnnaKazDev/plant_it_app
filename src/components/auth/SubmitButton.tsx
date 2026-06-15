@@ -9,7 +9,6 @@ interface SubmitButtonProps {
 }
 
 export function SubmitButton({ pending, pendingText, icon, children }: SubmitButtonProps) {
-
   return (
     <Button type="submit" disabled={pending} className="w-full">
       {pending ? (

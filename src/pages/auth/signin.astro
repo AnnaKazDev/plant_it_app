@@ -8,9 +8,7 @@ const error = Astro.url.searchParams.get("error");
 <Layout title="Sign in - Plant It App">
   <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
     <div class="border-border bg-card/50 w-full max-w-sm rounded-2xl border p-8 backdrop-blur-xl">
-      <h1
-        class="from-primary to-secondary mb-6 bg-gradient-to-r bg-clip-text text-center text-2xl font-bold"
-      >
+      <h1 class="from-primary to-secondary mb-6 bg-gradient-to-r bg-clip-text text-center text-2xl font-bold">
         Sign in
       </h1>
       <SignInForm serverError={error} client:only="react" />
