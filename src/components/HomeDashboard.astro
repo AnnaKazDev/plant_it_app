@@ -10,6 +10,7 @@ interface Props {
 }
 
 const { user, plantCount } = Astro.props;
+const emailInitial = user.email?.[0]?.toUpperCase() ?? "?";
 ---
 
 <HomeBackground>
@@ -30,26 +31,39 @@ const { user, plantCount } = Astro.props;
     </div>
 
     <div
-      class="border-border bg-card/50 mx-auto mb-16 w-full max-w-lg rounded-2xl border p-8 text-center backdrop-blur-xl"
+      class="border-border bg-card/50 mx-auto mb-16 w-full max-w-lg rounded-2xl border p-6 backdrop-blur-xl sm:p-8"
     >
-      <p class="text-muted-foreground text-sm">
-        {
-          plantCount === 0 ? (
-            <>
-              Signed in as <span class="text-foreground font-semibold">{user.email}</span> — your future jungle
-              starts with one plant. Name it, drop it on the map, and you&apos;re officially growing.
-            </>
-          ) : (
-            <>
-              <span class="text-foreground font-semibold">{user.email}</span>, you&apos;re tending{" "}
-              {plantCount} plant{plantCount === 1 ? "" : "s"} — nice work. Peek at your list, wander the map,
-              or invite another green friend.
-            </>
-          )
-        }
-      </p>
 
-      <div class="mt-6 flex flex-col items-center gap-3">
+      {
+        plantCount === 0 ? (
+          <div class="text-center">
+            <p class="text-foreground font-medium">Your garden is empty</p>
+            <p class="text-muted-foreground mt-1 text-sm">
+              Start with one plant and pin it on the map.
+            </p>
+          </div>
+        ) : (
+          <div class="text-center">
+            <p class="text-foreground text-4xl font-bold tabular-nums">{plantCount}</p>
+            <p class="text-muted-foreground text-sm">
+              plant{plantCount === 1 ? "" : "s"} in your garden
+            </p>
+            <p class="text-muted-foreground mt-2 text-sm">Nice work — keep tending your patch.</p>
+          </div>
+        )
+      }
+
+      <div class="border-border/60 my-5 border-t" />
+
+
+      <div class="flex flex-col gap-3">
+        <a
+          href="/plants/new"
+          class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+        >
+          <NavIcon name="plus" />
+          {plantCount === 0 ? "Plant your first one" : "Add another plant"}
+        </a>
         {
           plantCount > 0 ? (
             <>
@@ -70,13 +84,6 @@ const { user, plantCount } = Astro.props;
             </>
           ) : null
         }
-        <a
-          href="/plants/new"
-          class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-        >
-          <NavIcon name="plus" />
-          {plantCount === 0 ? "Plant your first one" : "Add another plant"}
-        </a>
       </div>
     </div>
   </div>

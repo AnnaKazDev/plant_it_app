@@ -16,7 +16,7 @@ export default function PlantCardContent({ plant }: Props) {
       <div className="flex items-start gap-4">
         <PlantAvatar signedPhotoUrl={plant.signed_photo_url} alt={plant.display_name} />
         <div>
-          <h1 className="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold text-transparent">
+          <h1 className="from-primary to-secondary bg-gradient-to-r bg-clip-text text-2xl font-bold">
             {plant.display_name}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
