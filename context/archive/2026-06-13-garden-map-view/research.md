@@ -4,14 +4,14 @@ researcher: Cursor Agent
 git_commit: 4c91aeafe73420723c7f25c69610687d5ad34d34
 branch: garden-map-view
 repository: plant_it_app
-topic: "Biblioteki i podejście wizualne do garden map view + ulepszenie GardenGridPicker"
+topic: "Libraries and visual approach for garden map view + GardenGridPicker improvements"
 tags: [research, codebase, garden-map-view, grid, GardenGridPicker, lucide-react, tooltip, multi-cell]
 status: complete
 last_updated: 2026-06-13
 last_updated_by: Cursor Agent
 ---
 
-# Research: Biblioteki i podejście wizualne do garden map view
+# Research: Libraries and visual approach for garden map view
 
 **Date**: 2026-06-13  
 **Researcher**: Cursor Agent  
@@ -21,33 +21,33 @@ last_updated_by: Cursor Agent
 
 ## Research Question
 
-Chciałabym najlepiej mieć do tego jakąś bibliotekę, żeby taki ogród/grid ładnie wyglądał. Dodatkowo: ulepszyć istniejący picker przy dodawaniu rośliny (drag-and-drop), dodać wybór ikony dla rozróżnienia wizualnego, tooltip z nazwą/teaserem po najechaniu, oraz rozważyć wielokomórkowe umieszczanie rośliny (np. paproć od A1 do A4 i B2–B4).
+Ideally, there should be a library to make the garden/grid look polished. Additionally: improve the existing picker when adding a plant (drag-and-drop), add icon selection for visual distinction, tooltip with name/teaser on hover, and consider multi-cell plant placement (e.g. a fern from A1 to A4 and B2–B4).
 
 ## Summary
 
-**Nie potrzebujesz ciężkiej biblioteki canvas/tile-map.** Najlepszy stosunek „ładność / złożoność / zgodność z projektem” daje **rozszerzenie istniejącego wzorca CSS Grid + Tailwind + lucide-react**, z jedną lekką zależnością UI: **shadcn Tooltip** (Radix) do hover teaserów na mapie.
+**You do not need a heavy canvas/tile-map library.** The best balance of "looks good / complexity / project fit" comes from **extending the existing CSS Grid + Tailwind + lucide-react pattern**, with one lightweight UI dependency: **shadcn Tooltip** (Radix) for hover teasers on the map.
 
-| Potrzeba | Rekomendacja |
-|----------|--------------|
-| Ładna mapa ogrodu (S-05) | Wspólny komponent `GardenGrid` — tło siatki CSS + markery roślin (sparse, nie 10k przycisków) |
-| Ulepszony picker (S-02 flow) | Ten sam `GardenGrid` w trybie `interactive` — drag marker, wybór ikony |
-| Rozróżnienie wizualne | Kolumna `icon` w `plants` + picker z kuratorowanego zestawu **lucide** (już w projekcie) |
-| Hover → nazwa/teaser | shadcn `Tooltip` na mapie; na pickerze wystarczy `title` lub ten sam Tooltip |
-| Wielokomórkowe grządki | **Poza MVP PRD** — wymaga zmiany modelu danych; rekomendacja: odłożyć lub osobna zmiana po S-05 |
+| Need | Recommendation |
+|------|----------------|
+| Polished garden map (S-05) | Shared `GardenGrid` component — CSS grid background + plant markers (sparse, not 10k buttons) |
+| Improved picker (S-02 flow) | Same `GardenGrid` in `interactive` mode — drag marker, icon selection |
+| Visual distinction | `icon` column in `plants` + picker from a curated **lucide** set (already in the project) |
+| Hover → name/teaser | shadcn `Tooltip` on the map; on the picker, `title` or the same Tooltip is enough |
+| Multi-cell beds | **Outside MVP PRD** — requires data model changes; recommendation: defer or separate change after S-05 |
 
-**Unikaj:** Konva, Pixi, Phaser, Leaflet, react-grid-layout — zły model (geo-mapy, gry, drag-dashboard) lub koszt bundle/a11y bez korzyści dla prostego prostokątnego ogrodu.
+**Avoid:** Konva, Pixi, Phaser, Leaflet, react-grid-layout — wrong model (geo maps, games, drag-dashboard) or bundle/a11y cost without benefits for a simple rectangular garden.
 
 ## Detailed Findings
 
-### Stan obecny w kodzie
+### Current state in the codebase
 
-#### System współrzędnych (`src/lib/grid.ts`)
+#### Coordinate system (`src/lib/grid.ts`)
 
-- `grid_x` = wiersz (0 = A), `grid_y` = kolumna (0 = 1)
-- 1 komórka = 1 metr: `rows = floor(garden_height)`, `cols = floor(garden_width)`
-- Etykiety: `formatGridLabel(grid_x, grid_y)` → np. `"A3"`
+- `grid_x` = row (0 = A), `grid_y` = column (0 = 1)
+- 1 cell = 1 meter: `rows = floor(garden_height)`, `cols = floor(garden_width)`
+- Labels: `formatGridLabel(grid_x, grid_y)` → e.g. `"A3"`
 
-#### Jedyny wizualny grid: `GardenGridPicker`
+#### Only visual grid: `GardenGridPicker`
 
 ```17:23:src/components/plants/GardenGridPicker.tsx
 export default function GardenGridPicker({ gardenWidth, gardenHeight, gridX, gridY, onChange }: GardenGridPickerProps) {
@@ -59,11 +59,11 @@ export default function GardenGridPicker({ gardenWidth, gardenHeight, gridX, gri
   const cellSize = Math.max(MIN_CELL_PX, Math.min(MAX_CELL_PX, Math.floor(320 / Math.max(cols, rows))));
 ```
 
-**Co działa:** a11y (`role="grid"`, strzałki), snap pointera, tokeny Tailwind, ikona `Sprout`.
+**What works:** a11y (`role="grid"`, arrow keys), pointer snap, Tailwind tokens, `Sprout` icon.
 
-**Słabości wizualne:** brak etykiet osi (A/B/1/2), płaskie obramowania, jeden marker, renderuje **każdą komórkę jako `<button>`** — przy 100×100 m to 10 000 węzłów DOM.
+**Visual weaknesses:** no axis labels (A/B/1/2), flat borders, single marker, renders **every cell as a `<button>`** — at 100×100 m that's 10,000 DOM nodes.
 
-#### Baza danych
+#### Database
 
 ```16:25:supabase/migrations/20260604120000_core_data_schema.sql
 CREATE TABLE public.plants (
@@ -74,86 +74,86 @@ CREATE TABLE public.plants (
 );
 ```
 
-- Jedna para współrzędnych na roślinę
-- Brak unikalności `(user_id, grid_x, grid_y)` — nakładanie dozwolone
-- Brak kolumny na ikonę rośliny
+- One coordinate pair per plant
+- No uniqueness on `(user_id, grid_x, grid_y)` — overlapping is allowed
+- No column for plant icon
 
-#### Mapa ogrodu (S-05)
+#### Garden map (S-05)
 
-**Brak implementacji** w `src/` — tylko `context/changes/garden-map-view/change.md` (status: new). Roadmapa: `/garden-map`, statyczna siatka, klik → karta rośliny, bez drag na mapie.
+**Not implemented** in `src/` — only `context/changes/garden-map-view/change.md` (status: new). Roadmap: `/garden-map`, static grid, click → plant card, no drag on the map.
 
-`fetchPlantListForUser` już pobiera `grid_x`, `grid_y`, ale UI listy dostaje tylko `display_name` — współrzędne są odrzucane przed renderem (`src/lib/plant-page.ts`).
+`fetchPlantListForUser` already fetches `grid_x`, `grid_y`, but the list UI only receives `display_name` — coordinates are dropped before render (`src/lib/plant-page.ts`).
 
-### Ocena bibliotek
+### Library evaluation
 
-#### Rekomendowane (MVP + Twoje wymagania)
+#### Recommended (MVP + your requirements)
 
-| Opcja | Nowe zależności | Bundle (gzip) | Dlaczego |
-|-------|-----------------|---------------|----------|
-| **CSS Grid + Tailwind — sparse map** | 0 | ~0 KB | Tło siatki przez `repeating-linear-gradient` lub SVG pattern; markery absolutnie pozycjonowane; N roślin zamiast N×M komórek |
-| **lucide-react** (już jest) | 0 | ~1 KB/ikona | Kuratorowany zestaw: `Sprout`, `Flower2`, `TreePine`, `Leaf`, `Cherry`, `Carrot`, `Bean`… |
-| **shadcn Tooltip** | `@radix-ui/react-tooltip` | ~3–5 KB | Hover z nazwą + mini-teaser (ostatnia akcja); dobra a11y vs canvas |
-| **Wspólny `GardenGrid`** | 0 | — | `mode: "picker" \| "map"`; jedna logika `cellSize`, etykiety osi, styling |
+| Option | New dependencies | Bundle (gzip) | Why |
+|--------|------------------|---------------|-----|
+| **CSS Grid + Tailwind — sparse map** | 0 | ~0 KB | Grid background via `repeating-linear-gradient` or SVG pattern; absolutely positioned markers; N plants instead of N×M cells |
+| **lucide-react** (already present) | 0 | ~1 KB/icon | Curated set: `Sprout`, `Flower2`, `TreePine`, `Leaf`, `Cherry`, `Carrot`, `Bean`… |
+| **shadcn Tooltip** | `@radix-ui/react-tooltip` | ~3–5 KB | Hover with name + mini-teaser (last action); good a11y vs canvas |
+| **Shared `GardenGrid`** | 0 | — | `mode: "picker" \| "map"`; single `cellSize`, axis labels, styling logic |
 
-#### Opcjonalne (później)
+#### Optional (later)
 
-| Opcja | Kiedy | Uwagi |
-|-------|-------|-------|
-| `@tanstack/react-virtual` (~7 KB) | Pełna siatka komórek przy ogrodzie 50×50+ | Tylko jeśli produkt wymaga klikalnych pustych komórek w każdym miejscu |
-| `react-svg-pan-zoom` (~25 KB) | Pinch-zoom na mobile dla dużych ogrodów | Poza PRD Non-Goals na MVP |
-| Inline SVG pattern | „Organiczniejszy” wygląd grządek | Zero npm; więcej markupu |
+| Option | When | Notes |
+|--------|------|-------|
+| `@tanstack/react-virtual` (~7 KB) | Full cell grid for 50×50+ gardens | Only if the product requires clickable empty cells everywhere |
+| `react-svg-pan-zoom` (~25 KB) | Pinch-zoom on mobile for large gardens | Outside PRD Non-Goals for MVP |
+| Inline SVG pattern | More "organic" bed appearance | Zero npm; more markup |
 
-#### Odrzucone
+#### Rejected
 
-| Biblioteka | Powód odrzucenia |
-|------------|------------------|
-| **react-konva / Konva** | ~50–80 KB; canvas bez natywnej a11y; sensowne dla gier/edytorów, nie dla „kliknij roślinę” |
-| **Pixi / Phaser** | Silniki gier; ogromny bundle |
-| **Leaflet / Mapbox** | Współrzędne geograficzne (lat/lng), nie siatka A3 w metrach |
-| **react-grid-layout / gridstack** | Drag/resize paneli dashboardu — PRD wyklucza repositioning na mapie |
-| **@heroicons/react** | Duplikat lucide |
-| **@svgdotjs/svg.js** | Imperatywne API; słaba integracja z React 19 |
+| Library | Reason for rejection |
+|---------|---------------------|
+| **react-konva / Konva** | ~50–80 KB; canvas without native a11y; makes sense for games/editors, not "click a plant" |
+| **Pixi / Phaser** | Game engines; huge bundle |
+| **Leaflet / Mapbox** | Geographic coordinates (lat/lng), not an A3 grid in meters |
+| **react-grid-layout / gridstack** | Dashboard panel drag/resize — PRD excludes repositioning on the map |
+| **@heroicons/react** | Duplicate of lucide |
+| **@svgdotjs/svg.js** | Imperative API; weak integration with React 19 |
 
-### Propozycja architektury wizualnej
+### Proposed visual architecture
 
 ```
 src/components/plants/
-  GardenGrid.tsx          # wspólna siatka (tło, osie, cellSize)
-  GardenGridPicker.tsx    # cienki wrapper: mode="picker" + drag + icon picker
-  GardenMapView.tsx       # cienki wrapper: mode="map" + linki + tooltips
-  PlantIconPicker.tsx     # wybór ikony lucide przy dodawaniu
-  plant-icons.ts          # mapowanie nazwa → komponent LucideIcon
+  GardenGrid.tsx          # shared grid (background, axes, cellSize)
+  GardenGridPicker.tsx    # thin wrapper: mode="picker" + drag + icon picker
+  GardenMapView.tsx       # thin wrapper: mode="map" + links + tooltips
+  PlantIconPicker.tsx     # lucide icon selection when adding a plant
+  plant-icons.ts          # name → LucideIcon component mapping
 ```
 
-**Wygląd „ładnego ogrodu” bez assetów 3D:**
+**"Nice garden" look without 3D assets:**
 
-1. Tło: `bg-emerald-950/5` lub gradient „gleba” + subtelne linie siatki (`repeating-linear-gradient`)
-2. Sticky etykiety: wiersze A, B, C… po lewej; kolumny 1, 2, 3… u góry
-3. Markery: okrągłe awatary (`PlantAvatar` z `ActionTeaser.tsx`) lub wybrana ikona lucide w kółku `bg-primary`
-4. Hover na mapie: Tooltip z `display_name` + opcjonalnie ostatnia akcja (wymaga rozszerzenia loadera)
-5. Zajęte komórki: delikatne `bg-primary/10` pod markerem (opcjonalnie)
+1. Background: `bg-emerald-950/5` or "soil" gradient + subtle grid lines (`repeating-linear-gradient`)
+2. Sticky labels: rows A, B, C… on the left; columns 1, 2, 3… at the top
+3. Markers: round avatars (`PlantAvatar` from `ActionTeaser.tsx`) or selected lucide icon in a `bg-primary` circle
+4. Hover on map: Tooltip with `display_name` + optional last action (requires loader extension)
+5. Occupied cells: subtle `bg-primary/10` under the marker (optional)
 
-**Mapa vs picker — różnice:**
+**Map vs picker — differences:**
 
-| Aspekt | Picker (`/plants/new`) | Mapa (`/garden-map`) |
-|--------|------------------------|----------------------|
-| Komórki | Klikalne (wybór pozycji) | Tło tylko wizualne |
-| Markery | 1 (przeciągany) | Wiele (link `<a href="/plants/id">`) |
-| Drag | Tak (pozycja nowej rośliny) | Nie (PRD Non-Goals) |
-| Ikona | Wybór przed zapisem | Zapisana w DB |
-| Tooltip | Opcjonalny | Nazwa + teaser |
+| Aspect | Picker (`/plants/new`) | Map (`/garden-map`) |
+|--------|------------------------|---------------------|
+| Cells | Clickable (position selection) | Background only |
+| Markers | 1 (draggable) | Many (link `<a href="/plants/id">`) |
+| Drag | Yes (new plant position) | No (PRD Non-Goals) |
+| Icon | Selected before save | Stored in DB |
+| Tooltip | Optional | Name + teaser |
 
-### Wybór ikony rośliny
+### Plant icon selection
 
-**Rekomendacja:** kolumna `icon_name TEXT` (lucide icon name, np. `"flower-2"`) w `plants`, domyślnie `"sprout"`.
+**Recommendation:** `icon_name TEXT` column (lucide icon name, e.g. `"flower-2"`) in `plants`, default `"sprout"`.
 
-- Spójne z `action_types.icon_emoji` — tam emoji, tu lucide (wizualnie różne domeny: akcja vs roślina)
-- Picker: rząd 8–12 przycisków-toggle z podglądem ikony (wzorzec jak combobox w `AddActionForm`)
-- **Bez nowej biblioteki ikon** — lucide już w `package.json`
+- Consistent with `action_types.icon_emoji` — emoji there, lucide here (visually different domains: action vs plant)
+- Picker: row of 8–12 toggle buttons with icon preview (pattern like combobox in `AddActionForm`)
+- **No new icon library** — lucide already in `package.json`
 
-### Tooltip / teaser po hover
+### Tooltip / teaser on hover
 
-**Rekomendacja:** `npx shadcn@latest add tooltip` — jedyna sensowna nowa zależność UI.
+**Recommendation:** `npx shadcn@latest add tooltip` — the only sensible new UI dependency.
 
 ```tsx
 <Tooltip>
@@ -169,77 +169,77 @@ src/components/plants/
 </Tooltip>
 ```
 
-Loader mapy musi wtedy zwracać skrót ostatniej akcji (wzór: `fetchPlantListForUser` już łączy akcje dla listy roślin).
+The map loader must then return a summary of the last action (pattern: `fetchPlantListForUser` already joins actions for the plant list).
 
-### Wielokomórkowe umieszczanie (grządka A1–A4, B2–B4)
+### Multi-cell placement (bed A1–A4, B2–B4)
 
-**To wykracza poza obecny PRD i schemat.** FR-014 mówi o „pozycji” rośliny; model ma jedną parę `(grid_x, grid_y)`. Non-Goals nie wymieniają multi-cell explicite, ale S-05 roadmap zakłada „jedna ikona na pozycję”.
+**This goes beyond the current PRD and schema.** FR-014 refers to plant "position"; the model has a single `(grid_x, grid_y)` pair. Non-Goals do not explicitly list multi-cell, but the S-05 roadmap assumes "one icon per position".
 
-#### Opcje modelu danych
+#### Data model options
 
-| Model | Przykład | Plusy | Minusy |
-|-------|----------|-------|--------|
-| **A. Status quo** — 1 komórka | Paproć tylko w A1 | Zero migracji | Nie oddaje grządki |
-| **B. Bounding box** — `grid_x, grid_y, span_rows, span_cols` | A1, span 4×2 | Proste renderowanie prostokąta | Nie obsługuje L-kształtów (B2–B4 bez A5) |
-| **C. Tablica komórek** — `grid_cells JSONB` lub tabela `plant_cells` | `[(0,0),(0,1),…]` | Dowolny kształt | Migracja, walidacja, kolizje, UX picker znacznie trudniejszy |
-| **D. Osobna encja „grządka”** | Bed → wiele plants | Semantycznie czyste | Duży scope; nowa domena |
+| Model | Example | Pros | Cons |
+|-------|---------|------|------|
+| **A. Status quo** — 1 cell | Fern only at A1 | Zero migration | Does not represent a bed |
+| **B. Bounding box** — `grid_x, grid_y, span_rows, span_cols` | A1, span 4×2 | Simple rectangle rendering | Does not handle L-shapes (B2–B4 without A5) |
+| **C. Cell array** — `grid_cells JSONB` or `plant_cells` table | `[(0,0),(0,1),…]` | Arbitrary shape | Migration, validation, collisions, much harder picker UX |
+| **D. Separate "bed" entity** | Bed → many plants | Semantically clean | Large scope; new domain |
 
-**Rekomendacja dla Plant It MVP:**
+**Recommendation for Plant It MVP:**
 
-1. **S-05 + ulepszony picker:** zostać przy **jednej komórce** (anchor point) — wystarczy do FR-013/014/015 i porównywania lokalizacji „która paproć lepiej rośnie”.
-2. **Jeśli multi-cell jest must-have:** osobna zmiana po S-05; start od **opcji B** (bounding box) jeśli wystarczą prostokąty; **opcja C** tylko gdy naprawdę potrzebne kształty L/U.
+1. **S-05 + improved picker:** stay with **one cell** (anchor point) — sufficient for FR-013/014/015 and comparing locations ("which fern grows better").
+2. **If multi-cell is a must-have:** separate change after S-05; start with **option B** (bounding box) if rectangles are enough; **option C** only when L/U shapes are truly needed.
 
-Picker multi-cell (przyszłość): zaznaczanie prostokąta przez drag na siatce (jak zaznaczenie w arkuszu) — nadal bez Konva, czysty DOM + stan `selection: Set<"x,y">`.
+Multi-cell picker (future): rectangle selection via drag on the grid (like spreadsheet selection) — still without Konva, pure DOM + `selection: Set<"x,y">` state.
 
 ## Code References
 
-- `src/lib/grid.ts:27-60` — formatowanie etykiet, wymiary ogrodu, bounds
-- `src/components/plants/GardenGridPicker.tsx:17-163` — obecny picker CSS grid
-- `src/components/plants/ActionTeaser.tsx:63-72` — `PlantAvatar` do reużycia na markerach
-- `src/lib/plant-page.ts:105-163` — lista roślin pobiera `grid_x/y` ale nie eksponuje do UI
-- `src/pages/api/plants/index.ts:121-129` — walidacja pozycji w ogrodzie
-- `supabase/migrations/20260604120000_core_data_schema.sql:16-25` — schema `plants`
-- `context/foundation/roadmap.md:199-210` — spec S-05
+- `src/lib/grid.ts:27-60` — label formatting, garden dimensions, bounds
+- `src/components/plants/GardenGridPicker.tsx:17-163` — current CSS grid picker
+- `src/components/plants/ActionTeaser.tsx:63-72` — `PlantAvatar` reusable on markers
+- `src/lib/plant-page.ts:105-163` — plant list fetches `grid_x/y` but does not expose to UI
+- `src/pages/api/plants/index.ts:121-129` — position validation within garden
+- `supabase/migrations/20260604120000_core_data_schema.sql:16-25` — `plants` schema
+- `context/foundation/roadmap.md:199-210` — S-05 spec
 - `context/foundation/prd.md:138-147` — FR-013/014/015
-- `context/foundation/prd.md:182` — Non-Goals: brak advanced map / drag na mapie
+- `context/foundation/prd.md:182` — Non-Goals: no advanced map / drag on map
 
 ## Architecture Insights
 
-1. **Sparse rendering** — mapa nie powinna klonować pickera z 10k przyciskami; tło CSS + N markerów.
-2. **Wspólny komponent** — `cellSize`, osie i styling w jednym miejscu; picker i mapa to tryby, nie dwa niezależne systemy.
-3. **Astro SSR** — wymiary ogrodu + lista roślin w frontmatter strony; React island tylko do interakcji (picker drag, tooltips).
-4. **Cloudflare Workers** — render po stronie klienta; liczy się rozmiar JS i hydratacja, nie canvas.
-5. **Wzorzec ikon** — projekt już używa lucide wszędzie; emoji tylko dla typów akcji.
+1. **Sparse rendering** — the map should not clone the picker with 10k buttons; CSS background + N markers.
+2. **Shared component** — `cellSize`, axes, and styling in one place; picker and map are modes, not two independent systems.
+3. **Astro SSR** — garden dimensions + plant list in page frontmatter; React island only for interaction (picker drag, tooltips).
+4. **Cloudflare Workers** — client-side render; JS size and hydration matter, not canvas.
+5. **Icon pattern** — the project already uses lucide everywhere; emoji only for action types.
 
 ## Historical Context (from prior changes)
 
-- `context/changes/first-plant-first-action/plan-brief.md` — S-02: drag-and-drop CSS grid (`GardenGridPicker`); mapa odłożona do S-05
-- `context/changes/first-plant-first-action/plan.md` — 1 m = 1 komórka; ryzyko 10k DOM przy 100×100 m
-- `context/foundation/roadmap.md:234` — otwarte pytanie #4: CSS grid vs canvas/SVG; **rekomendacja CSS grid**
-- `context/foundation/tasks-linear.md` (PLA-12) — acceptance: CSS grid, bez drag na mapie
-- Brak wcześniejszych decyzji o bibliotekach mapowych (Leaflet, Konva itd.) w `context/`
+- `context/changes/first-plant-first-action/plan-brief.md` — S-02: drag-and-drop CSS grid (`GardenGridPicker`); map deferred to S-05
+- `context/changes/first-plant-first-action/plan.md` — 1 m = 1 cell; 10k DOM risk at 100×100 m
+- `context/foundation/roadmap.md:234` — open question #4: CSS grid vs canvas/SVG; **recommendation: CSS grid**
+- `context/foundation/tasks-linear.md` (PLA-12) — acceptance: CSS grid, no drag on map
+- No prior decisions on map libraries (Leaflet, Konva, etc.) in `context/`
 
 ## Related Research
 
-- Brak wcześniejszego `research.md` dla `garden-map-view`
-- Powiązane: `context/archive/2026-06-13-plant-list-view/plan.md` — lista roślin; mapa jako następny krok
+- No prior `research.md` for `garden-map-view`
+- Related: `context/archive/2026-06-13-plant-list-view/plan.md` — plant list; map as next step
 
 ## Open Questions
 
-1. **Multi-cell grządki** — **Rozstrzygnięte:** osobna iteracja **S-06** (`garden-multi-cell`) po S-05; zob. `context/foundation/roadmap.md`.
-2. **Teaser w tooltipie** — sama nazwa vs nazwa + ostatnia akcja + miniatura?
-3. **Kolizje** — czy dwie rośliny mogą dzielić komórkę, czy walidować unikalność przy zapisie?
-4. **Zestaw ikon** — stała lista 10 ikon vs pełny wybór z lucide?
-5. **Cap rozmiaru ogrodu w UI** — impl review S-02 zalecał max 50×50 lub virtualizację; nadal nierozstrzygnięte.
+1. **Multi-cell beds** — **Resolved:** separate iteration **S-06** (`garden-multi-cell`) after S-05; see `context/foundation/roadmap.md`.
+2. **Teaser in tooltip** — name only vs name + last action + thumbnail?
+3. **Collisions** — can two plants share a cell, or validate uniqueness on save?
+4. **Icon set** — fixed list of 10 icons vs full lucide picker?
+5. **Garden size cap in UI** — S-02 impl review recommended max 50×50 or virtualization; still unresolved.
 
-## Rekomendacja końcowa (decyzja do planu)
+## Final recommendation (decision for the plan)
 
-| Warstwa | Wybór |
-|---------|--------|
-| Renderowanie siatki | **CSS + Tailwind** (bez canvas) |
-| Nowe npm (MVP) | **`@radix-ui/react-tooltip`** via shadcn (opcjonalnie `@tanstack/react-virtual` tylko jeśli pełna siatka komórek) |
-| Ikony roślin | **lucide-react** + kolumna `icon_name` w DB |
-| Struktura kodu | Wydzielić **`GardenGrid`**; picker i mapa jako cienkie wrappery |
-| Multi-cell | **S-06** (`garden-multi-cell`) po S-05 — migracja + picker prostokątny (bounding box) jako pierwszy krok |
+| Layer | Choice |
+|-------|--------|
+| Grid rendering | **CSS + Tailwind** (no canvas) |
+| New npm (MVP) | **`@radix-ui/react-tooltip`** via shadcn (optionally `@tanstack/react-virtual` only if full cell grid) |
+| Plant icons | **lucide-react** + `icon_name` column in DB |
+| Code structure | Extract **`GardenGrid`**; picker and map as thin wrappers |
+| Multi-cell | **S-06** (`garden-multi-cell`) after S-05 — migration + rectangular picker (bounding box) as first step |
 
-Następny krok: `/10x-implement garden-map-view` (single-cell); później `/10x-plan garden-multi-cell` gdy S-05 done.
+Next step: `/10x-implement garden-map-view` (single-cell); later `/10x-plan garden-multi-cell` when S-05 is done.
