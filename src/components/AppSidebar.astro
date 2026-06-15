@@ -1,0 +1,467 @@
+---
+import NavIcon from "@/components/NavIcon.astro";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { getVisibleNavItems, isNavItemActive } from "@/lib/navigation";
+
+interface Props {
+  userEmail: string | null;
+  currentPath: string;
+}
+
+const { userEmail, currentPath } = Astro.props;
+const isAuthenticated = Boolean(userEmail);
+const navItems = getVisibleNavItems(isAuthenticated);
+---
+
+<button
+  id="sidebar-open"
+  type="button"
+  class="app-sidebar-open"
+  aria-label="Open navigation"
+  aria-controls="app-sidebar"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="size-5"
+    aria-hidden="true"
+  >
+    <line x1="4" x2="20" y1="12" y2="12"></line>
+    <line x1="4" x2="20" y1="6" y2="6"></line>
+    <line x1="4" x2="20" y1="18" y2="18"></line>
+  </svg>
+</button>
+
+<div id="sidebar-backdrop" class="app-sidebar-backdrop" hidden aria-hidden="true"></div>
+
+<aside id="app-sidebar" class="app-sidebar" aria-label="Main navigation">
+  <div class="app-sidebar-header">
+    <div class="app-sidebar-logo">
+      <NavIcon name="plants" />
+    </div>
+    <span class="app-sidebar-title">Plant It</span>
+    <button
+      id="sidebar-toggle"
+      type="button"
+      class="app-sidebar-toggle"
+      aria-label="Collapse sidebar"
+      aria-expanded="true"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="chevron-expanded size-4"
+        aria-hidden="true"
+      >
+        <path d="m15 18-6-6 6-6"></path>
+      </svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="chevron-collapsed size-4"
+        aria-hidden="true"
+      >
+        <path d="m9 18 6-6-6-6"></path>
+      </svg>
+    </button>
+  </div>
+
+  <nav class="app-sidebar-nav">
+    {
+      navItems.map((item) => {
+        const active = isNavItemActive(item.href, currentPath);
+        return (
+          <a
+            href={item.href}
+            class:list={["app-sidebar-link", { "app-sidebar-link-active": active }]}
+            aria-current={active ? "page" : undefined}
+            title={item.label}
+          >
+            <NavIcon name={item.icon} />
+            <span class="app-sidebar-link-label">{item.label}</span>
+          </a>
+        );
+      })
+    }
+  </nav>
+
+  <div class="app-sidebar-footer">
+    {
+      userEmail && (
+        <p class="app-sidebar-email" title={userEmail}>
+          <span class="app-sidebar-email-full">{userEmail}</span>
+          <span class="app-sidebar-email-initial">{userEmail.charAt(0).toUpperCase()}</span>
+        </p>
+      )
+    }
+
+    <div class="app-sidebar-theme">
+      <ThemeToggle client:only="react" className="w-full" />
+    </div>
+
+    {
+      isAuthenticated && (
+        <form method="POST" action="/api/auth/signout">
+          <button type="submit" class="app-sidebar-signout">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="size-4"
+              aria-hidden="true"
+            >
+              <path d="m16 17 5-5-5-5" />
+              <path d="M21 12H9" />
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            </svg>
+            <span class="app-sidebar-signout-label">Sign out</span>
+          </button>
+        </form>
+      )
+    }
+  </div>
+</aside>
+
+<script>
+  const SIDEBAR_STORAGE_KEY = "sidebar-collapsed";
+  const MOBILE_QUERY = window.matchMedia("(max-width: 767px)");
+
+  const sidebar = document.getElementById("app-sidebar");
+  const toggle = document.getElementById("sidebar-toggle");
+  const openButton = document.getElementById("sidebar-open");
+  const backdrop = document.getElementById("sidebar-backdrop");
+
+  function isMobile() {
+    return MOBILE_QUERY.matches;
+  }
+
+  function applyCollapsed(collapsed: boolean) {
+    sidebar?.setAttribute("data-collapsed", String(collapsed));
+    toggle?.setAttribute("aria-expanded", String(!collapsed));
+    toggle?.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
+
+    const mobileOpen = isMobile() && !collapsed;
+    openButton?.toggleAttribute("hidden", !collapsed || !isMobile());
+    backdrop?.toggleAttribute("hidden", !mobileOpen);
+    backdrop?.setAttribute("aria-hidden", String(!mobileOpen));
+    document.body.classList.toggle("sidebar-mobile-open", mobileOpen);
+  }
+
+  applyCollapsed(localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
+
+  toggle?.addEventListener("click", () => {
+    const collapsed = sidebar?.getAttribute("data-collapsed") === "true";
+    const next = !collapsed;
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+    applyCollapsed(next);
+  });
+
+  openButton?.addEventListener("click", () => {
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, "false");
+    applyCollapsed(false);
+  });
+
+  backdrop?.addEventListener("click", () => {
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, "true");
+    applyCollapsed(true);
+  });
+
+  MOBILE_QUERY.addEventListener("change", () => {
+    applyCollapsed(sidebar?.getAttribute("data-collapsed") === "true");
+  });
+
+  sidebar?.querySelectorAll("a.app-sidebar-link").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (!isMobile()) return;
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, "true");
+      applyCollapsed(true);
+    });
+  });
+</script>
+
+<style>
+  .app-sidebar-open {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 40;
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sidebar-border);
+    border-radius: calc(var(--radius) - 2px);
+    background: var(--sidebar);
+    color: var(--sidebar-foreground);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+  }
+
+  .app-sidebar-open:hover {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+  }
+
+  .app-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    border: none;
+    background: rgb(0 0 0 / 45%);
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    display: flex;
+    height: 100vh;
+    width: 16rem;
+    flex-direction: column;
+    border-right: 1px solid var(--sidebar-border);
+    background: var(--sidebar);
+    color: var(--sidebar-foreground);
+    box-shadow: var(--shadow-lg);
+    transition:
+      transform 300ms ease,
+      width 300ms ease;
+  }
+
+  .app-sidebar[data-collapsed="true"] {
+    width: 4rem;
+  }
+
+  .app-sidebar-header {
+    display: flex;
+    height: 3.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--sidebar-border);
+    padding: 0 0.75rem;
+  }
+
+  .app-sidebar-logo {
+    display: flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    background: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+  }
+
+  .app-sidebar-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-title {
+    display: none;
+  }
+
+  .app-sidebar-toggle {
+    margin-left: auto;
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: calc(var(--radius) - 2px);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .app-sidebar-toggle:hover {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+  }
+
+  .app-sidebar .chevron-collapsed {
+    display: none;
+  }
+
+  .app-sidebar[data-collapsed="true"] .chevron-expanded {
+    display: none;
+  }
+
+  .app-sidebar[data-collapsed="true"] .chevron-collapsed {
+    display: block;
+  }
+
+  .app-sidebar-nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+    padding: 0.5rem;
+  }
+
+  .app-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: calc(var(--radius) - 2px);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--sidebar-foreground);
+    text-decoration: none;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .app-sidebar-link:hover {
+    background: color-mix(in oklab, var(--sidebar-accent) 70%, transparent);
+    color: var(--sidebar-accent-foreground);
+  }
+
+  .app-sidebar-link-active {
+    background: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-link {
+    justify-content: center;
+    padding-inline: 0.5rem;
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-link-label {
+    display: none;
+  }
+
+  .app-sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-top: 1px solid var(--sidebar-border);
+    padding: 0.75rem;
+  }
+
+  .app-sidebar-email {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-inline: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  .app-sidebar-email-initial {
+    display: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: calc(var(--radius) - 2px);
+    background: color-mix(in oklab, var(--sidebar-accent) 50%, transparent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-email-full {
+    display: none;
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-email-initial {
+    display: inline-flex;
+  }
+
+  .app-sidebar-theme :global(button) {
+    width: 100%;
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-theme :global(button) {
+    width: 2.25rem;
+    padding-inline: 0;
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-theme :global(button span) {
+    display: none;
+  }
+
+  .app-sidebar-signout {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) - 2px);
+    background: var(--background);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: inherit;
+    cursor: pointer;
+    box-shadow: var(--shadow-xs);
+  }
+
+  .app-sidebar-signout:hover {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-signout {
+    width: 2.25rem;
+    padding: 0;
+  }
+
+  .app-sidebar[data-collapsed="true"] .app-sidebar-signout-label {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .app-sidebar-open:not([hidden]) {
+      display: inline-flex;
+    }
+
+    .app-sidebar {
+      width: min(16rem, 85vw);
+    }
+
+    .app-sidebar[data-collapsed="true"] {
+      width: min(16rem, 85vw);
+      transform: translateX(-100%);
+    }
+
+    .app-sidebar[data-collapsed="false"] {
+      transform: translateX(0);
+    }
+
+    :global(body.sidebar-mobile-open) {
+      overflow: hidden;
+    }
+  }
+</style>

@@ -58,3 +58,63 @@ export function isWithinGardenBounds(gridX: number, gridY: number, gardenWidth: 
   const { rows, cols } = getGardenGridDimensions(gardenWidth, gardenHeight);
   return gridX >= 0 && gridX < rows && gridY >= 0 && gridY < cols;
 }
+
+export const GRID_DISPLAY_PICKER = {
+  viewportPx: 320,
+  minCellPx: 20,
+  maxCellPx: 28,
+} as const;
+
+export const GRID_DISPLAY_MAP = {
+  viewportPx: 640,
+  minCellPx: 24,
+  maxCellPx: 48,
+} as const;
+
+export type GridDisplayPreset = typeof GRID_DISPLAY_PICKER | typeof GRID_DISPLAY_MAP;
+
+export function computeCellSize(rows: number, cols: number, preset: GridDisplayPreset = GRID_DISPLAY_PICKER): number {
+  return Math.max(preset.minCellPx, Math.min(preset.maxCellPx, Math.floor(preset.viewportPx / Math.max(cols, rows))));
+}
+
+export const GARDEN_GRID_MAP_LABEL_WIDTH_PX = 28;
+const GARDEN_GRID_MAP_CONTAINER_PADDING_PX = 16;
+const GARDEN_GRID_MAP_ROW_GAP_PX = 4;
+
+export function computeMapCellSizeFromContainer(rows: number, cols: number, containerWidthPx: number): number {
+  const gridAreaWidth =
+    containerWidthPx -
+    GARDEN_GRID_MAP_LABEL_WIDTH_PX -
+    GARDEN_GRID_MAP_CONTAINER_PADDING_PX -
+    GARDEN_GRID_MAP_ROW_GAP_PX;
+  const fromContainer = Math.floor(Math.max(0, gridAreaWidth) / cols);
+  const fallback = computeCellSize(rows, cols, GRID_DISPLAY_MAP);
+
+  return Math.max(GRID_DISPLAY_MAP.minCellPx, Math.max(fromContainer, fallback));
+}
+
+export function formatRowLabel(gridX: number): string {
+  return formatGridLabel(gridX, 0).replace(/\d+$/, "");
+}
+
+export function snapPointerToGridCell(
+  clientX: number,
+  clientY: number,
+  gridElement: HTMLElement,
+  rows: number,
+  cols: number,
+  cellSize: number,
+): { gridX: number; gridY: number } | null {
+  const rect = gridElement.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+
+  const gridY = Math.floor(x / cellSize);
+  const gridX = Math.floor(y / cellSize);
+
+  if (gridX >= 0 && gridX < rows && gridY >= 0 && gridY < cols) {
+    return { gridX, gridY };
+  }
+
+  return null;
+}

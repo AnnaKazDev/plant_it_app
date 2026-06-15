@@ -6,12 +6,12 @@ import { loadAddPlantPageData } from "@/lib/plant-page";
 const { user } = Astro.locals;
 const pageData = user
   ? await loadAddPlantPageData(Astro.request.headers, Astro.cookies, user.id)
-  : { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false };
+  : { gardenWidth: 0, gardenHeight: 0, hasGardenSetup: false, plants: [] };
 ---
 
 <Layout title="Add plant">
   <div class="bg-cosmic flex min-h-screen justify-center p-4 pt-8">
-    <div class="border-border bg-card/50 w-full max-w-lg rounded-2xl border p-8 backdrop-blur-xl">
+    <div class="border-border bg-card/50 w-full max-w-4xl rounded-2xl border p-8 backdrop-blur-xl">
       {
         !user ? (
           <div class="space-y-4 text-center">
@@ -48,6 +48,7 @@ const pageData = user
               gardenWidth={pageData.gardenWidth}
               gardenHeight={pageData.gardenHeight}
               gardenName={pageData.gardenName}
+              existingPlants={pageData.plants}
               client:only="react"
             />
           </div>

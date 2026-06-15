@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { CircleAlert, ImagePlus, Sprout } from "lucide-react";
 import GardenGridPicker from "@/components/plants/GardenGridPicker";
+import PlantIconPicker from "@/components/plants/PlantIconPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DEFAULT_PLANT_ICON_ID, type PlantIconId } from "@/lib/plant-icons";
+import type { GardenMapPlant } from "@/lib/plant-page";
 import { ALLOWED_PHOTO_MIME_TYPES, MAX_PHOTO_FILE_SIZE } from "@/lib/photo-validation";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +14,7 @@ interface Props {
   gardenWidth: number;
   gardenHeight: number;
   gardenName?: string;
+  existingPlants: GardenMapPlant[];
 }
 
 interface FormErrors {
@@ -19,8 +23,9 @@ interface FormErrors {
   submit?: string;
 }
 
-export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName }: Props) {
+export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName, existingPlants }: Props) {
   const [name, setName] = useState("");
+  const [iconName, setIconName] = useState<PlantIconId>(DEFAULT_PLANT_ICON_ID);
   const [gridX, setGridX] = useState(0);
   const [gridY, setGridY] = useState(0);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -64,6 +69,7 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName }: 
         formData.append("name", name.trim());
         formData.append("grid_x", String(gridX));
         formData.append("grid_y", String(gridY));
+        formData.append("icon_name", iconName);
         formData.append("file", photoFile);
 
         response = await fetch("/api/plants", {
@@ -78,6 +84,7 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName }: 
             name: name.trim(),
             grid_x: gridX,
             grid_y: gridY,
+            icon_name: iconName,
           }),
         });
       }
@@ -159,12 +166,19 @@ export default function AddPlantForm({ gardenWidth, gardenHeight, gardenName }: 
       </div>
 
       <div className="space-y-2">
+        <Label>Plant icon</Label>
+        <PlantIconPicker value={iconName} onChange={setIconName} />
+      </div>
+
+      <div className="space-y-2">
         <Label>Garden location</Label>
         <GardenGridPicker
           gardenWidth={gardenWidth}
           gardenHeight={gardenHeight}
           gridX={gridX}
           gridY={gridY}
+          iconName={iconName}
+          existingPlants={existingPlants}
           onChange={(x, y) => {
             setGridX(x);
             setGridY(y);

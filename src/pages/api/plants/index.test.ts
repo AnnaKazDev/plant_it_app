@@ -14,6 +14,7 @@ interface PlantSuccessResponse {
     name: string;
     grid_x: number;
     grid_y: number;
+    icon_name: string;
     photo_url: string | null;
     display_name: string;
   };
@@ -67,6 +68,78 @@ describe("POST /api/plants", () => {
     expect(json.plant.grid_y).toBe(1);
     expect(json.plant.id).toBeTruthy();
     expect(json.plant.display_name).toContain("API Test Fern");
+  });
+
+  it("should create a plant with valid icon_name and return it", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Test-User-Id": testData.userId,
+        Origin: apiUrl,
+      },
+      body: JSON.stringify({
+        name: "Cherry Tomato",
+        grid_x: 2,
+        grid_y: 1,
+        icon_name: "cherry",
+      }),
+    });
+
+    expect(response.status).toBe(201);
+
+    const json = (await response.json()) as PlantSuccessResponse;
+    expect(json.success).toBe(true);
+    expect(json.plant.icon_name).toBe("cherry");
+  });
+
+  it("should default icon_name to sprout when omitted", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Test-User-Id": testData.userId,
+        Origin: apiUrl,
+      },
+      body: JSON.stringify({
+        name: "Default Icon Plant",
+        grid_x: 3,
+        grid_y: 1,
+      }),
+    });
+
+    expect(response.status).toBe(201);
+
+    const json = (await response.json()) as PlantSuccessResponse;
+    expect(json.plant.icon_name).toBe("sprout");
+  });
+
+  it("should reject invalid icon_name with 400 VALIDATION_ERROR", async () => {
+    if (!testData) throw new Error("Test data not initialized");
+
+    const response = await fetch(`${apiUrl}/api/plants`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Test-User-Id": testData.userId,
+        Origin: apiUrl,
+      },
+      body: JSON.stringify({
+        name: "Bad Icon Plant",
+        grid_x: 0,
+        grid_y: 2,
+        icon_name: "not-a-real-icon",
+      }),
+    });
+
+    expect(response.status).toBe(400);
+
+    const json = (await response.json()) as ErrorResponse;
+    expect(json.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("should reject out-of-bounds grid position with 400 INVALID_GRID_POSITION", async () => {

@@ -35,7 +35,8 @@ Hobby gardeners lose track of when plants were planted, how they looked at each 
 | S-03 | multiple-actions-tracking | Add multiple actions (past/today/future dates), see plant card with all action teasers, planned actions show badge/indicator                                  | S-02                   | FR-007, FR-008, FR-009, FR-010                        | done     |
 | S-03b | action-notes               | Add optional notes when creating an action, see notes on plant card action teaser                                                                             | S-03                   | FR-007                                                | ready    |
 | S-04 | plant-list-view           | Add multiple plants, see plant list with last-action teasers (photo + action + date + weather)                                                                | S-02                   | FR-005, FR-009                                        | done     |
-| S-05 | garden-map-view           | See garden map with all plants at their grid locations, click plant on map to open plant card                                                                 | S-02                   | FR-013, FR-014, FR-015                                | proposed |
+| S-05 | garden-map-view           | See garden map with plant icons at grid locations (hover tooltip, click → card); add-plant picker shares map styling + `icon_name` | S-02                   | FR-013, FR-014, FR-015                                | done     |
+| S-06 | garden-multi-cell         | Place a plant across multiple grid cells (e.g. raised bed spanning A1–A4); map shows occupied area                                                            | S-05                   | FR-013 (extends)                                      | proposed |
 
 ## Routing structure
 
@@ -49,9 +50,9 @@ File-based routing (Astro `src/pages/`). Auth middleware protects routes listed 
 | `/auth/confirm-email` | public    | baseline   | Email confirmation page (existing)                                     |
 | `/dashboard`          | protected | baseline   | Post-login entry point (existing)                                      |
 | `/plants`             | protected | S-04       | Plant list view with last-action teasers                               |
-| `/plants/new`         | protected | S-02       | Add first plant form (photo + name + grid coordinates)                 |
+| `/plants/new`         | protected | S-02, S-05 | Add plant form (photo + name + grid coordinates); S-05 upgrades picker to map-style grid + plant icons |
 | `/plants/[id]`        | protected | S-02, S-03, S-03b | Plant card: view plant details + action timeline + add new action (+ optional action notes) |
-| `/garden-map`         | protected | S-05       | Garden map view with plant positions                                   |
+| `/garden-map`         | protected | S-05       | Garden map view: sparse CSS grid, plant icon markers, tooltips, links to plant cards                  |
 
 **Navigation flow (MVP):**
 
@@ -72,7 +73,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | Stream | Theme                   | Chain                                               | Note                                                                     |
 | ------ | ----------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
 | A      | Foundation & onboarding | `F-01` → `S-01`                                     | Enables user registration with garden setup; joins Stream B at `S-02`    |
-| B      | Growth tracking         | `F-02` / `F-03` → `S-02` → `S-03` → `S-03b` / `S-04` / `S-05` | Core product (visual story = photo + weather + actions); north star path |
+| B      | Growth tracking         | `F-02` / `F-03` → `S-02` → `S-03` → `S-03b` / `S-04` / `S-05` → `S-06` | Core product (visual story = photo + weather + actions); north star path |
 
 ## Baseline
 
@@ -198,15 +199,30 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-05: Garden map view with spatial layout
 
-- **Outcome:** User can see garden map with all plants positioned at their grid locations (visual grid matching garden dimensions from S-01), click plant icon on map to open that plant's card. Route: `/garden-map` (separate view, likely linked from `/dashboard` or `/plants`).
+- **Outcome:** User can see a styled garden map at `/garden-map` with all plants as lucide icon markers at `(grid_x, grid_y)` on a sparse CSS grid matching profile dimensions (axis labels, soil-tone background). Hover a marker → tooltip with display name, last-action label, date, and photo thumbnail. Click → `/plants/[id]`. Multiple plants in one cell remain visible via collision offsets. Entry points: **Garden map** on `/dashboard` (when `plantCount > 0`) and header link on `/plants`. Same slice upgrades `/plants/new`: shared `GardenGrid`, ~23 curated `icon_name` icons (`POST /api/plants`), map-style picker showing existing plants + draggable new-plant marker; desktop map/picker grids scale to container width (`ResizeObserver`).
 - **Change ID:** garden-map-view
-- **PRD refs:** FR-013 (place plant at grid coordinates — input part done in S-02, visualization here), FR-014 (see garden map with all plants), FR-015 (click plant on map → open plant card)
+- **PRD refs:** FR-013 (place plant at grid coordinates — visualization + picker upgrade; input started in S-02), FR-014 (see garden map with all plants), FR-015 (click plant on map → open plant card)
 - **Prerequisites:** S-02 (plants must have grid coordinates)
 - **Parallel with:** S-03, S-04
 - **Blockers:** —
 - **Unknowns:**
-  - Map visualization approach: HTML canvas / SVG / CSS grid? Owner: user. Block: no (recommend CSS grid for simplicity — fastest to implement, accessible, responsive; canvas/SVG are overkill for rectangular grid).
-- **Risk:** Garden map could become complex (drag-and-drop plant repositioning, zoom, pan). PRD Non-Goals explicitly defers advanced map features. Keep it simple: static grid, click to navigate, no dragging. Defer enhancements.
+  - ~~Map visualization approach: HTML canvas / SVG / CSS grid?~~ **Resolved (S-05):** sparse CSS background grid + N marker nodes — see `context/changes/garden-map-view/research.md`.
+- **Risk:** Garden map could become complex (drag-and-drop plant repositioning, zoom, pan). PRD Non-Goals explicitly defers advanced map features. Keep it simple: static grid, click to navigate, no dragging on map (placement drag only on `/plants/new` picker). **Multi-cell placement (grządki spanning several cells) deferred to S-06** — S-05 stays single-cell anchor point only.
+- **Status:** done
+
+### S-06: Multi-cell plant placement on garden grid
+
+- **Outcome:** User can assign a plant to **multiple grid cells** when adding or editing placement — e.g. a fern or raised bed spanning A1–A4 and B2–B4, not just a single anchor cell. Garden map shows the **occupied area** (highlighted cells and/or spanning marker). Routes: extends `/plants/new` (picker) and `/garden-map` (visualization); no new page required.
+- **Change ID:** garden-multi-cell
+- **PRD refs:** FR-013 (extends — place plant at garden location; MVP is one cell, this slice adds bed-shaped areas), FR-014 (map shows spatial footprint)
+- **Prerequisites:** S-05 (shared `GardenGrid` component, garden map view, plant icons on map)
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Data model: bounding box (`grid_x`, `grid_y`, `span_rows`, `span_cols`) vs arbitrary cell set (`plant_cells` table or JSONB). Owner: planning phase. Block: no (research in `context/changes/garden-map-view/research.md` recommends **bounding box first**; arbitrary L-shapes only if product requires).
+  - Picker UX: rectangle drag-select on grid (spreadsheet-style) vs multi-click cells. Owner: planning phase. Block: no.
+  - Cell collision rules: allow overlap between plants or enforce unique occupancy per cell. Owner: user. Block: no.
+- **Risk:** Schema migration + API validation + picker UX are non-trivial. Keep S-05 shippable with single-cell; do not block map MVP on this slice. Large gardens (100×100) compound DOM cost if every cell is interactive — reuse sparse rendering from S-05 map where possible.
 - **Status:** proposed
 
 ## Backlog Handoff
@@ -221,7 +237,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-03       | multiple-actions-tracking | Track multiple actions per plant (past/future dates)                   | no                    | Blocked on S-02                         |
 | S-03b      | action-notes              | Optional notes on actions (create + teaser display)                    | yes                   | Run `/10x-implement action-notes`       |
 | S-04       | plant-list-view           | Plant list view with last-action teasers                               | no                    | Blocked on S-02                         |
-| S-05       | garden-map-view           | Garden map view with plant positions                                   | no                    | Blocked on S-02                         |
+| S-05       | garden-map-view           | Garden map view with plant positions                                   | yes                   | Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/` |
+| S-06       | garden-multi-cell         | Multi-cell plant placement (raised beds / grządki)                     | no                    | Blocked on S-05; see `garden-map-view/research.md`    |
 
 ## Open Roadmap Questions
 
@@ -229,9 +246,9 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 2. **Location input UX** — City name (with geocoding) vs manual lat/lng entry vs map picker? Owner: user. Block: S-01 (recommend city name input if geocoding service is acceptable; manual coordinates if keeping dependencies minimal).
 
-3. **Grid coordinate input UX** — Dropdown (A-Z rows, 1-N cols) vs text field ("A3") vs click-on-map preview? Owner: user. Block: S-02 (recommend text field "A3" for MVP speed; enhance with visual grid later).
+3. **Grid coordinate input UX** — Dropdown (A-Z rows, 1-N cols) vs text field ("A3") vs click-on-map preview? Owner: user. Block: S-02 (recommend text field "A3" for MVP speed; enhance with visual grid later). **Partially resolved in S-05:** `/plants/new` uses map-style click/drag grid picker; text label still shown for selected cell.
 
-4. **Map visualization approach** — HTML canvas / SVG / CSS grid for garden map? Owner: user. Block: S-05 (recommend CSS grid — fastest to implement, accessible, responsive; canvas/SVG are overkill for rectangular grid).
+4. ~~**Map visualization approach** — HTML canvas / SVG / CSS grid for garden map?~~ **Resolved in S-05:** sparse CSS grid (`GardenGrid`); see `context/changes/garden-map-view/research.md`.
 
 ## Parked
 
@@ -241,7 +258,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **Sharing gardens between users** — Why parked: PRD §Non-Goals. Strictly single-user in MVP. No multi-user access, no shared gardens, no collaboration features.
 
-- **Advanced map features** — Why parked: PRD §Non-Goals. MVP uses simple rectangular grid (width x height in meters). Non-rectangular garden shapes, custom boundaries, drag-and-drop plant positioning, sunlight zone mapping, and freeform drawing are deferred.
+- **Advanced map features** — Why parked: PRD §Non-Goals. MVP uses simple rectangular grid (width x height in meters). Non-rectangular garden shapes, custom boundaries, drag-and-drop plant repositioning on the map, sunlight zone mapping, and freeform drawing are deferred. **Exception:** multi-cell plant footprint (grządka spanning several cells) is tracked as **S-06** (`garden-multi-cell`) — post–S-05 enhancement, not part of initial map MVP.
 
 - **Full account deletion** — Why parked: PRD §Non-Goals. Users can delete individual plants or actions, but full account deletion with data purge is out of MVP scope (data retention policy + GDPR-compliant deletion add legal/technical complexity beyond 3-week timeline).
 
@@ -250,3 +267,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-01: User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).** — Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/`. Lesson: —.
 - **S-03: User can add multiple actions to a plant (past/today/future dates), see plant card with all action teasers in chronological order, planned actions (future dates) show visual indicator (badge/count) in plant list. Route: `/plants/[id]` (extends plant card from S-02 to show action timeline + repeated "add action" flow).** — Archived 2026-06-12 → `context/archive/2026-06-12-multiple-actions-tracking/`. Lesson: —.
 - **S-04: User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions. Route: `/plants` (main plant list view, likely linked from `/dashboard`).** — Archived 2026-06-13 → `context/archive/2026-06-13-plant-list-view/`. Lesson: —.
+- **S-05: User can see a styled garden map at `/garden-map` with all plants as lucide icon markers at `(grid_x, grid_y)` on a sparse CSS grid matching profile dimensions (axis labels, soil-tone background). Hover a marker → tooltip with display name, last-action label, date, and photo thumbnail. Click → `/plants/[id]`. Multiple plants in one cell remain visible via collision offsets. Entry points: **Garden map** on `/dashboard` (when `plantCount > 0`) and header link on `/plants`. Same slice upgrades `/plants/new`: shared `GardenGrid`, ~23 curated `icon_name` icons (`POST /api/plants`), map-style picker showing existing plants + draggable new-plant marker; desktop map/picker grids scale to container width (`ResizeObserver`).** — Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/`. Lesson: —.

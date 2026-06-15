@@ -129,6 +129,7 @@ export interface Database {
           created_at: string | null;
           grid_x: number;
           grid_y: number;
+          icon_name: string;
           id: string;
           name: string;
           photo_url: string | null;
@@ -139,6 +140,7 @@ export interface Database {
           created_at?: string | null;
           grid_x: number;
           grid_y: number;
+          icon_name?: string;
           id?: string;
           name: string;
           photo_url?: string | null;
@@ -149,6 +151,7 @@ export interface Database {
           created_at?: string | null;
           grid_x?: number;
           grid_y?: number;
+          icon_name?: string;
           id?: string;
           name?: string;
           photo_url?: string | null;
