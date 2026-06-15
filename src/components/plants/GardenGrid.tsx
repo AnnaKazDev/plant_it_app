@@ -143,7 +143,7 @@ const GardenGrid = forwardRef<HTMLDivElement, GardenGridProps>(function GardenGr
             ))}
           </div>
 
-          <GardenGridCellSizeProvider cellSize={cellSize}>
+          <GardenGridCellSizeProvider cellSize={cellSize} rows={rows}>
             <div
               ref={setGridRef}
               role="grid"

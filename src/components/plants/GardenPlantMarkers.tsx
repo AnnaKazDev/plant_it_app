@@ -1,8 +1,8 @@
 import { getActionLabel, PlantPlaceholderImage } from "@/components/plants/ActionTeaser";
-import { useGardenGridCellSize } from "@/components/plants/garden-grid-context";
+import { useGardenGridCellSize, useGardenGridRows } from "@/components/plants/garden-grid-context";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatActionDate } from "@/lib/action-dates";
-import { buildMarkerLayouts } from "@/lib/garden-markers";
+import { buildMarkerLayouts, getMarkerTooltipSide } from "@/lib/garden-markers";
 import { formatGridLabel } from "@/lib/grid";
 import type { GardenMapPlant } from "@/lib/plant-page";
 import { PlantIcon } from "@/lib/plant-icons";
@@ -14,8 +14,7 @@ interface GardenPlantMarkersProps {
 }
 
 function getTooltipPhotoUrl(plant: GardenMapPlant): string | null {
-  const actionPhoto = plant.last_action?.photos[0]?.signed_photo_url;
-  return actionPhoto ?? plant.signed_photo_url;
+  return plant.signed_photo_url ?? plant.last_action?.photos[0]?.signed_photo_url ?? null;
 }
 
 function markerIconClassName(size: number): string {
@@ -24,12 +23,14 @@ function markerIconClassName(size: number): string {
 
 export default function GardenPlantMarkers({ plants, linkable = true }: GardenPlantMarkersProps) {
   const cellSize = useGardenGridCellSize();
+  const rows = useGardenGridRows();
   const markers = buildMarkerLayouts(plants, cellSize);
 
   return (
     <>
       {markers.map(({ plant, left, top, size, zIndex }) => {
         const coordinateLabel = formatGridLabel(plant.grid_x, plant.grid_y);
+        const tooltipSide = getMarkerTooltipSide(plant.grid_x, rows);
         const tooltipPhotoUrl = getTooltipPhotoUrl(plant);
         const markerClassName = cn(
           "bg-primary text-primary-foreground absolute flex items-center justify-center rounded-full shadow-md",
@@ -65,27 +66,31 @@ export default function GardenPlantMarkers({ plants, linkable = true }: GardenPl
                 </span>
               )}
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-56 p-0">
-              <div className="flex gap-2 p-2">
-                <div className="bg-muted flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md">
+            <TooltipContent
+              side={tooltipSide}
+              sideOffset={10}
+              collisionPadding={24}
+              className="max-w-[36rem] p-0 text-base"
+            >
+              <div className="flex gap-6 p-6">
+                <div className="bg-muted flex size-36 shrink-0 items-center justify-center overflow-hidden rounded-xl">
                   {tooltipPhotoUrl ? (
                     <img src={tooltipPhotoUrl} alt="" className="size-full object-cover" />
                   ) : (
                     <PlantPlaceholderImage alt={plant.display_name} />
                   )}
                 </div>
-                <div className="min-w-0 space-y-0.5">
-                  <p className="text-primary-foreground truncate text-sm font-medium">{plant.display_name}</p>
-                  <p className="text-primary-foreground/80 text-xs">{coordinateLabel}</p>
+                <div className="min-w-0 space-y-2 py-1">
+                  <p className="text-primary-foreground text-xl leading-snug font-semibold">{plant.display_name}</p>
                   {plant.last_action ? (
                     <>
-                      <p className="text-primary-foreground/90 text-xs capitalize">
+                      <p className="text-primary-foreground/90 text-base capitalize">
                         {getActionLabel(plant.last_action)}
                       </p>
-                      <p className="text-primary-foreground/70 text-xs">{formatActionDate(plant.last_action.date)}</p>
+                      <p className="text-primary-foreground/75 text-base">{formatActionDate(plant.last_action.date)}</p>
                     </>
                   ) : (
-                    <p className="text-primary-foreground/70 text-xs">No actions yet</p>
+                    <p className="text-primary-foreground/75 text-base">No actions yet</p>
                   )}
                 </div>
               </div>

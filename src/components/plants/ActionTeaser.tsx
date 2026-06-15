@@ -18,6 +18,9 @@ export function PlantPlaceholderImage({ alt = "" }: { alt?: string }) {
 export const teaserElevationClass =
   "shadow-md dark:shadow-[0_4px_20px_-2px_color-mix(in_oklch,var(--primary)_35%,transparent)]";
 
+export const plannedBadgeClass =
+  "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-amber-300/70 dark:bg-amber-400/20 dark:text-amber-200 dark:ring-amber-400/40";
+
 function TeaserLayout({
   image,
   children,
@@ -76,14 +79,14 @@ export default function ActionTeaser({ action, nested = false }: ActionTeaserPro
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-foreground font-medium capitalize">{getActionLabel(action)}</h3>
         {planned ? (
-          <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-medium">
-            Planned
-          </span>
+          <span className={plannedBadgeClass}>Planned</span>
         ) : null}
       </div>
       <p className="text-muted-foreground text-sm">{formatActionDate(action.date)}</p>
       {action.additional_data ? <p className="text-muted-foreground text-sm">{action.additional_data}</p> : null}
-      <p className="text-muted-foreground text-sm">{formatWeather(action.weather_data)}</p>
+      {!planned ? (
+        <p className="text-muted-foreground text-sm">{formatWeather(action.weather_data)}</p>
+      ) : null}
     </TeaserLayout>
   );
 }

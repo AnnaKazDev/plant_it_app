@@ -146,7 +146,12 @@ export default function AddActionForm({ plantId }: Props) {
   }
 
   return (
-    <form className="border-border space-y-4 rounded-xl border p-4" onSubmit={handleSubmit} noValidate>
+    <form
+      id="add-action"
+      className="border-border scroll-mt-6 space-y-4 rounded-xl border p-4"
+      onSubmit={handleSubmit}
+      noValidate
+    >
       <h2 className="text-foreground text-lg font-semibold">Add action</h2>
 
       <div className="space-y-2">

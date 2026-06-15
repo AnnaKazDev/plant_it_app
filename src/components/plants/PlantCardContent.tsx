@@ -9,9 +9,6 @@ interface Props {
 export default function PlantCardContent({ plant }: Props) {
   return (
     <div className="space-y-8">
-      <a href="/plants" className="text-muted-foreground hover:text-foreground inline-block text-sm transition-colors">
-        ← All plants
-      </a>
 
       <div className="flex items-start gap-4">
         <PlantAvatar signedPhotoUrl={plant.signed_photo_url} alt={plant.display_name} />
