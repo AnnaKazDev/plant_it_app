@@ -3,7 +3,7 @@ project: Plant It
 version: 1
 status: draft
 created: 2026-05-25
-updated: 2026-06-15
+updated: 2026-06-17
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -47,7 +47,8 @@ File-based routing (Astro `src/pages/`). Auth middleware protects routes listed 
 | `/`                   | public    | baseline   | Landing / welcome page (existing)                                      |
 | `/auth/signin`        | public    | baseline   | Sign in form (existing)                                                |
 | `/auth/signup`        | public    | S-01       | Extended registration: email + password + location + garden dimensions |
-| `/auth/confirm-email` | public    | baseline   | Email confirmation page (existing)                                     |
+| `/auth/confirm-email` | public    | baseline   | Email confirmation page (existing); `?reason=setup_pending` when account created but profile save failed |
+| `/garden/setup`       | protected | S-01       | Complete garden profile (city, garden name, dimensions) when missing after signup or for orphaned accounts |
 | `/dashboard`          | protected | baseline   | Post-login entry point (existing)                                      |
 | `/plants`             | protected | S-04       | **My plants** list with last-action teasers                               |
 | `/plants/new`         | protected | S-02, S-05 | Add plant form (photo + name + grid coordinates); S-05 upgrades picker to map-style grid + plant icons |
@@ -56,12 +57,16 @@ File-based routing (Astro `src/pages/`). Auth middleware protects routes listed 
 
 **Navigation flow (MVP):**
 
-- Unauthenticated: `/` → `/auth/signup` (or `/auth/signin`) → `/auth/confirm-email` → `/dashboard`
-- Authenticated: `/dashboard` → `/plants` (list) or `/garden-map` → `/plants/[id]` (card)
+- **Registration (happy path):** `/` → `/auth/signup` → `/auth/confirm-email` → `/auth/signin` → `/dashboard`
+- **Registration (profile save failed):** `/auth/signup` → `/auth/confirm-email?reason=setup_pending` → confirm email → `/auth/signin` → `/garden/setup` → `/plants/new` (or `?next=` target)
+- **Sign-in without garden dimensions:** `/auth/signin` → `/garden/setup` (auto-redirect when profile incomplete)
+- **Authenticated, incomplete profile:** `/plants/new` or `/garden-map` → CTA → `/garden/setup`
+- **Authenticated (normal):** `/dashboard` → `/plants` (list) or `/garden-map` → `/plants/[id]` (card)
 
 **API routes (outside file-based routing):**
 
 - `/api/auth/{signin,signup,signout}` — auth endpoints
+- `/api/profile/setup` — `POST` (complete garden profile for authenticated user)
 - `/api/plants` — `GET` (list), `POST` (create with photo)
 - `/api/plants/[id]` — `GET` (card payload), `DELETE` (plant + cascading actions)
 - `/api/actions` — `POST` (create with weather fetch)
@@ -139,7 +144,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### S-01: Extended registration with garden setup
 
-- **Outcome:** User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).
+- **Outcome:** User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page). If profile save fails after auth, user is guided to confirm email then `/garden/setup` to finish garden data.
 - **Change ID:** extended-registration
 - **PRD refs:** FR-001 (user can register and provide location + garden dimensions), FR-012 (provide garden dimensions during registration)
 - **Prerequisites:** F-01 (user profile extension fields must exist in schema)
@@ -272,7 +277,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **F-03: Weather API** — `WeatherService` in `src/lib/weather.ts` (WeatherAPI.com); historical + today's forecast. Change folder: `context/changes/weather-api-integration/`.
 - **S-02: User can add plant with photo + name + grid coordinates, add action with photos + date, see plant card with action teasers (photo + action + date + weather). Routes: `/plants/new`, `/plants/[id]`. Includes stats panel, growth timeline, Upcoming/History, delete plant.** — Change folder: `context/changes/first-plant-first-action/` (not yet archived).
 - **S-03b: User can add optional notes when creating an action and see notes on action teasers.** — Change folder: `context/changes/action-notes/` (not yet archived).
-- **S-01: User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup` (extends existing signup page).** — Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/`. Lesson: —.
+- **S-01: User can register with email + password + location (city/coordinates) + garden name (optional friendly label) + garden dimensions (width x height in meters). Route: `/auth/signup`; recovery path `/garden/setup` when profile incomplete.** — Archived 2026-06-10 → `context/archive/2026-06-07-extended-registration/`. Lesson: —.
 - **S-03: User can add multiple actions to a plant (past/today/future dates), see plant card with all action teasers in chronological order, planned actions (future dates) show visual indicator (badge/count) in plant list. Route: `/plants/[id]` (extends plant card from S-02 to show action timeline + repeated "add action" flow).** — Archived 2026-06-12 → `context/archive/2026-06-12-multiple-actions-tracking/`. Lesson: —.
 - **S-04: User can add multiple plants, see plant list with last-action teasers (photo + action + date + weather), teasers show planned-action badge if plant has future actions. Route: `/plants` (main plant list view, likely linked from `/dashboard`).** — Archived 2026-06-13 → `context/archive/2026-06-13-plant-list-view/`. Lesson: —.
 - **S-05: User can see a styled garden map at `/garden-map` with plant icon markers, tooltips, and links to plant cards. Post-polish: context bar (garden name, location city, dimensions, plant count, today's weather).** — Archived 2026-06-13 → `context/archive/2026-06-13-garden-map-view/`. Lesson: —.

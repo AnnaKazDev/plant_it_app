@@ -46,10 +46,7 @@ export function normalizeWeatherIconUrl(iconUrl: string): string {
 
 /** WeatherAPI often fails on diacritics (e.g. Gdańsk); strip marks before API calls. */
 export function normalizeCityNameForWeatherApi(cityName: string): string {
-  return cityName
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .trim();
+  return cityName.normalize("NFD").replace(/\p{M}/gu, "").trim();
 }
 
 function mapForecastDayToWeatherData(forecastDay: WeatherApiForecastDay): WeatherData {
