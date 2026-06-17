@@ -52,9 +52,17 @@ npx wrangler deploy
 
 ### Secrets
 
-- Local: `.dev.vars` (gitignored)
-- Production: Set via `npx wrangler secret put SUPABASE_URL` and `SUPABASE_KEY`
-- CI/CD: GitHub repository secrets
+- Local: `.dev.vars` (gitignored) — must include `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `WEATHER_API_KEY`
+- Production: Set via Wrangler secrets (required for signup profile creation and garden setup):
+
+```bash
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_KEY
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put WEATHER_API_KEY
+```
+
+- CI/CD: GitHub repository secrets (`SUPABASE_URL`, `SUPABASE_KEY` for build only; runtime secrets live in Cloudflare)
 
 ### Monitoring
 
@@ -89,7 +97,7 @@ All steps must pass before merge.
 ## Environment & Secrets
 
 - Node.js v22.14.0 (see @.nvmrc)
-- Secrets: `SUPABASE_URL`, `SUPABASE_KEY` (declared in @astro.config.mjs `env.schema` as server-only)
+- Secrets: `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `WEATHER_API_KEY` (declared in @astro.config.mjs `env.schema` as server-only)
 - Local dev: copy @.env.example to `.env` (for Node) or `.dev.vars` (for Cloudflare)
 - Local Supabase: `npx supabase start` (requires Docker)
 - Deploy: `npx wrangler deploy` (set secrets in Cloudflare dashboard or via `npx wrangler secret put`)

@@ -2,19 +2,19 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { createClient, createServiceRoleClient, getSupabaseKeyRole } from "@/lib/supabase";
 import { SUPABASE_SERVICE_ROLE_KEY } from "astro:env/server";
+import { gardenProfileSchema } from "@/lib/profile-schema";
+import { upsertGardenProfile } from "@/lib/profile";
 import { WeatherService } from "@/lib/weather";
 import { WEATHER_API_KEY } from "astro:env/server";
 
 export const prerender = false;
 
-const signupSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  city: z.string().min(2, "City name must be at least 2 characters").max(100, "City name too long"),
-  garden_name: z.string().min(1, "Garden name is required").max(100, "Garden name too long"),
-  garden_width: z.coerce.number().min(0.1, "Width must be at least 0.1m").max(100, "Width must be at most 100m"),
-  garden_height: z.coerce.number().min(0.1, "Height must be at least 0.1m").max(100, "Height must be at most 100m"),
-});
+const signupSchema = z
+  .object({
+    email: z.email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+  })
+  .extend(gardenProfileSchema.shape);
 
 export const POST: APIRoute = async (context) => {
   // Parse form data
@@ -36,6 +36,7 @@ export const POST: APIRoute = async (context) => {
   }
 
   const { email, password, city, garden_name, garden_width, garden_height } = parseResult.data;
+  const gardenProfile = { city, garden_name, garden_width, garden_height };
 
   if (!WEATHER_API_KEY) {
     return context.redirect(
@@ -84,16 +85,7 @@ export const POST: APIRoute = async (context) => {
   }
 
   // Service role bypasses RLS — required when email confirmation is enabled (no session after signUp).
-  const { error: profileError } = await adminSupabase.from("profiles").upsert(
-    {
-      id: authData.user.id,
-      location_city: city,
-      garden_name,
-      garden_width,
-      garden_height,
-    },
-    { onConflict: "id" },
-  );
+  const { error: profileError } = await upsertGardenProfile(adminSupabase, authData.user.id, gardenProfile);
 
   if (profileError) {
     console.error("Profile upsert failed during signup:", {
@@ -102,9 +94,7 @@ export const POST: APIRoute = async (context) => {
       details: profileError.details,
       hint: profileError.hint,
     });
-    return context.redirect(
-      `/auth/signup?error=${encodeURIComponent("Failed to create profile. Please try again or contact support.")}`,
-    );
+    return context.redirect("/auth/confirm-email?reason=setup_pending");
   }
 
   // Success - redirect to confirm email

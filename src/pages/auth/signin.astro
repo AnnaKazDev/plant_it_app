@@ -3,6 +3,8 @@ import Layout from "@/layouts/Layout.astro";
 import SignInForm from "@/components/auth/SignInForm";
 
 const error = Astro.url.searchParams.get("error");
+const next = Astro.url.searchParams.get("next");
+const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : null;
 ---
 
 <Layout title="Sign in - Plant It App">
@@ -11,7 +13,7 @@ const error = Astro.url.searchParams.get("error");
       <h1 class="from-primary to-secondary mb-6 bg-gradient-to-r bg-clip-text text-center text-2xl font-bold">
         Sign in
       </h1>
-      <SignInForm serverError={error} client:only="react" />
+      <SignInForm serverError={error} next={safeNext} client:only="react" />
       <p class="text-muted-foreground mt-4 text-center text-sm">
         Don't have an account? <a href="/auth/signup" class="text-primary hover:underline">Sign up</a>
       </p>

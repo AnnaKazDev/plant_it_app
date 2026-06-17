@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
+import { fetchGardenProfile, isGardenProfileComplete } from "@/lib/profile";
 
 export const prerender = false;
 
@@ -10,7 +11,13 @@ function formatAuthError(message: string): string {
   return message;
 }
 
+function safeRedirectPath(next: string | null): string | null {
+  return next?.startsWith("/") && !next.startsWith("//") ? next : null;
+}
+
 export const POST: APIRoute = async (context) => {
+  const next = safeRedirectPath(context.url.searchParams.get("next"));
+
   const form = await context.request.formData();
   const email = form.get("email") as string;
   const password = form.get("password") as string;
@@ -26,8 +33,28 @@ export const POST: APIRoute = async (context) => {
     if (message.includes("email not confirmed") || message.includes("not confirmed")) {
       return context.redirect("/auth/confirm-email?reason=unconfirmed");
     }
-    return context.redirect(`/auth/signin?error=${encodeURIComponent(formatAuthError(error.message))}`);
+    const signInParams = new URLSearchParams({ error: formatAuthError(error.message) });
+    if (next) {
+      signInParams.set("next", next);
+    }
+    return context.redirect(`/auth/signin?${signInParams.toString()}`);
   }
 
-  return context.redirect("/");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    const profile = await fetchGardenProfile(supabase, user.id);
+    if (!isGardenProfileComplete(profile)) {
+      const setupParams = new URLSearchParams();
+      if (next) {
+        setupParams.set("next", next);
+      }
+      const setupQuery = setupParams.toString() ? `?${setupParams.toString()}` : "";
+      return context.redirect(`/garden/setup${setupQuery}`);
+    }
+  }
+
+  return context.redirect(next ?? "/");
 };

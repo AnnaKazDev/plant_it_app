@@ -1,0 +1,73 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import GardenSetupForm from "@/components/profile/GardenSetupForm";
+import { createClient } from "@/lib/supabase";
+import { fetchGardenProfile } from "@/lib/profile";
+import { loadAddPlantPageData } from "@/lib/plant-page";
+
+const { user } = Astro.locals;
+const next = Astro.url.searchParams.get("next");
+const safeNext = next?.startsWith("/") && !next.startsWith("//") ? next : null;
+const error = Astro.url.searchParams.get("error");
+const continueHref = safeNext ?? "/plants/new";
+
+const pageData = user
+  ? await loadAddPlantPageData(Astro.request.headers, Astro.cookies, user.id)
+  : { hasGardenSetup: false };
+
+const supabase = user ? createClient(Astro.request.headers, Astro.cookies) : null;
+const profile = user && supabase && !pageData.hasGardenSetup ? await fetchGardenProfile(supabase, user.id) : null;
+
+const signInHref = safeNext
+  ? `/auth/signin?next=${encodeURIComponent(`/garden/setup?next=${encodeURIComponent(safeNext)}`)}`
+  : "/auth/signin";
+---
+
+<Layout title="Garden setup - Plant It App">
+  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
+    <div class="border-border bg-card/50 w-full max-w-sm rounded-2xl border p-8 backdrop-blur-xl">
+      {
+        !user ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Sign in required</h1>
+            <p class="text-muted-foreground text-sm">
+              <a href={signInHref} class="text-primary hover:underline">
+                Sign in
+              </a>{" "}
+              to finish your garden setup.
+            </p>
+          </div>
+        ) : pageData.hasGardenSetup ? (
+          <div class="space-y-4 text-center">
+            <h1 class="text-foreground text-2xl font-bold">Garden setup complete</h1>
+            <p class="text-muted-foreground text-sm">Your garden dimensions are already saved.</p>
+            <a
+              href={continueHref}
+              class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex rounded-md px-4 py-2 text-sm font-medium"
+            >
+              Continue
+            </a>
+          </div>
+        ) : (
+          <>
+            <h1 class="from-primary to-secondary mb-2 bg-gradient-to-r bg-clip-text text-center text-2xl font-bold">
+              Finish garden setup
+            </h1>
+            <p class="text-muted-foreground mb-6 text-center text-sm">
+              Tell us about your garden so you can add plants and use the map.
+            </p>
+            <GardenSetupForm
+              serverError={error}
+              next={safeNext}
+              initialCity={profile?.location_city ?? ""}
+              initialGardenName={profile?.garden_name ?? ""}
+              initialGardenWidth={profile?.garden_width?.toString() ?? ""}
+              initialGardenHeight={profile?.garden_height?.toString() ?? ""}
+              client:only="react"
+            />
+          </>
+        )
+      }
+    </div>
+  </div>
+</Layout>
