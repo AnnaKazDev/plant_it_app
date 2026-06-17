@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { createClient, createServiceRoleClient } from "@/lib/supabase";
+import { createClient, createServiceRoleClient, getSupabaseKeyRole } from "@/lib/supabase";
+import { SUPABASE_SERVICE_ROLE_KEY } from "astro:env/server";
 import { WeatherService } from "@/lib/weather";
 import { WEATHER_API_KEY } from "astro:env/server";
 
@@ -58,15 +59,23 @@ export const POST: APIRoute = async (context) => {
 
   const adminSupabase = createServiceRoleClient();
   if (!adminSupabase) {
-    return context.redirect(
-      `/auth/signup?error=${encodeURIComponent("Server configuration error. Please contact support.")}`,
-    );
+    const role = SUPABASE_SERVICE_ROLE_KEY ? getSupabaseKeyRole(SUPABASE_SERVICE_ROLE_KEY) : null;
+    const message =
+      role && role !== "service_role"
+        ? "Server configuration error: invalid Supabase service role key. Please contact support."
+        : "Server configuration error. Please contact support.";
+    return context.redirect(`/auth/signup?error=${encodeURIComponent(message)}`);
   }
 
   // Sign up with Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
 
   if (authError) {
+    const authMessage = authError.message.toLowerCase();
+    // Account may already exist from a previous attempt — guide user to confirm email instead of a dead-end error.
+    if (authMessage.includes("rate limit") || authMessage.includes("already registered")) {
+      return context.redirect("/auth/confirm-email?reason=pending");
+    }
     return context.redirect(`/auth/signup?error=${encodeURIComponent(authError.message)}`);
   }
 
@@ -75,16 +84,24 @@ export const POST: APIRoute = async (context) => {
   }
 
   // Service role bypasses RLS — required when email confirmation is enabled (no session after signUp).
-  const { error: profileError } = await adminSupabase.from("profiles").insert({
-    id: authData.user.id,
-    location_city: city,
-    garden_name,
-    garden_width,
-    garden_height,
-  });
+  const { error: profileError } = await adminSupabase.from("profiles").upsert(
+    {
+      id: authData.user.id,
+      location_city: city,
+      garden_name,
+      garden_width,
+      garden_height,
+    },
+    { onConflict: "id" },
+  );
 
   if (profileError) {
-    console.error("Profile insert failed during signup:", profileError);
+    console.error("Profile upsert failed during signup:", {
+      code: profileError.code,
+      message: profileError.message,
+      details: profileError.details,
+      hint: profileError.hint,
+    });
     return context.redirect(
       `/auth/signup?error=${encodeURIComponent("Failed to create profile. Please try again or contact support.")}`,
     );

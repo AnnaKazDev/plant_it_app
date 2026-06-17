@@ -5,9 +5,33 @@ import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY } from "astro:env
 import type { Database } from "@/types";
 import { createTestClient } from "@/lib/test-utils";
 
+/** Decode JWT role claim without verifying signature (config sanity check only). */
+export function getSupabaseKeyRole(key: string): string | null {
+  try {
+    const parts = key.split(".");
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    const data = JSON.parse(json) as { role?: unknown };
+    return typeof data.role === "string" ? data.role : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Server-only client that bypasses RLS — use only for trusted server operations (e.g. signup profile insert). */
 export function createServiceRoleClient() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
+
+  const role = getSupabaseKeyRole(SUPABASE_SERVICE_ROLE_KEY);
+  if (role !== "service_role") {
+    console.error(
+      `SUPABASE_SERVICE_ROLE_KEY has role "${role ?? "unknown"}" — expected "service_role". ` +
+        "Use the service_role key from Supabase Dashboard → Project Settings → API, not the anon key.",
+    );
     return null;
   }
 
