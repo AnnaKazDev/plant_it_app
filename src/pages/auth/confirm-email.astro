@@ -4,12 +4,12 @@ import Layout from "@/layouts/Layout.astro";
 const reason = Astro.url.searchParams.get("reason");
 const isAutoConfirmed = import.meta.env.DEV;
 
-type ConfirmEmailContent = {
+interface ConfirmEmailContent {
   emoji: string;
   heading: string;
   description: string;
   buttonText: string;
-};
+}
 
 const contentByReason: Record<string, ConfirmEmailContent> = {
   pending: {
@@ -31,8 +31,7 @@ const contentByReason: Record<string, ConfirmEmailContent> = {
 const defaultProduction: ConfirmEmailContent = {
   emoji: "📧",
   heading: "Registration successful",
-  description:
-    "We've sent a confirmation link to your email address. Click it to activate your account, then sign in.",
+  description: "We've sent a confirmation link to your email address. Click it to activate your account, then sign in.",
   buttonText: "Go to sign in",
 };
 
@@ -44,7 +43,7 @@ const defaultDev: ConfirmEmailContent = {
 };
 
 const content =
-  reason && contentByReason[reason]
+  reason !== null && reason in contentByReason
     ? contentByReason[reason]
     : isAutoConfirmed
       ? defaultDev
@@ -61,7 +60,7 @@ const content =
       <p class="text-muted-foreground mb-8 text-sm leading-relaxed">{content.description}</p>
       <a
         href="/auth/signin"
-        class="bg-primary text-primary-foreground inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium shadow-xs hover:bg-primary/90"
+        class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium shadow-xs"
       >
         {content.buttonText}
       </a>
