@@ -14,9 +14,16 @@ interface ConfirmEmailContent {
 const contentByReason: Record<string, ConfirmEmailContent> = {
   pending: {
     emoji: "📧",
-    heading: "Check your email",
+    heading: "Account may already exist",
     description:
-      "Your account may already be registered. We sent a confirmation link to your inbox — click it to activate your account, then sign in. If you don't see the email, check spam or wait a few minutes before trying again.",
+      "If you registered before, check your inbox for the confirmation link or try signing in. We do not send another confirmation email for duplicate sign-up attempts. Check spam or wait a few minutes if you registered recently.",
+    buttonText: "Go to sign in",
+  },
+  setup_pending: {
+    emoji: "📧",
+    heading: "Registration successful",
+    description:
+      "Your account was created and we sent a confirmation link to your email. After confirming, sign in and complete your garden setup to start adding plants.",
     buttonText: "Go to sign in",
   },
   unconfirmed: {
@@ -42,6 +49,7 @@ const defaultDev: ConfirmEmailContent = {
   buttonText: "Go to sign in",
 };
 
+const signInHref = reason === "setup_pending" ? "/auth/signin?next=%2Fgarden%2Fsetup" : "/auth/signin";
 const content =
   reason !== null && reason in contentByReason
     ? contentByReason[reason]
@@ -59,7 +67,7 @@ const content =
       </h1>
       <p class="text-muted-foreground mb-8 text-sm leading-relaxed">{content.description}</p>
       <a
-        href="/auth/signin"
+        href={signInHref}
         class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium shadow-xs"
       >
         {content.buttonText}
