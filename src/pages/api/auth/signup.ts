@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase";
+import { createClient, createServiceRoleClient } from "@/lib/supabase";
 import { WeatherService } from "@/lib/weather";
 import { WEATHER_API_KEY } from "astro:env/server";
 
@@ -36,24 +36,6 @@ export const POST: APIRoute = async (context) => {
 
   const { email, password, city, garden_name, garden_width, garden_height } = parseResult.data;
 
-  // Create Supabase client
-  const supabase = createClient(context.request.headers, context.cookies);
-  if (!supabase) {
-    return context.redirect(`/auth/signup?error=${encodeURIComponent("Supabase is not configured")}`);
-  }
-
-  // Sign up with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
-
-  if (authError) {
-    return context.redirect(`/auth/signup?error=${encodeURIComponent(authError.message)}`);
-  }
-
-  if (!authData.user) {
-    return context.redirect(`/auth/signup?error=${encodeURIComponent("Signup succeeded but user data is missing")}`);
-  }
-
-  // Validate city name via WeatherAPI
   if (!WEATHER_API_KEY) {
     return context.redirect(
       `/auth/signup?error=${encodeURIComponent("Weather API is not configured. Please contact support.")}`,
@@ -69,8 +51,31 @@ export const POST: APIRoute = async (context) => {
     );
   }
 
-  // Create profile row
-  const { error: profileError } = await supabase.from("profiles").insert({
+  const supabase = createClient(context.request.headers, context.cookies);
+  if (!supabase) {
+    return context.redirect(`/auth/signup?error=${encodeURIComponent("Supabase is not configured")}`);
+  }
+
+  const adminSupabase = createServiceRoleClient();
+  if (!adminSupabase) {
+    return context.redirect(
+      `/auth/signup?error=${encodeURIComponent("Server configuration error. Please contact support.")}`,
+    );
+  }
+
+  // Sign up with Supabase Auth
+  const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+
+  if (authError) {
+    return context.redirect(`/auth/signup?error=${encodeURIComponent(authError.message)}`);
+  }
+
+  if (!authData.user) {
+    return context.redirect(`/auth/signup?error=${encodeURIComponent("Signup succeeded but user data is missing")}`);
+  }
+
+  // Service role bypasses RLS — required when email confirmation is enabled (no session after signUp).
+  const { error: profileError } = await adminSupabase.from("profiles").insert({
     id: authData.user.id,
     location_city: city,
     garden_name,
@@ -79,6 +84,7 @@ export const POST: APIRoute = async (context) => {
   });
 
   if (profileError) {
+    console.error("Profile insert failed during signup:", profileError);
     return context.redirect(
       `/auth/signup?error=${encodeURIComponent("Failed to create profile. Please try again or contact support.")}`,
     );
