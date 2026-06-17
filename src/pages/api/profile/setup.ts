@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
 import { parseGardenProfileForm } from "@/lib/profile-schema";
 import { upsertGardenProfile } from "@/lib/profile";
-import { WeatherService } from "@/lib/weather";
+import { validateGardenCity } from "@/lib/city-validation";
 import { WEATHER_API_KEY } from "astro:env/server";
 
 export const prerender = false;
@@ -50,11 +50,10 @@ export const POST: APIRoute = async (context) => {
     return redirectWithError("Weather API is not configured. Please contact support.", safeNext);
   }
 
-  const weatherService = new WeatherService(WEATHER_API_KEY);
-  const isCityValid = await weatherService.validateCityName(parseResult.data.city);
+  const cityValidation = await validateGardenCity(parseResult.data.city, WEATHER_API_KEY);
 
-  if (!isCityValid) {
-    return redirectWithError("City not found or could not be validated. Please check the city name.", safeNext);
+  if (!cityValidation.ok) {
+    return redirectWithError(cityValidation.message, safeNext);
   }
 
   const { error: profileError } = await upsertGardenProfile(supabase, user.id, parseResult.data);

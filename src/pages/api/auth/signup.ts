@@ -4,7 +4,7 @@ import { createClient, createServiceRoleClient, getSupabaseKeyRole } from "@/lib
 import { SUPABASE_SERVICE_ROLE_KEY } from "astro:env/server";
 import { gardenProfileSchema } from "@/lib/profile-schema";
 import { upsertGardenProfile } from "@/lib/profile";
-import { WeatherService } from "@/lib/weather";
+import { validateGardenCity } from "@/lib/city-validation";
 import { WEATHER_API_KEY } from "astro:env/server";
 
 export const prerender = false;
@@ -44,13 +44,10 @@ export const POST: APIRoute = async (context) => {
     );
   }
 
-  const weatherService = new WeatherService(WEATHER_API_KEY);
-  const isCityValid = await weatherService.validateCityName(city);
+  const cityValidation = await validateGardenCity(city, WEATHER_API_KEY);
 
-  if (!isCityValid) {
-    return context.redirect(
-      `/auth/signup?error=${encodeURIComponent("City not found or could not be validated. Please check the city name.")}`,
-    );
+  if (!cityValidation.ok) {
+    return context.redirect(`/auth/signup?error=${encodeURIComponent(cityValidation.message)}`);
   }
 
   const supabase = createClient(context.request.headers, context.cookies);

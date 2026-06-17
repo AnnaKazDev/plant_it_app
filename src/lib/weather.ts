@@ -44,6 +44,14 @@ export function normalizeWeatherIconUrl(iconUrl: string): string {
   return iconUrl;
 }
 
+/** WeatherAPI often fails on diacritics (e.g. Gdańsk); strip marks before API calls. */
+export function normalizeCityNameForWeatherApi(cityName: string): string {
+  return cityName
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim();
+}
+
 function mapForecastDayToWeatherData(forecastDay: WeatherApiForecastDay): WeatherData {
   const { day, astro } = forecastDay;
 
@@ -76,6 +84,12 @@ export class WeatherError extends Error {
 
 export class WeatherService {
   constructor(private apiKey: string) {}
+
+  private static readonly REQUEST_TIMEOUT_MS = 5000;
+
+  private cityQuery(cityName: string): string {
+    return encodeURIComponent(normalizeCityNameForWeatherApi(cityName));
+  }
 
   async fetchWeatherForDate(date: string, latitude: number, longitude: number): Promise<WeatherData | null> {
     try {
@@ -146,7 +160,7 @@ export class WeatherService {
         controller.abort();
       }, 5000);
 
-      const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}&dt=${date}`;
+      const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${this.cityQuery(cityName)}&dt=${date}`;
 
       const response = await fetch(url, {
         signal: controller.signal,
@@ -210,7 +224,7 @@ export class WeatherService {
         controller.abort();
       }, 5000);
 
-      const url = `https://api.weatherapi.com/v1/forecast.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}&days=1`;
+      const url = `https://api.weatherapi.com/v1/forecast.json?key=${this.apiKey}&q=${this.cityQuery(cityName)}&days=1`;
 
       const response = await fetch(url, {
         signal: controller.signal,
@@ -250,14 +264,14 @@ export class WeatherService {
     }
   }
 
-  async validateCityName(cityName: string): Promise<boolean> {
+  async validateCityName(cityName: string): Promise<CityValidationResult> {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-      }, 5000);
+      }, WeatherService.REQUEST_TIMEOUT_MS);
 
-      const url = `https://api.weatherapi.com/v1/current.json?key=${this.apiKey}&q=${encodeURIComponent(cityName)}`;
+      const url = `https://api.weatherapi.com/v1/current.json?key=${this.apiKey}&q=${this.cityQuery(cityName)}`;
 
       const response = await fetch(url, {
         signal: controller.signal,
@@ -265,9 +279,43 @@ export class WeatherService {
 
       clearTimeout(timeoutId);
 
-      return response.ok;
+      if (response.ok) {
+        return { valid: true };
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        return { valid: false, reason: "api_key" };
+      }
+
+      try {
+        const body = (await response.json()) as { error?: { code?: number } };
+        if (body.error?.code === 1006) {
+          return { valid: false, reason: "not_found" };
+        }
+      } catch {
+        // Fall through to generic unavailable error.
+      }
+
+      if (response.status === 400) {
+        return { valid: false, reason: "not_found" };
+      }
+
+      return { valid: false, reason: "unavailable" };
     } catch {
-      return false;
+      return { valid: false, reason: "unavailable" };
     }
+  }
+}
+
+export type CityValidationResult = { valid: true } | { valid: false; reason: "not_found" | "api_key" | "unavailable" };
+
+export function cityValidationErrorMessage(result: Extract<CityValidationResult, { valid: false }>): string {
+  switch (result.reason) {
+    case "not_found":
+      return 'City not found. Try a larger nearby city or add the country, e.g. "Warsaw" or "Krakow, Poland".';
+    case "api_key":
+      return "Weather service is misconfigured on the server. Please contact support.";
+    case "unavailable":
+      return "Could not validate the city right now. Please try again in a few minutes.";
   }
 }
