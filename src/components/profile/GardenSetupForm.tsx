@@ -101,6 +101,13 @@ export default function GardenSetupForm({
         placeholder="e.g., Warsaw"
         error={errors.city}
         icon={<MapPin className="size-4" />}
+        hint={
+          !errors.city && (
+            <p className="text-muted-foreground mt-1 text-xs">
+              Polish characters are fine (e.g. Gdańsk) — we normalize them for weather lookup
+            </p>
+          )
+        }
       />
 
       <FormField

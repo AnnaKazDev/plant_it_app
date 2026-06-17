@@ -6,10 +6,18 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
-import { WeatherService } from "./weather";
+import { WeatherService, normalizeCityNameForWeatherApi } from "./weather";
 import { seedTestData, cleanupTestData, createTestClient } from "@/lib/test-utils";
 import type { Json } from "@/database.types";
 import type { WeatherData } from "@/types";
+
+describe("normalizeCityNameForWeatherApi", () => {
+  it("strips Polish diacritics for WeatherAPI compatibility", () => {
+    expect(normalizeCityNameForWeatherApi("Gdańsk")).toBe("Gdansk");
+    expect(normalizeCityNameForWeatherApi("Kraków")).toBe("Krakow");
+    expect(normalizeCityNameForWeatherApi("Warsaw")).toBe("Warsaw");
+  });
+});
 
 describe("WeatherService", () => {
   const TEST_API_KEY = "test-api-key-123";
