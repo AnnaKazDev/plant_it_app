@@ -374,13 +374,13 @@ No schema migrations. Harness change is test-runtime only; production auth uncha
 
 #### Automated
 
-- [ ] 2.1 `npm run test:integration` passes Risk #6 boundary and read-back scenarios
-- [ ] 2.2 `npm run lint` passes
-- [ ] 2.3 `npm run check` passes
+- [x] 2.1 `npm run test:integration` passes Risk #6 boundary and read-back scenarios
+- [x] 2.2 `npm run lint` passes
+- [x] 2.3 `npm run check` passes
 
 #### Manual
 
-- [ ] 2.4 PRD constants are local to test files (no app imports)
+- [x] 2.4 PRD constants are local to test files (no app imports)
 
 ### Phase 3: User-scoped test harness (Risk #3 enabler)
 
