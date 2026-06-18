@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { seedTestData, cleanupTestData, createTestClient } from "@/lib/test-utils";
+import { seedTestData, cleanupTestData, createTestClient, buildTestAuthHeaders } from "@/lib/test-utils";
 
 const PRD_MAX_ACTION_NAME = 300;
 const PRD_MAX_NOTES = 1000;
@@ -18,11 +18,10 @@ interface ErrorResponse {
   };
 }
 
-function authHeaders(userId: string, apiUrl: string) {
+function jsonHeaders(ownerHeaders: Record<string, string>) {
   return {
+    ...ownerHeaders,
     "Content-Type": "application/json",
-    "X-Test-User-Id": userId,
-    Origin: apiUrl,
   };
 }
 
@@ -40,10 +39,15 @@ async function countActionsForPlant(plantId: string): Promise<number> {
   return count ?? 0;
 }
 
-async function createEmptyPlant(userId: string, apiUrl: string, gridX: number, gridY: number): Promise<string> {
+async function createEmptyPlant(
+  ownerHeaders: Record<string, string>,
+  apiUrl: string,
+  gridX: number,
+  gridY: number,
+): Promise<string> {
   const response = await fetch(`${apiUrl}/api/plants`, {
     method: "POST",
-    headers: authHeaders(userId, apiUrl),
+    headers: jsonHeaders(ownerHeaders),
     body: JSON.stringify({
       name: "Validation Test Plant",
       grid_x: gridX,
@@ -63,11 +67,13 @@ describe("POST /api/actions validation rejection + DB oracle (Risk #6)", () => {
   let testData: Awaited<ReturnType<typeof seedTestData>> | undefined;
   let apiUrl: string;
   let plantId: string;
+  let ownerHeaders: Record<string, string>;
 
   beforeAll(async () => {
     testData = await seedTestData();
     apiUrl = process.env.API_URL ?? "http://localhost:4321";
-    plantId = await createEmptyPlant(testData.userId, apiUrl, 3, 3);
+    ownerHeaders = await buildTestAuthHeaders(testData, apiUrl);
+    plantId = await createEmptyPlant(ownerHeaders, apiUrl, 3, 3);
   });
 
   afterAll(async () => {
@@ -84,7 +90,7 @@ describe("POST /api/actions validation rejection + DB oracle (Risk #6)", () => {
 
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
-      headers: authHeaders(testData.userId, apiUrl),
+      headers: jsonHeaders(ownerHeaders),
       body: JSON.stringify({
         plant_id: plantId,
         custom_action_name: name,
@@ -104,7 +110,7 @@ describe("POST /api/actions validation rejection + DB oracle (Risk #6)", () => {
 
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
-      headers: authHeaders(testData.userId, apiUrl),
+      headers: jsonHeaders(ownerHeaders),
       body: JSON.stringify({
         plant_id: plantId,
         custom_action_name: name,
@@ -127,7 +133,7 @@ describe("POST /api/actions validation rejection + DB oracle (Risk #6)", () => {
 
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
-      headers: authHeaders(testData.userId, apiUrl),
+      headers: jsonHeaders(ownerHeaders),
       body: JSON.stringify({
         plant_id: plantId,
         action_type_id: testData.actionTypeId,
@@ -148,7 +154,7 @@ describe("POST /api/actions validation rejection + DB oracle (Risk #6)", () => {
 
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
-      headers: authHeaders(testData.userId, apiUrl),
+      headers: jsonHeaders(ownerHeaders),
       body: JSON.stringify({
         plant_id: plantId,
         action_type_id: testData.actionTypeId,
@@ -174,7 +180,7 @@ describe("POST /api/actions validation rejection + DB oracle (Risk #6)", () => {
 
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
-      headers: authHeaders(testData.userId, apiUrl),
+      headers: jsonHeaders(ownerHeaders),
       body: JSON.stringify({
         plant_id: plantId,
         custom_action_name: "Valid name",
@@ -196,7 +202,7 @@ describe("POST /api/actions validation rejection + DB oracle (Risk #6)", () => {
 
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
-      headers: authHeaders(testData.userId, apiUrl),
+      headers: jsonHeaders(ownerHeaders),
       body: JSON.stringify({
         plant_id: plantId,
         custom_action_name: "   ",

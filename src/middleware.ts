@@ -6,6 +6,17 @@ import { ERROR_CODES } from "@/types";
 const PROTECTED_ROUTES = ["/api/photos", "/plants", "/api/plants", "/api/actions", "/api/action-types", "/garden-map"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  const bearerClient = createClient(context.request.headers, context.cookies);
+  if (bearerClient && context.request.headers.get("Authorization")?.startsWith("Bearer ")) {
+    const {
+      data: { user },
+    } = await bearerClient.auth.getUser();
+    if (user) {
+      context.locals.user = user;
+      return next();
+    }
+  }
+
   // TEST MODE: Allow bypassing auth with X-Test-User-Id header (local dev only)
   if (import.meta.env.DEV) {
     const testUserId = context.request.headers.get("X-Test-User-Id");

@@ -16,7 +16,13 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { seedTestData, cleanupTestData, createTestFile, createTestClient } from "@/lib/test-utils";
+import {
+  seedTestData,
+  cleanupTestData,
+  createTestFile,
+  createTestClient,
+  buildTestAuthHeaders,
+} from "@/lib/test-utils";
 
 const PRD_MAX_PHOTOS_PER_ACTION = 5;
 const PRD_MAX_PHOTO_BYTES = 10 * 1024 * 1024;
@@ -55,11 +61,13 @@ async function countPhotosForAction(actionId: string): Promise<number> {
 describe("POST /api/photos/upload", () => {
   let testData: Awaited<ReturnType<typeof seedTestData>> | undefined;
   let apiUrl: string;
+  let ownerHeaders: Record<string, string>;
 
   beforeAll(async () => {
     // Seed test data (user, plant, action)
     testData = await seedTestData();
     apiUrl = process.env.API_URL ?? "http://localhost:4321";
+    ownerHeaders = await buildTestAuthHeaders(testData, apiUrl);
   });
 
   afterAll(async () => {
@@ -79,10 +87,7 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -116,10 +121,7 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -143,10 +145,7 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -175,10 +174,7 @@ describe("POST /api/photos/upload", () => {
 
       const response = await fetch(`${apiUrl}/api/photos/upload`, {
         method: "POST",
-        headers: {
-          "X-Test-User-Id": testData.userId,
-          Origin: apiUrl,
-        },
+        headers: ownerHeaders,
         body: formData,
       });
 
@@ -193,10 +189,7 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -231,9 +224,7 @@ describe("POST /api/photos/upload", () => {
     expect(response.status).toBe(401);
   });
 
-  // NOTE: This test is skipped because the X-Test-User-Id approach uses service role
-  // client which bypasses RLS. To properly test RLS, we would need to use actual
-  // Supabase authentication with proper session cookies.
+  // Superseded by src/lib/test-utils.harness.test.ts (RLS smoke with signInTestUser).
   it.skip("should reject cross-user action access with 404 (RLS)", async () => {
     if (!testData) throw new Error("Test data not initialized");
 

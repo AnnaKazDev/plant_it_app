@@ -374,25 +374,25 @@ No schema migrations. Harness change is test-runtime only; production auth uncha
 
 #### Automated
 
-- [x] 2.1 `npm run test:integration` passes Risk #6 boundary and read-back scenarios
-- [x] 2.2 `npm run lint` passes
-- [x] 2.3 `npm run check` passes
+- [x] 2.1 `npm run test:integration` passes Risk #6 boundary and read-back scenarios — d17ea5d
+- [x] 2.2 `npm run lint` passes — d17ea5d
+- [x] 2.3 `npm run check` passes — d17ea5d
 
 #### Manual
 
-- [x] 2.4 PRD constants are local to test files (no app imports)
+- [x] 2.4 PRD constants are local to test files (no app imports) — d17ea5d
 
 ### Phase 3: User-scoped test harness (Risk #3 enabler)
 
 #### Automated
 
-- [ ] 3.1 `npm run test:integration` passes harness smoke and all pre-existing owner tests
-- [ ] 3.2 `npm run lint` passes
-- [ ] 3.3 `npm run check` passes
+- [x] 3.1 `npm run test:integration` passes harness smoke and all pre-existing owner tests
+- [x] 3.2 `npm run lint` passes
+- [x] 3.3 `npm run check` passes
 
 #### Manual
 
-- [ ] 3.4 `createClient` no longer uses service role for `X-Test-User-Id`
+- [x] 3.4 `createClient` no longer uses service role for `X-Test-User-Id`
 
 ### Phase 4: Two-user ownership boundaries (Risk #3)
 

@@ -4,7 +4,19 @@
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import ws from "ws";
+
+export interface TestUserFixture {
+  userId: string;
+  plantId: string;
+  actionId: string;
+  actionTypeId: string;
+  gardenWidth: number;
+  gardenHeight: number;
+  email: string;
+  password: string;
+}
 
 /**
  * Create a Supabase client for testing
@@ -33,13 +45,86 @@ export function createTestClient(useServiceRole = false) {
 }
 
 /**
- * Create test user and seed data for photo upload tests
- * Returns user auth session, plant ID, action ID, and auth cookies
+ * Sign in a test user and return headers suitable for fetch (Bearer JWT, RLS active).
  */
-export async function seedTestData() {
+export async function signInTestUser(email: string, password: string): Promise<Record<string, string>> {
+  const client = createTestClient(false);
+  const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    throw new Error(`Failed to sign in test user: ${error.message}`);
+  }
+
+  const accessToken = data.session.access_token;
+  if (!accessToken) {
+    throw new Error("Failed to sign in test user: no session");
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  };
+}
+
+/**
+ * Build integration test headers: JWT session + X-Test-User-Id (middleware) + Origin (CSRF).
+ */
+export async function buildTestAuthHeaders(
+  user: Pick<TestUserFixture, "userId" | "email" | "password">,
+  apiUrl: string,
+  extra: Record<string, string> = {},
+): Promise<Record<string, string>> {
+  const sessionHeaders = await signInTestUser(user.email, user.password);
+  return {
+    ...sessionHeaders,
+    "X-Test-User-Id": user.userId,
+    Origin: apiUrl,
+    ...extra,
+  };
+}
+
+/**
+ * Admin row counts for rejection read-back oracles.
+ */
+export async function getRowCounts(
+  admin: SupabaseClient<Database>,
+  filters: { plantId?: string; actionId?: string } = {},
+): Promise<{ actions: number; photos: number }> {
+  let actions = 0;
+  let photos = 0;
+
+  if (filters.plantId) {
+    const { count, error } = await admin
+      .from("actions")
+      .select("id", { count: "exact", head: true })
+      .eq("plant_id", filters.plantId);
+
+    if (error) {
+      throw new Error(`Failed to count actions: ${error.message}`);
+    }
+
+    actions = count ?? 0;
+  }
+
+  if (filters.actionId) {
+    const { count, error } = await admin
+      .from("photos")
+      .select("id", { count: "exact", head: true })
+      .eq("action_id", filters.actionId);
+
+    if (error) {
+      throw new Error(`Failed to count photos: ${error.message}`);
+    }
+
+    photos = count ?? 0;
+  }
+
+  return { actions, photos };
+}
+
+async function seedUserFixture(label: string, gridX: number, gridY: number): Promise<TestUserFixture> {
   const admin = createTestClient(true);
 
-  const email = `test-${crypto.randomUUID()}@example.com`;
+  const email = `${label}-${crypto.randomUUID()}@example.com`;
   const password = "testpass123";
 
   const { data: authData, error: signUpError } = await admin.auth.admin.createUser({
@@ -68,14 +153,13 @@ export async function seedTestData() {
 
   const actionTypeId = await getFirstActionTypeId(admin);
 
-  // Create test plant
   const { data: plant, error: plantError } = await admin
     .from("plants")
     .insert({
       user_id: userId,
       name: "Test Monstera",
-      grid_x: 0,
-      grid_y: 0,
+      grid_x: gridX,
+      grid_y: gridY,
     })
     .select("id")
     .single();
@@ -84,13 +168,12 @@ export async function seedTestData() {
     throw new Error(`Failed to create test plant: ${plantError.message}`);
   }
 
-  // Create test action
   const { data: action, error: actionError } = await admin
     .from("actions")
     .insert({
       plant_id: plant.id,
       action_type_id: actionTypeId,
-      date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+      date: new Date().toISOString().split("T")[0],
     })
     .select("id")
     .single();
@@ -109,6 +192,24 @@ export async function seedTestData() {
     email,
     password,
   };
+}
+
+/**
+ * Create test user and seed data for photo upload tests
+ * Returns user auth session, plant ID, action ID, and auth cookies
+ */
+export async function seedTestData(): Promise<TestUserFixture> {
+  return seedUserFixture("test", 0, 0);
+}
+
+/**
+ * Two isolated users for cross-user / RLS integration tests.
+ * Cleanup order in tests: userA then userB (or both in finally).
+ */
+export async function seedTwoUsers(): Promise<{ userA: TestUserFixture; userB: TestUserFixture }> {
+  const userA = await seedUserFixture("user-a", 0, 0);
+  const userB = await seedUserFixture("user-b", 1, 0);
+  return { userA, userB };
 }
 
 /**
