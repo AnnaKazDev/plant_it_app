@@ -261,6 +261,7 @@ function listAuthHeaders(userId: string, apiUrl: string) {
 }
 
 describe("GET /api/plants", () => {
+  // POST-origin create→read-back for last_action is covered in critical-path.test.ts (Risk #1).
   let apiUrl: string;
   let listTestUserId: string;
   let plantNoActionsId: string;
