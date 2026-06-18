@@ -386,13 +386,13 @@ No schema migrations. Harness change is test-runtime only; production auth uncha
 
 #### Automated
 
-- [x] 3.1 `npm run test:integration` passes harness smoke and all pre-existing owner tests
-- [x] 3.2 `npm run lint` passes
-- [x] 3.3 `npm run check` passes
+- [x] 3.1 `npm run test:integration` passes harness smoke and all pre-existing owner tests — c453fd8
+- [x] 3.2 `npm run lint` passes — c453fd8
+- [x] 3.3 `npm run check` passes — c453fd8
 
 #### Manual
 
-- [x] 3.4 `createClient` no longer uses service role for `X-Test-User-Id`
+- [x] 3.4 `createClient` no longer uses service role for `X-Test-User-Id` — c453fd8
 
 ### Phase 4: Two-user ownership boundaries (Risk #3)
 
