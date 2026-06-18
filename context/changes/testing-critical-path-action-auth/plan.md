@@ -362,13 +362,13 @@ No schema migrations. Harness change is test-runtime only; production auth uncha
 
 #### Automated
 
-- [x] 1.1 `npm run test:integration` passes including Risk #1 POST→GET scenarios
-- [x] 1.2 `npm run lint` passes
-- [x] 1.3 `npm run check` passes
+- [x] 1.1 `npm run test:integration` passes including Risk #1 POST→GET scenarios — b7fd240
+- [x] 1.2 `npm run lint` passes — b7fd240
+- [x] 1.3 `npm run check` passes — b7fd240
 
 #### Manual
 
-- [x] 1.4 Test names document card vs list vs planned semantics
+- [x] 1.4 Test names document card vs list vs planned semantics — b7fd240
 
 ### Phase 2: Validation rejection + DB oracle (Risk #6)
 
