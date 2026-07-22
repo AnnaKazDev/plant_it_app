@@ -13,7 +13,15 @@ const actionBodySchema = z
   .object({
     plant_id: z.uuid(),
     action_type_id: z.uuid().optional(),
-    custom_action_name: z.string().min(1).max(300).optional(),
+    custom_action_name: z
+      .string()
+      .max(300)
+      .optional()
+      .transform((value) => {
+        if (value === undefined) return undefined;
+        const trimmed = value.trim();
+        return trimmed.length === 0 ? undefined : trimmed;
+      }),
     date: z.string().refine((value) => !Number.isNaN(Date.parse(value)), { message: "Invalid date" }),
     additional_data: z
       .string()

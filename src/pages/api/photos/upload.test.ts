@@ -16,7 +16,16 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { seedTestData, cleanupTestData, createTestFile, createTestClient } from "@/lib/test-utils";
+import {
+  seedTestData,
+  cleanupTestData,
+  createTestFile,
+  createTestClient,
+  buildTestAuthHeaders,
+} from "@/lib/test-utils";
+
+const PRD_MAX_PHOTOS_PER_ACTION = 5;
+const PRD_MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 interface UploadSuccessResponse {
   success: true;
@@ -35,14 +44,30 @@ interface ErrorResponse {
   };
 }
 
+async function countPhotosForAction(actionId: string): Promise<number> {
+  const admin = createTestClient(true);
+  const { count, error } = await admin
+    .from("photos")
+    .select("id", { count: "exact", head: true })
+    .eq("action_id", actionId);
+
+  if (error) {
+    throw new Error(`Failed to count photos: ${error.message}`);
+  }
+
+  return count ?? 0;
+}
+
 describe("POST /api/photos/upload", () => {
   let testData: Awaited<ReturnType<typeof seedTestData>> | undefined;
   let apiUrl: string;
+  let ownerHeaders: Record<string, string>;
 
   beforeAll(async () => {
     // Seed test data (user, plant, action)
     testData = await seedTestData();
     apiUrl = process.env.API_URL ?? "http://localhost:4321";
+    ownerHeaders = await buildTestAuthHeaders(testData, apiUrl);
   });
 
   afterAll(async () => {
@@ -62,10 +87,7 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -88,9 +110,10 @@ describe("POST /api/photos/upload", () => {
     expect(photo?.photo_url).toBe(json.photo.photo_url);
   });
 
-  it("should reject invalid MIME type with 400 INVALID_FILE_TYPE", async () => {
+  it("rejects invalid MIME with 400 INVALID_FILE_TYPE and unchanged photo count (Risk #6)", async () => {
     if (!testData) throw new Error("Test data not initialized");
 
+    const before = await countPhotosForAction(testData.actionId);
     const file = createTestFile("test.txt", "text/plain", 1024);
     const formData = new FormData();
     formData.append("action_id", testData.actionId);
@@ -98,10 +121,7 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -111,22 +131,21 @@ describe("POST /api/photos/upload", () => {
     expect(json).toHaveProperty("error");
     expect(json.error.code).toBe("INVALID_FILE_TYPE");
     expect(json.error.message).toContain("Invalid file type");
+    expect(await countPhotosForAction(testData.actionId)).toBe(before);
   });
 
-  it("should reject file larger than 10MB with 413 FILE_TOO_LARGE", async () => {
+  it("rejects file over PRD max bytes with 413 FILE_TOO_LARGE and unchanged photo count (Risk #6)", async () => {
     if (!testData) throw new Error("Test data not initialized");
 
-    const file = createTestFile("large.jpg", "image/jpeg", 11 * 1024 * 1024); // 11MB
+    const before = await countPhotosForAction(testData.actionId);
+    const file = createTestFile("large.jpg", "image/jpeg", PRD_MAX_PHOTO_BYTES + 1);
     const formData = new FormData();
     formData.append("action_id", testData.actionId);
     formData.append("file", file);
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -136,17 +155,18 @@ describe("POST /api/photos/upload", () => {
     expect(json).toHaveProperty("error");
     expect(json.error.code).toBe("FILE_TOO_LARGE");
     expect(json.error.message).toContain("File too large");
+    expect(await countPhotosForAction(testData.actionId)).toBe(before);
   });
 
-  it("should reject 6th photo upload with 400 MAX_PHOTOS_EXCEEDED", async () => {
+  it("rejects upload beyond PRD max photos with MAX_PHOTOS_EXCEEDED and photo count stays at limit (Risk #6)", async () => {
     if (!testData) throw new Error("Test data not initialized");
 
     // Clean up any existing photos for this action first
     const supabase = createTestClient(true); // Use service role for cleanup
     await supabase.from("photos").delete().eq("action_id", testData.actionId);
 
-    // Upload 5 photos first
-    for (let i = 0; i < 5; i++) {
+    // Upload PRD max photos first
+    for (let i = 0; i < PRD_MAX_PHOTOS_PER_ACTION; i++) {
       const file = createTestFile(`photo-${i}.jpg`, "image/jpeg", 1024);
       const formData = new FormData();
       formData.append("action_id", testData.actionId);
@@ -154,10 +174,7 @@ describe("POST /api/photos/upload", () => {
 
       const response = await fetch(`${apiUrl}/api/photos/upload`, {
         method: "POST",
-        headers: {
-          "X-Test-User-Id": testData.userId,
-          Origin: apiUrl,
-        },
+        headers: ownerHeaders,
         body: formData,
       });
 
@@ -172,10 +189,7 @@ describe("POST /api/photos/upload", () => {
 
     const response = await fetch(`${apiUrl}/api/photos/upload`, {
       method: "POST",
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
       body: formData,
     });
 
@@ -185,6 +199,7 @@ describe("POST /api/photos/upload", () => {
     expect(json).toHaveProperty("error");
     expect(json.error.code).toBe("MAX_PHOTOS_EXCEEDED");
     expect(json.error.message).toContain("Maximum 5 photos");
+    expect(await countPhotosForAction(testData.actionId)).toBe(PRD_MAX_PHOTOS_PER_ACTION);
   });
 
   it("should reject unauthenticated request with 401", async () => {
@@ -207,43 +222,5 @@ describe("POST /api/photos/upload", () => {
 
     // Middleware redirects to /auth/signin (302) or endpoint returns 401
     expect(response.status).toBe(401);
-  });
-
-  // NOTE: This test is skipped because the X-Test-User-Id approach uses service role
-  // client which bypasses RLS. To properly test RLS, we would need to use actual
-  // Supabase authentication with proper session cookies.
-  it.skip("should reject cross-user action access with 404 (RLS)", async () => {
-    if (!testData) throw new Error("Test data not initialized");
-
-    // Create a second user
-    const secondUser = await seedTestData();
-
-    try {
-      const file = createTestFile("test.jpg", "image/jpeg", 1024);
-      const formData = new FormData();
-      // Try to upload to first user's action with second user's auth
-      formData.append("action_id", testData.actionId);
-      formData.append("file", file);
-
-      const response = await fetch(`${apiUrl}/api/photos/upload`, {
-        method: "POST",
-        headers: {
-          "X-Test-User-Id": secondUser.userId,
-          Origin: apiUrl,
-        },
-        body: formData,
-      });
-
-      // With service role bypass, this will succeed (201) instead of failing with 404
-      // In production with proper auth, RLS would prevent this
-      expect(response.status).toBe(404);
-
-      const json = (await response.json()) as ErrorResponse;
-      expect(json).toHaveProperty("error");
-      expect(json.error.code).toBe("ACTION_NOT_FOUND");
-    } finally {
-      // Clean up second user
-      await cleanupTestData(secondUser.userId);
-    }
   });
 });

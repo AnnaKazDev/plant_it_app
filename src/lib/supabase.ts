@@ -3,7 +3,6 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { AstroCookies } from "astro";
 import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY } from "astro:env/server";
 import type { Database } from "@/types";
-import { createTestClient } from "@/lib/test-utils";
 
 /** Decode JWT role claim without verifying signature (config sanity check only). */
 export function getSupabaseKeyRole(key: string): string | null {
@@ -43,20 +42,35 @@ export function createServiceRoleClient() {
   });
 }
 
+function createBearerTokenClient(requestHeaders: Headers) {
+  const authHeader = requestHeaders.get("Authorization");
+  const accessToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+
+  if (!accessToken || !SUPABASE_URL || !SUPABASE_KEY) {
+    return null;
+  }
+
+  return createSupabaseClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
 export function createClient(requestHeaders: Headers, cookies: AstroCookies) {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     return null;
   }
 
-  // TEST MODE: If X-Test-User-Id header is present (non-production only),
-  // use service role client to bypass RLS (test middleware already verified the user)
-  if (!import.meta.env.PROD) {
-    const testUserId = requestHeaders.get("X-Test-User-Id");
-    if (testUserId) {
-      // Return a service role client that will have full access
-      // The middleware has already verified this is a valid test user
-      return createTestClient(true); // Use service role key
-    }
+  const bearerClient = createBearerTokenClient(requestHeaders);
+  if (bearerClient) {
+    return bearerClient;
   }
 
   return createServerClient<Database>(SUPABASE_URL, SUPABASE_KEY, {

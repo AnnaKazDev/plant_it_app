@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { seedTestData, cleanupTestData } from "@/lib/test-utils";
+import { seedTestData, cleanupTestData, buildTestAuthHeaders } from "@/lib/test-utils";
 
 interface PlantDetailSuccessResponse {
   success: true;
@@ -22,6 +22,7 @@ interface PlantDetailSuccessResponse {
 describe("GET /api/plants/[id]", () => {
   let testData: Awaited<ReturnType<typeof seedTestData>> | undefined;
   let apiUrl: string;
+  let ownerHeaders: Record<string, string>;
 
   const actionDates = {
     past: "2020-03-10",
@@ -32,11 +33,11 @@ describe("GET /api/plants/[id]", () => {
   beforeAll(async () => {
     testData = await seedTestData();
     apiUrl = process.env.API_URL ?? "http://localhost:4321";
+    ownerHeaders = await buildTestAuthHeaders(testData, apiUrl);
 
     const headers = {
+      ...ownerHeaders,
       "Content-Type": "application/json",
-      "X-Test-User-Id": testData.userId,
-      Origin: apiUrl,
     };
 
     for (const date of Object.values(actionDates)) {
@@ -66,10 +67,7 @@ describe("GET /api/plants/[id]", () => {
     if (!testData) throw new Error("Test data not initialized");
 
     const response = await fetch(`${apiUrl}/api/plants/${testData.plantId}`, {
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
     });
 
     expect(response.status).toBe(200);
@@ -96,9 +94,8 @@ describe("GET /api/plants/[id]", () => {
     const createResponse = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -116,10 +113,7 @@ describe("GET /api/plants/[id]", () => {
     const actionId = createJson.action.id;
 
     const response = await fetch(`${apiUrl}/api/plants/${testData.plantId}`, {
-      headers: {
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
-      },
+      headers: ownerHeaders,
     });
 
     expect(response.status).toBe(200);

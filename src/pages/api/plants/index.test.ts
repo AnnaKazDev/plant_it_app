@@ -5,7 +5,13 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createTestClient, getFirstActionTypeId, seedTestData, cleanupTestData } from "@/lib/test-utils";
+import {
+  createTestClient,
+  getFirstActionTypeId,
+  seedTestData,
+  cleanupTestData,
+  buildTestAuthHeaders,
+} from "@/lib/test-utils";
 
 interface PlantSuccessResponse {
   success: true;
@@ -30,10 +36,12 @@ interface ErrorResponse {
 describe("POST /api/plants", () => {
   let testData: Awaited<ReturnType<typeof seedTestData>> | undefined;
   let apiUrl: string;
+  let ownerHeaders: Record<string, string>;
 
   beforeAll(async () => {
     testData = await seedTestData();
     apiUrl = process.env.API_URL ?? "http://localhost:4321";
+    ownerHeaders = await buildTestAuthHeaders(testData, apiUrl);
   });
 
   afterAll(async () => {
@@ -48,9 +56,8 @@ describe("POST /api/plants", () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         name: "API Test Fern",
@@ -76,9 +83,8 @@ describe("POST /api/plants", () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         name: "Cherry Tomato",
@@ -101,9 +107,8 @@ describe("POST /api/plants", () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         name: "Default Icon Plant",
@@ -124,9 +129,8 @@ describe("POST /api/plants", () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         name: "Bad Icon Plant",
@@ -148,9 +152,8 @@ describe("POST /api/plants", () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         name: "Out of Bounds Plant",
@@ -171,9 +174,8 @@ describe("POST /api/plants", () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         name: "",
@@ -250,19 +252,14 @@ async function seedUserWithProfile() {
     throw new Error(`Failed to create test profile: ${profileError.message}`);
   }
 
-  return { userId, admin };
-}
-
-function listAuthHeaders(userId: string, apiUrl: string) {
-  return {
-    "X-Test-User-Id": userId,
-    Origin: apiUrl,
-  };
+  return { userId, email, password, admin };
 }
 
 describe("GET /api/plants", () => {
+  // POST-origin create→read-back for last_action is covered in critical-path.test.ts (Risk #1).
   let apiUrl: string;
   let listTestUserId: string;
+  let listOwnerHeaders: Record<string, string>;
   let plantNoActionsId: string;
   let plantMultiActionId: string;
   let plantRecentId: string;
@@ -270,8 +267,9 @@ describe("GET /api/plants", () => {
   beforeAll(async () => {
     apiUrl = process.env.API_URL ?? "http://localhost:4321";
 
-    const { userId, admin } = await seedUserWithProfile();
+    const { userId, email, password, admin } = await seedUserWithProfile();
     listTestUserId = userId;
+    listOwnerHeaders = await buildTestAuthHeaders({ userId, email, password }, apiUrl);
     const actionTypeId = await getFirstActionTypeId(admin);
 
     const { data: plantNoActions, error: noActionsError } = await admin
@@ -362,11 +360,12 @@ describe("GET /api/plants", () => {
   });
 
   it("should return an empty list for a user with no plants", async () => {
-    const { userId } = await seedUserWithProfile();
+    const { userId, email, password } = await seedUserWithProfile();
 
     try {
+      const headers = await buildTestAuthHeaders({ userId, email, password }, apiUrl);
       const response = await fetch(`${apiUrl}/api/plants`, {
-        headers: listAuthHeaders(userId, apiUrl),
+        headers,
       });
 
       expect(response.status).toBe(200);
@@ -381,7 +380,7 @@ describe("GET /api/plants", () => {
 
   it("should return last_action null when a plant has no actions", async () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
-      headers: listAuthHeaders(listTestUserId, apiUrl),
+      headers: listOwnerHeaders,
     });
 
     expect(response.status).toBe(200);
@@ -394,7 +393,7 @@ describe("GET /api/plants", () => {
 
   it("should return the newest action as last_action when multiple actions exist", async () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
-      headers: listAuthHeaders(listTestUserId, apiUrl),
+      headers: listOwnerHeaders,
     });
 
     expect(response.status).toBe(200);
@@ -407,7 +406,7 @@ describe("GET /api/plants", () => {
 
   it("should return planned_action_count matching future-dated actions", async () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
-      headers: listAuthHeaders(listTestUserId, apiUrl),
+      headers: listOwnerHeaders,
     });
 
     expect(response.status).toBe(200);
@@ -422,7 +421,7 @@ describe("GET /api/plants", () => {
 
   it("should return plants sorted by activity date descending", async () => {
     const response = await fetch(`${apiUrl}/api/plants`, {
-      headers: listAuthHeaders(listTestUserId, apiUrl),
+      headers: listOwnerHeaders,
     });
 
     expect(response.status).toBe(200);

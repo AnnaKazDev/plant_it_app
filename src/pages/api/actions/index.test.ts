@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { seedTestData, cleanupTestData } from "@/lib/test-utils";
+import { seedTestData, cleanupTestData, buildTestAuthHeaders } from "@/lib/test-utils";
 
 interface ActionSuccessResponse {
   success: true;
@@ -31,10 +31,12 @@ interface ErrorResponse {
 describe("POST /api/actions", () => {
   let testData: Awaited<ReturnType<typeof seedTestData>> | undefined;
   let apiUrl: string;
+  let ownerHeaders: Record<string, string>;
 
   beforeAll(async () => {
     testData = await seedTestData();
     apiUrl = process.env.API_URL ?? "http://localhost:4321";
+    ownerHeaders = await buildTestAuthHeaders(testData, apiUrl);
   });
 
   afterAll(async () => {
@@ -49,9 +51,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -76,9 +77,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -101,9 +101,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -126,9 +125,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -150,9 +148,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -174,9 +171,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -196,9 +192,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: "00000000-0000-0000-0000-000000000000",
@@ -219,9 +214,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
@@ -245,9 +239,8 @@ describe("POST /api/actions", () => {
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: {
+        ...ownerHeaders,
         "Content-Type": "application/json",
-        "X-Test-User-Id": testData.userId,
-        Origin: apiUrl,
       },
       body: JSON.stringify({
         plant_id: testData.plantId,
