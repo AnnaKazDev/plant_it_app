@@ -13,6 +13,8 @@ import {
   cleanupTestData,
   buildTestAuthHeaders,
   createTestFile,
+  createTestClient,
+  getRowCounts,
   type TestUserFixture,
 } from "@/lib/test-utils";
 
@@ -26,6 +28,19 @@ interface ErrorResponse {
 interface PlantListSuccessResponse {
   success: true;
   plants: { id: string }[];
+}
+
+interface PlantCardResponse {
+  success?: true;
+  plant: {
+    actions: Array<{
+      id: string;
+      additional_data: string | null;
+      photos?: Array<{
+        signed_photo_url: string;
+      }>;
+    }>;
+  };
 }
 
 function jsonHeaders(headers: Record<string, string>) {
@@ -52,8 +67,12 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
   });
 
   afterAll(async () => {
-    await cleanupTestData(userA.userId);
-    await cleanupTestData(userB.userId);
+    if (userA?.userId) {
+      await cleanupTestData(userA.userId);
+    }
+    if (userB?.userId) {
+      await cleanupTestData(userB.userId);
+    }
   });
 
   it("user B cannot GET user A plant (404 PLANT_NOT_FOUND)", async () => {
@@ -86,6 +105,9 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
   });
 
   it("user B cannot POST action on user A plant (404 PLANT_NOT_FOUND)", async () => {
+    const admin = createTestClient(true);
+    const before = await getRowCounts(admin, { plantId: userA.plantId });
+
     const response = await fetch(`${apiUrl}/api/actions`, {
       method: "POST",
       headers: jsonHeaders(headersB),
@@ -100,6 +122,9 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
 
     const json = (await response.json()) as ErrorResponse;
     expect(json.error.code).toBe("PLANT_NOT_FOUND");
+
+    const after = await getRowCounts(admin, { plantId: userA.plantId });
+    expect(after.actions).toBe(before.actions);
   });
 
   it("user B cannot PATCH user A action (404 ACTION_NOT_FOUND)", async () => {
@@ -115,6 +140,18 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
 
     const json = (await response.json()) as ErrorResponse;
     expect(json.error.code).toBe("ACTION_NOT_FOUND");
+
+    const getResponse = await fetch(`${apiUrl}/api/plants/${userA.plantId}`, {
+      headers: headersA,
+    });
+
+    expect(getResponse.status).toBe(200);
+
+    const plantJson = (await getResponse.json()) as PlantCardResponse;
+    const action = plantJson.plant.actions.find((item) => item.id === userA.actionId);
+
+    expect(action).toBeDefined();
+    expect(action?.additional_data).not.toBe("cross-user edit attempt");
   });
 
   it("user B cannot DELETE user A action (404 ACTION_NOT_FOUND)", async () => {
@@ -127,9 +164,21 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
 
     const json = (await response.json()) as ErrorResponse;
     expect(json.error.code).toBe("ACTION_NOT_FOUND");
+
+    const getResponse = await fetch(`${apiUrl}/api/plants/${userA.plantId}`, {
+      headers: headersA,
+    });
+
+    expect(getResponse.status).toBe(200);
+
+    const plantJson = (await getResponse.json()) as PlantCardResponse;
+    expect(plantJson.plant.actions.some((item) => item.id === userA.actionId)).toBe(true);
   });
 
   it("user B cannot upload photo to user A action (404 ACTION_NOT_FOUND)", async () => {
+    const admin = createTestClient(true);
+    const before = await getRowCounts(admin, { actionId: userA.actionId });
+
     const file = createTestFile("cross-user.jpg", "image/jpeg", 1024);
     const formData = new FormData();
     formData.append("action_id", userA.actionId);
@@ -145,6 +194,9 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
 
     const json = (await response.json()) as ErrorResponse;
     expect(json.error.code).toBe("ACTION_NOT_FOUND");
+
+    const after = await getRowCounts(admin, { actionId: userA.actionId });
+    expect(after.photos).toBe(before.photos);
   });
 
   it("user B plant list excludes user A plants", async () => {
@@ -159,5 +211,48 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
 
     expect(plantIds).not.toContain(userA.plantId);
     expect(plantIds).toContain(userB.plantId);
+  });
+
+  it("user B cannot obtain user A photo URLs via plant APIs", async () => {
+    const file = createTestFile("owner-photo.jpg", "image/jpeg", 1024);
+    const formData = new FormData();
+    formData.append("action_id", userA.actionId);
+    formData.append("file", file);
+
+    const uploadResponse = await fetch(`${apiUrl}/api/photos/upload`, {
+      method: "POST",
+      headers: headersA,
+      body: formData,
+    });
+
+    expect(uploadResponse.status).toBe(201);
+
+    const cardResponse = await fetch(`${apiUrl}/api/plants/${userA.plantId}`, {
+      headers: headersA,
+    });
+
+    expect(cardResponse.status).toBe(200);
+
+    const cardJson = (await cardResponse.json()) as PlantCardResponse;
+    const action = cardJson.plant.actions.find((item) => item.id === userA.actionId);
+    const signedPhotoUrl = action?.photos?.[0]?.signed_photo_url;
+
+    expect(signedPhotoUrl).toBeTruthy();
+
+    const listResponse = await fetch(`${apiUrl}/api/plants`, {
+      headers: headersB,
+    });
+
+    expect(listResponse.status).toBe(200);
+
+    const listText = await listResponse.text();
+    expect(listText).not.toContain(userA.plantId);
+    expect(listText).not.toContain(signedPhotoUrl);
+
+    const crossGetResponse = await fetch(`${apiUrl}/api/plants/${userA.plantId}`, {
+      headers: headersB,
+    });
+
+    expect(crossGetResponse.status).toBe(404);
   });
 }, 30_000);

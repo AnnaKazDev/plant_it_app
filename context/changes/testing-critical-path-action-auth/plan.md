@@ -398,9 +398,9 @@ No schema migrations. Harness change is test-runtime only; production auth uncha
 
 #### Automated
 
-- [x] 4.1 `npm run test:integration` passes ownership matrix
-- [x] 4.2 `npm run lint` passes
-- [x] 4.3 `npm run check` passes
+- [x] 4.1 `npm run test:integration` passes ownership matrix — be61aa5
+- [x] 4.2 `npm run lint` passes — be61aa5
+- [x] 4.3 `npm run check` passes — be61aa5
 
 ### Phase 5: Cookbook §6 patterns
 
