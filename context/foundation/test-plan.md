@@ -113,8 +113,9 @@ the relevant rollout phase ships; before that, the sub-section reads
 ### 6.1 Adding a unit test
 
 This project defers unit tests for API route contracts — handlers are thin and
-integration tests give better signal for auth, RLS, and persistence. Extract
-pure logic to `src/lib/` first, then add a colocated `*.test.ts` with Vitest.
+integration tests give better signal for auth, RLS, and persistence. For API
+contracts, follow §6.2 integration patterns instead. Extract pure logic to
+`src/lib/` first, then add a colocated `*.test.ts` with Vitest.
 
 ### 6.2 Adding an integration test
 
@@ -122,15 +123,18 @@ pure logic to `src/lib/` first, then add a colocated `*.test.ts` with Vitest.
 
 1. Place the file under `src/**/*.test.ts` (Vitest picks it up automatically).
 2. Seed data with `seedTestData()` (single user) or `seedTwoUsers()` (RLS matrix).
-3. Build auth headers with `buildTestAuthHeaders(user, apiUrl)` — mints a real
-   JWT session and sets `X-Test-User-Id` for middleware.
+3. Build auth headers with `buildTestAuthHeaders(user, apiUrl)` — wraps
+   `signInTestUser` (JWT session) and sets `X-Test-User-Id` for middleware. Use
+   `buildTestAuthHeaders` for API matrix tests; use `signInTestUser` directly only
+   for harness/RLS smoke tests (set `Origin: apiUrl` on multipart uploads).
 4. `fetch` the running dev server at `process.env.API_URL ?? "http://localhost:4321"`.
 5. For write→read scenarios (Risk #1), `POST` then `GET` card and list — do not
    stop at 201.
 6. Clean up in `afterAll` with `cleanupTestData(userId)` (service role teardown).
+7. Run the suite: `npm run test:integration` (or `npm run test:watch` for UI).
 
-**Reference files:** `critical-path.test.ts`, `ownership.test.ts`,
-`test-utils.harness.test.ts`.
+**Reference files:** `critical-path.test.ts`, `validation.test.ts`,
+`ownership.test.ts`, `test-utils.harness.test.ts`.
 
 ### 6.3 Adding an e2e test
 
@@ -167,8 +171,8 @@ contributors should respect these unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-06-18
-- Stack versions last verified: 2026-06-18
+- Strategy (§1–§5) last reviewed: 2026-07-22
+- Stack versions last verified: 2026-07-22
 - AI-native tool references last verified: 2026-06-18
 
 Refresh (`/10x-test-plan --refresh`) when:

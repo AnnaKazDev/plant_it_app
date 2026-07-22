@@ -1,7 +1,7 @@
 ---
 change_id: testing-critical-path-action-auth
 title: Critical-path action + auth integration
-status: impl_reviewed
+status: implemented
 created: 2026-06-18
 updated: 2026-07-22
 archived_at: null
