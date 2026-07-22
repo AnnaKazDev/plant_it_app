@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-18
+> Last updated: 2026-07-22
 
 ## 1. Strategy
 
@@ -65,7 +65,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | Critical-path action + auth integration | Prove action create persists and surfaces on card/list read paths; defend ownership boundaries | #1, #3, #6 | integration | researched | testing-critical-path-action-auth |
+| 1 | Critical-path action + auth integration | Prove action create persists and surfaces on card/list read paths; defend ownership boundaries | #1, #3, #6 | integration | implemented | testing-critical-path-action-auth |
 | 2 | Weather and photo boundary tests | Catch silent weather failures and photo–teaser drift at external/storage edges | #2, #4, #5 | integration | not started | — |
 | 3 | Quality-gates wiring | Run integration suite in CI so regressions block merge | cross-cutting | gates | not started | — |
 
@@ -112,11 +112,25 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.1 Adding a unit test
 
-- TBD — see §3 Phase 1 (action persist/read-back and validation patterns).
+This project defers unit tests for API route contracts — handlers are thin and
+integration tests give better signal for auth, RLS, and persistence. Extract
+pure logic to `src/lib/` first, then add a colocated `*.test.ts` with Vitest.
 
 ### 6.2 Adding an integration test
 
-- TBD — see §3 Phase 1 (action create → persist → read for teasers; two-user ownership).
+**Prerequisites:** `npx supabase start` and `npm run dev` (separate terminal).
+
+1. Place the file under `src/**/*.test.ts` (Vitest picks it up automatically).
+2. Seed data with `seedTestData()` (single user) or `seedTwoUsers()` (RLS matrix).
+3. Build auth headers with `buildTestAuthHeaders(user, apiUrl)` — mints a real
+   JWT session and sets `X-Test-User-Id` for middleware.
+4. `fetch` the running dev server at `process.env.API_URL ?? "http://localhost:4321"`.
+5. For write→read scenarios (Risk #1), `POST` then `GET` card and list — do not
+   stop at 201.
+6. Clean up in `afterAll` with `cleanupTestData(userId)` (service role teardown).
+
+**Reference files:** `critical-path.test.ts`, `ownership.test.ts`,
+`test-utils.harness.test.ts`.
 
 ### 6.3 Adding an e2e test
 
@@ -124,7 +138,13 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.4 Adding a test for a new API endpoint
 
-- TBD — see §3 Phase 1 (ownership + contract rejection pattern for new routes).
+1. **Happy path (owner):** authenticated user succeeds; assert response shape.
+2. **Ownership (Risk #3):** second user gets **404** with `PLANT_NOT_FOUND` or
+   `ACTION_NOT_FOUND` — production never returns 403 for wrong-owner access.
+3. **Validation (Risk #6):** define PRD limits locally in the test file (do not
+   import Zod schemas); assert 4xx and unchanged row counts via
+   `getRowCounts(admin, { plantId })` or `createTestClient(true)` queries.
+4. **Unauthenticated:** expect 401 (or middleware redirect in some routes).
 
 ### 6.5 Adding a test for weather or external HTTP boundary
 
@@ -132,7 +152,11 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 ### 6.6 Per-rollout-phase notes
 
-(Optional — filled as phases complete.)
+**Phase 1 — Critical-path action + auth** (2026-07-22, change folder
+`context/changes/testing-critical-path-action-auth/`): Risks #1, #3, #6 closed.
+Patterns: POST→GET read-back (`critical-path.test.ts`), PRD-oracle validation
+(`validation.test.ts`), user-scoped harness (`signInTestUser`, `buildTestAuthHeaders`),
+two-user matrix (`ownership.test.ts`).
 
 ## 7. What We Deliberately Don't Test
 

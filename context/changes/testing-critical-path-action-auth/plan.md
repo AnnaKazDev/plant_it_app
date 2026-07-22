@@ -398,17 +398,17 @@ No schema migrations. Harness change is test-runtime only; production auth uncha
 
 #### Automated
 
-- [ ] 4.1 `npm run test:integration` passes ownership matrix
-- [ ] 4.2 `npm run lint` passes
-- [ ] 4.3 `npm run check` passes
+- [x] 4.1 `npm run test:integration` passes ownership matrix
+- [x] 4.2 `npm run lint` passes
+- [x] 4.3 `npm run check` passes
 
 ### Phase 5: Cookbook §6 patterns
 
 #### Automated
 
-- [ ] 5.1 `npm run test:integration` passes (regression guard)
+- [x] 5.1 `npm run test:integration` passes (regression guard)
 
 #### Manual
 
-- [ ] 5.2 `context/foundation/test-plan.md` §6.1, §6.2, §6.4, §6.6 updated
-- [ ] 5.3 `change.md` status set to `implemented`
+- [x] 5.2 `context/foundation/test-plan.md` §6.1, §6.2, §6.4, §6.6 updated
+- [x] 5.3 `change.md` status set to `implemented`

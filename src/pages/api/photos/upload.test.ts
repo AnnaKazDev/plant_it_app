@@ -223,40 +223,4 @@ describe("POST /api/photos/upload", () => {
     // Middleware redirects to /auth/signin (302) or endpoint returns 401
     expect(response.status).toBe(401);
   });
-
-  // Superseded by src/lib/test-utils.harness.test.ts (RLS smoke with signInTestUser).
-  it.skip("should reject cross-user action access with 404 (RLS)", async () => {
-    if (!testData) throw new Error("Test data not initialized");
-
-    // Create a second user
-    const secondUser = await seedTestData();
-
-    try {
-      const file = createTestFile("test.jpg", "image/jpeg", 1024);
-      const formData = new FormData();
-      // Try to upload to first user's action with second user's auth
-      formData.append("action_id", testData.actionId);
-      formData.append("file", file);
-
-      const response = await fetch(`${apiUrl}/api/photos/upload`, {
-        method: "POST",
-        headers: {
-          "X-Test-User-Id": secondUser.userId,
-          Origin: apiUrl,
-        },
-        body: formData,
-      });
-
-      // With service role bypass, this will succeed (201) instead of failing with 404
-      // In production with proper auth, RLS would prevent this
-      expect(response.status).toBe(404);
-
-      const json = (await response.json()) as ErrorResponse;
-      expect(json).toHaveProperty("error");
-      expect(json.error.code).toBe("ACTION_NOT_FOUND");
-    } finally {
-      // Clean up second user
-      await cleanupTestData(secondUser.userId);
-    }
-  });
 });
