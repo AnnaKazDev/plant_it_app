@@ -33,13 +33,13 @@ interface PlantListSuccessResponse {
 interface PlantCardResponse {
   success?: true;
   plant: {
-    actions: Array<{
+    actions: {
       id: string;
       additional_data: string | null;
-      photos?: Array<{
+      photos?: {
         signed_photo_url: string;
-      }>;
-    }>;
+      }[];
+    }[];
   };
 }
 
@@ -67,10 +67,10 @@ describe("Two-user ownership boundaries (Risk #3)", () => {
   });
 
   afterAll(async () => {
-    if (userA?.userId) {
+    if (userA.userId) {
       await cleanupTestData(userA.userId);
     }
-    if (userB?.userId) {
+    if (userB.userId) {
       await cleanupTestData(userB.userId);
     }
   });
