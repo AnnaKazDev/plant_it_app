@@ -19,7 +19,14 @@ export default defineConfig({
       dedupe: ["react", "react-dom"],
     },
     optimizeDeps: {
-      include: ["@radix-ui/react-tooltip"],
+      include: [
+        "@radix-ui/react-slot",
+        "@radix-ui/react-tooltip",
+        "class-variance-authority",
+        "clsx",
+        "lucide-react",
+        "tailwind-merge",
+      ],
     },
   },
   adapter: cloudflare(),
