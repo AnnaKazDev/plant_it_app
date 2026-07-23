@@ -13,7 +13,9 @@
     "format": "prettier --write .",
     "test": "vitest",
     "test:integration": "vitest run",
-    "test:watch": "vitest --ui"
+    "test:watch": "vitest --ui",
+    "test:e2e": "npm run build && playwright test",
+    "test:e2e:ui": "npm run build && playwright test --ui"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
@@ -42,6 +44,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.0.3",
     "@eslint/js": "^9.29.0",
+    "@playwright/test": "^1.61.1",
     "@types/ws": "^8.18.1",
     "@vitest/ui": "^4.1.8",
     "dotenv": "^17.4.2",

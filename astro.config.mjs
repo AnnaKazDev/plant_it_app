@@ -6,6 +6,16 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
 
+const isDevCommand = process.argv.includes("dev");
+
+const reactOptimizeDeps = [
+  "react",
+  "react-dom",
+  "react-dom/client",
+  "react/jsx-runtime",
+  "react/jsx-dev-runtime",
+];
+
 // https://astro.build/config
 export default defineConfig({
   output: "server",
@@ -16,10 +26,11 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     resolve: {
-      dedupe: ["react", "react-dom"],
+      dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
     },
     optimizeDeps: {
       include: [
+        ...reactOptimizeDeps,
         "@radix-ui/react-slot",
         "@radix-ui/react-tooltip",
         "class-variance-authority",
@@ -27,6 +38,15 @@ export default defineConfig({
         "lucide-react",
         "tailwind-merge",
       ],
+      // Vite prebundles react/jsx-dev-runtime with NODE_ENV=production unless forced,
+      // which sets jsxDEV to undefined and breaks React island hydration in dev.
+      ...(isDevCommand && {
+        esbuildOptions: {
+          define: {
+            "process.env.NODE_ENV": '"development"',
+          },
+        },
+      }),
     },
   },
   adapter: cloudflare(),
