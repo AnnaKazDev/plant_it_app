@@ -1,11 +1,10 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { WEATHER_API_KEY } from "astro:env/server";
+import { fetchActionWeatherData } from "@/lib/action-weather";
 import { createClient } from "@/lib/supabase";
-import { WeatherService } from "@/lib/weather";
 import type { Json } from "@/database.types";
 import { ERROR_CODES } from "@/types";
-import type { ApiError, WeatherData } from "@/types";
+import type { ApiError } from "@/types";
 
 export const prerender = false;
 
@@ -87,6 +86,7 @@ export const PATCH: APIRoute = async (context) => {
     additional_data?: string | null;
     weather_data?: Json | null;
   } = {};
+  let weatherError: ApiError | undefined;
 
   if (parseResult.data.additional_data !== undefined) {
     updates.additional_data = parseResult.data.additional_data;
@@ -95,23 +95,14 @@ export const PATCH: APIRoute = async (context) => {
   if (parseResult.data.date !== undefined) {
     updates.date = parseResult.data.date;
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("location_city")
-      .eq("id", context.locals.user.id)
-      .single();
+    const weatherResult = await fetchActionWeatherData(
+      supabase,
+      context.locals.user.id,
+      toWeatherDate(parseResult.data.date),
+    );
 
-    let weatherData: WeatherData | null = null;
-    if (profile?.location_city && WEATHER_API_KEY) {
-      const weatherService = new WeatherService(WEATHER_API_KEY);
-      weatherData = await weatherService.getWeatherForDateByCity(
-        toWeatherDate(parseResult.data.date),
-        profile.location_city,
-        supabase,
-      );
-    }
-
-    updates.weather_data = weatherData as Json | null;
+    updates.weather_data = weatherResult.weatherData as Json | null;
+    weatherError = weatherResult.weatherError;
   }
 
   if (Object.keys(updates).length === 0) {
@@ -136,7 +127,11 @@ export const PATCH: APIRoute = async (context) => {
     );
   }
 
-  return Response.json({ success: true, action });
+  return Response.json({
+    success: true,
+    action,
+    ...(weatherError ? { weather_error: weatherError } : {}),
+  });
 };
 
 export const DELETE: APIRoute = async (context) => {
