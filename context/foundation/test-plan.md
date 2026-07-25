@@ -138,7 +138,29 @@ contracts, follow §6.2 integration patterns instead. Extract pure logic to
 
 ### 6.3 Adding an e2e test
 
-- TBD — not scheduled in current rollout; prefer integration until §3 Phase 1–2 land.
+**Prerequisites:** `npm run dev` (dev server running) and local Supabase (`npx supabase start`).
+
+1. Place test files in `tests/e2e/*.spec.ts`.
+2. Use role-based locators (`getByRole`, `getByLabel`, `getByText`).
+3. **Name tests to bind them to risks:** Include `(Risk #N)` in test name to link to §2 Risk Map.
+   Example: `test('saved action appears on plant card and list (Risk #1)', ...)` not
+   `test('test 1', ...)`. This makes traceability explicit for future maintenance.
+4. Authenticate via `signInViaApi()` (no UI login) — see `helpers/sign-in.ts`.
+5. Create test users with `createE2eUser()` and plants with `createE2ePlant()` — see
+   `helpers/auth-fixture.ts` and `helpers/plant-fixture.ts`.
+6. Clean up in `afterEach` with `deleteE2eUser()` (cascades plants, actions, photos via FK).
+7. For photo uploads: place fixtures in `tests/e2e/fixtures/`, use
+   `addWateringActionWithPhotosViaUi()` which waits for action + photo upload responses.
+8. Run tests: `npx playwright test` or `npx playwright test --ui`.
+
+**Cross-boundary risks** (auth, routing, API, DB, storage) belong in E2E. Isolated logic
+or API contracts should use integration tests (§6.2) instead.
+
+**Reference files:**
+- **`tests/e2e/seed.spec.ts`** — **Reference example of all E2E conventions** (extensively commented)
+- `tests/e2e/signin.spec.ts` (auth flow, UI login pattern)
+- `tests/e2e/action-create-readback.spec.ts` (Risk #1 — action create + read-back)
+- `tests/e2e/action-photo-teaser.spec.ts` (Risk #4 — photo upload + teaser visibility)
 
 ### 6.4 Adding a test for a new API endpoint
 

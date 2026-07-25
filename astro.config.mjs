@@ -1,4 +1,5 @@
 // @ts-check
+import process from "node:process";
 import { defineConfig, envField } from "astro/config";
 
 import react from "@astrojs/react";
@@ -8,13 +9,7 @@ import cloudflare from "@astrojs/cloudflare";
 
 const isDevCommand = process.argv.includes("dev");
 
-const reactOptimizeDeps = [
-  "react",
-  "react-dom",
-  "react-dom/client",
-  "react/jsx-runtime",
-  "react/jsx-dev-runtime",
-];
+const reactOptimizeDeps = ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime"];
 
 // https://astro.build/config
 export default defineConfig({

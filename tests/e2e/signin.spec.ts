@@ -6,16 +6,14 @@ import { createE2eUser, deleteE2eUser, type E2eUser } from "./helpers/auth-fixtu
 import { signInViaUi } from "./helpers/sign-in";
 
 test.describe("Sign in", () => {
-  let user: E2eUser | undefined;
+  let user: E2eUser;
 
   test.beforeEach(async () => {
     user = await createE2eUser("signin");
   });
 
   test.afterEach(async () => {
-    if (user) {
-      await deleteE2eUser(user.userId);
-    }
+    await deleteE2eUser(user.userId);
   });
 
   test("existing user can sign in and sees authenticated navigation", async ({ page }) => {
@@ -23,7 +21,7 @@ test.describe("Sign in", () => {
     await page.goto("/auth/signin");
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Sign In" })).toBeVisible();
-    await signInViaUi(page, user!.email, user!.password);
+    await signInViaUi(page, user.email, user.password);
 
     await page.waitForURL("/");
     await expect(page.getByRole("link", { name: /My plants/ })).toBeVisible();
