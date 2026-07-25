@@ -8,7 +8,6 @@ import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
 
 const isDevCommand = process.argv.includes("dev");
-
 const reactOptimizeDeps = ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime"];
 
 // https://astro.build/config
@@ -19,6 +18,9 @@ export default defineConfig({
   },
   integrations: [react(), sitemap()],
   vite: {
+    // Keep dev and preview/build dep caches separate — preview prebundles
+    // react/jsx-dev-runtime with NODE_ENV=production, which breaks `astro dev`.
+    cacheDir: isDevCommand ? "node_modules/.vite-dev" : "node_modules/.vite",
     plugins: [tailwindcss()],
     resolve: {
       dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
