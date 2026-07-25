@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ERROR_CODES } from "@/types";
 import type { Database, WeatherData } from "@/types";
 
 interface WeatherApiForecastDay {
@@ -79,6 +80,35 @@ export class WeatherError extends Error {
   }
 }
 
+function createWeatherErrorFromHttpResponse(status: number, statusText: string): WeatherError | null {
+  if (status === 401 || status === 403) {
+    return new WeatherError("Weather API key is invalid or unauthorized", ERROR_CODES.WEATHER_API_INVALID_KEY, {
+      status,
+    });
+  }
+
+  if (status === 429) {
+    return new WeatherError("Weather API rate limit exceeded", ERROR_CODES.WEATHER_API_RATE_LIMIT, { status });
+  }
+
+  if (status >= 500) {
+    return new WeatherError(`Weather API error: ${status} ${statusText}`, ERROR_CODES.WEATHER_API_UNAVAILABLE, {
+      status,
+    });
+  }
+
+  return null;
+}
+
+function toWeatherError(error: unknown): WeatherError {
+  if (error instanceof WeatherError) {
+    return error;
+  }
+
+  const message = error instanceof Error ? error.message : "Unknown weather fetch error";
+  return new WeatherError(message, ERROR_CODES.WEATHER_API_UNAVAILABLE);
+}
+
 export class WeatherService {
   constructor(private apiKey: string) {}
 
@@ -88,15 +118,13 @@ export class WeatherService {
     return encodeURIComponent(normalizeCityNameForWeatherApi(cityName));
   }
 
-  async fetchWeatherForDate(date: string, latitude: number, longitude: number): Promise<WeatherData | null> {
+  private async fetchHistoryForecastDay(url: string): Promise<WeatherApiForecastDay | null> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, WeatherService.REQUEST_TIMEOUT_MS);
+
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 5000);
-
-      const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${latitude},${longitude}&dt=${date}`;
-
       const response = await fetch(url, {
         signal: controller.signal,
       });
@@ -104,29 +132,29 @@ export class WeatherService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        // eslint-disable-next-line no-console
-        console.error(`Weather API error: ${response.status} ${response.statusText}`);
+        const weatherError = createWeatherErrorFromHttpResponse(response.status, response.statusText);
+        if (weatherError) {
+          throw weatherError;
+        }
         return null;
       }
 
       const data = (await response.json()) as WeatherApiForecastResponse;
-
-      if (!data.forecast.forecastday[0]) {
-        // eslint-disable-next-line no-console
-        console.error("Weather API response missing forecast data");
-        return null;
-      }
-
-      const day = data.forecast.forecastday[0];
-
-      return mapForecastDayToWeatherData(day);
+      return data.forecast.forecastday[0] ?? null;
     } catch (error) {
-      if (error instanceof Error) {
-        // eslint-disable-next-line no-console
-        console.error("Weather fetch error:", error.message);
-      }
+      clearTimeout(timeoutId);
+      throw toWeatherError(error);
+    }
+  }
+
+  async fetchWeatherForDate(date: string, latitude: number, longitude: number): Promise<WeatherData | null> {
+    const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${latitude},${longitude}&dt=${date}`;
+    const day = await this.fetchHistoryForecastDay(url);
+    if (!day) {
       return null;
     }
+
+    return mapForecastDayToWeatherData(day);
   }
 
   async getCachedWeather(date: string, supabase: SupabaseClient<Database>): Promise<WeatherData | null> {
@@ -151,44 +179,13 @@ export class WeatherService {
   }
 
   async fetchWeatherForDateByCity(date: string, cityName: string): Promise<WeatherData | null> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 5000);
-
-      const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${this.cityQuery(cityName)}&dt=${date}`;
-
-      const response = await fetch(url, {
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        // eslint-disable-next-line no-console
-        console.error(`Weather API error: ${response.status} ${response.statusText}`);
-        return null;
-      }
-
-      const data = (await response.json()) as WeatherApiForecastResponse;
-
-      if (!data.forecast.forecastday[0]) {
-        // eslint-disable-next-line no-console
-        console.error("Weather API response missing forecast data");
-        return null;
-      }
-
-      const day = data.forecast.forecastday[0];
-
-      return mapForecastDayToWeatherData(day);
-    } catch (error) {
-      if (error instanceof Error) {
-        // eslint-disable-next-line no-console
-        console.error("Weather fetch error:", error.message);
-      }
+    const url = `https://api.weatherapi.com/v1/history.json?key=${this.apiKey}&q=${this.cityQuery(cityName)}&dt=${date}`;
+    const day = await this.fetchHistoryForecastDay(url);
+    if (!day) {
       return null;
     }
+
+    return mapForecastDayToWeatherData(day);
   }
 
   async getWeatherForDateByCity(
@@ -219,7 +216,7 @@ export class WeatherService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
-      }, 5000);
+      }, WeatherService.REQUEST_TIMEOUT_MS);
 
       const url = `https://api.weatherapi.com/v1/forecast.json?key=${this.apiKey}&q=${this.cityQuery(cityName)}&days=1`;
 
@@ -230,20 +227,19 @@ export class WeatherService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        // eslint-disable-next-line no-console
-        console.error(`Weather API error: ${response.status} ${response.statusText}`);
+        const weatherError = createWeatherErrorFromHttpResponse(response.status, response.statusText);
+        if (weatherError) {
+          throw weatherError;
+        }
         return null;
       }
 
       const data = (await response.json()) as WeatherApiForecastResponse;
-
-      if (!data.forecast.forecastday[0]) {
-        // eslint-disable-next-line no-console
-        console.error("Weather API response missing forecast data");
+      const forecastDay = data.forecast.forecastday.at(0);
+      if (!forecastDay) {
         return null;
       }
 
-      const forecastDay = data.forecast.forecastday[0];
       const forecast = mapForecastDayToWeatherData(forecastDay);
 
       return {
@@ -252,11 +248,7 @@ export class WeatherService {
         condition_icon_url: data.current?.condition.icon ? normalizeWeatherIconUrl(data.current.condition.icon) : null,
         forecast,
       };
-    } catch (error) {
-      if (error instanceof Error) {
-        // eslint-disable-next-line no-console
-        console.error("Weather fetch error:", error.message);
-      }
+    } catch {
       return null;
     }
   }

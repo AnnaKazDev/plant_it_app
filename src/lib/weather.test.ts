@@ -6,10 +6,11 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
-import { WeatherService, normalizeCityNameForWeatherApi } from "./weather";
+import { WeatherError, WeatherService, normalizeCityNameForWeatherApi } from "./weather";
 import { seedTestData, cleanupTestData, createTestClient } from "@/lib/test-utils";
 import type { Json } from "@/database.types";
 import type { WeatherData } from "@/types";
+import { ERROR_CODES } from "@/types";
 
 describe("normalizeCityNameForWeatherApi", () => {
   it("strips Polish diacritics for WeatherAPI compatibility", () => {
@@ -101,24 +102,22 @@ describe("WeatherService", () => {
       );
     });
 
-    it("should return null on network error", async () => {
+    it("should throw WeatherError on network error", async () => {
       global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
-      const result = await weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON);
-
-      expect(result).toBeNull();
+      await expect(weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON)).rejects.toThrow(WeatherError);
     });
 
-    it("should return null on 401 Unauthorized (invalid key)", async () => {
+    it("should throw WeatherError on 401 Unauthorized (invalid key)", async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 401,
         statusText: "Unauthorized",
       });
 
-      const result = await weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON);
-
-      expect(result).toBeNull();
+      await expect(weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON)).rejects.toMatchObject({
+        code: ERROR_CODES.WEATHER_API_INVALID_KEY,
+      });
     });
 
     it("should return null on 404 Not Found (no data for date)", async () => {
@@ -133,27 +132,25 @@ describe("WeatherService", () => {
       expect(result).toBeNull();
     });
 
-    it("should return null on 500 Server Error", async () => {
+    it("should throw WeatherError on 500 Server Error", async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 500,
         statusText: "Internal Server Error",
       });
 
-      const result = await weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON);
-
-      expect(result).toBeNull();
+      await expect(weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON)).rejects.toMatchObject({
+        code: ERROR_CODES.WEATHER_API_UNAVAILABLE,
+      });
     });
 
-    it("should return null on malformed JSON response", async () => {
+    it("should throw WeatherError on malformed JSON response", async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => Promise.reject(new Error("Invalid JSON")),
       });
 
-      const result = await weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON);
-
-      expect(result).toBeNull();
+      await expect(weatherService.fetchWeatherForDate(TEST_DATE, TEST_LAT, TEST_LON)).rejects.toThrow(WeatherError);
     });
 
     it("should return null when forecast data is missing", async () => {

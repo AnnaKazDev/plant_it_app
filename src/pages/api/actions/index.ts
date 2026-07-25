@@ -1,11 +1,10 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { WEATHER_API_KEY } from "astro:env/server";
+import { fetchActionWeatherData } from "@/lib/action-weather";
 import { createClient } from "@/lib/supabase";
-import { WeatherService } from "@/lib/weather";
 import type { Json } from "@/database.types";
 import { ERROR_CODES } from "@/types";
-import type { ApiError, WeatherData } from "@/types";
+import type { ApiError } from "@/types";
 
 export const prerender = false;
 
@@ -83,18 +82,11 @@ export const POST: APIRoute = async (context) => {
     return jsonError({ code: ERROR_CODES.PLANT_NOT_FOUND, message: "Plant not found or access denied" }, 404);
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("location_city")
-    .eq("id", context.locals.user.id)
-    .single();
-
-  let weatherData: WeatherData | null = null;
-
-  if (profile?.location_city && WEATHER_API_KEY) {
-    const weatherService = new WeatherService(WEATHER_API_KEY);
-    weatherData = await weatherService.getWeatherForDateByCity(toWeatherDate(date), profile.location_city, supabase);
-  }
+  const { weatherData, weatherError } = await fetchActionWeatherData(
+    supabase,
+    context.locals.user.id,
+    toWeatherDate(date),
+  );
 
   const { data: action, error: insertError } = await supabase
     .from("actions")
@@ -124,6 +116,7 @@ export const POST: APIRoute = async (context) => {
     {
       success: true,
       action,
+      ...(weatherError ? { weather_error: weatherError } : {}),
     },
     { status: 201 },
   );
