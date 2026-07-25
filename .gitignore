@@ -29,3 +29,9 @@ pnpm-debug.log*
 
 # supabase studio local sql snippets (not migrations)
 supabase/snippets/
+
+# playwright
+playwright/.auth/
+playwright-report/
+test-results/
+.playwright-cli/
