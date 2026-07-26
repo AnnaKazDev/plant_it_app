@@ -135,9 +135,12 @@ async function main(): Promise<void> {
   } catch (err) {
     if (err instanceof CursorAgentError) {
       console.error(`Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`);
-      process.exit(1);
+      exitCode = 1;
+    } else {
+      // Unexpected error; log and exit 1 after finally runs.
+      console.error("Unexpected error:", err);
+      exitCode = 1;
     }
-    throw err;
   } finally {
     // Safety check: ensure agent did not modify working tree.
     // Only check if agent was started (skip if creation failed before any tool access).
