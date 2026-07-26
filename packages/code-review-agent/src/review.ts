@@ -3,7 +3,7 @@ import { Agent, CursorAgentError } from "@cursor/sdk";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
-import { assertRefsExist, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
+import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
@@ -80,8 +80,13 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  // Precompute diff to inject into prompt (avoid agent running git commands).
+  console.error(`[code-review-agent] computing diff...`);
+  const diffStat = getDiffStat(repoRoot, baseRef, headRef);
+  const diff = getDiff(repoRoot, baseRef, headRef);
+
   const modelId = process.env.CURSOR_MODEL?.trim() ?? "composer-2.5";
-  const prompt = buildReviewPrompt({ baseRef, headRef });
+  const prompt = buildReviewPrompt({ baseRef, headRef, diffStat, diff });
 
   console.error(`[code-review-agent] cwd=${repoRoot}`);
   console.error(`[code-review-agent] model=${modelId} range=${baseRef}...${headRef}`);

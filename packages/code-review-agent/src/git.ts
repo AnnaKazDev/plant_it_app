@@ -73,3 +73,18 @@ export function isDiffEmpty(cwd: string, baseRef: string, headRef: string): bool
 export function getWorkingTreeStatus(cwd: string): string {
   return git(cwd, ["status", "--porcelain"]);
 }
+
+/**
+ * Returns the diff stat summary for the given range.
+ */
+export function getDiffStat(cwd: string, baseRef: string, headRef: string): string {
+  return git(cwd, ["diff", "--stat", `${baseRef}...${headRef}`]);
+}
+
+/**
+ * Returns the full diff for the given range.
+ * May be large; consider capping for prompts.
+ */
+export function getDiff(cwd: string, baseRef: string, headRef: string): string {
+  return git(cwd, ["diff", `${baseRef}...${headRef}`]);
+}
