@@ -1,10 +1,14 @@
 import { execFileSync } from "node:child_process";
 
+// 10 MiB buffer for large diffs (10x default 1 MiB).
+const MAX_BUFFER = 10 * 1024 * 1024;
+
 function git(cwd: string, args: string[]): string {
   return execFileSync("git", args, {
     cwd,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: MAX_BUFFER,
   }).trim();
 }
 
@@ -82,9 +86,24 @@ export function getDiffStat(cwd: string, baseRef: string, headRef: string): stri
 }
 
 /**
- * Returns the full diff for the given range.
- * May be large; consider capping for prompts.
+ * Returns the full diff for the given range, capped at maxBytes.
+ * Truncates with a warning message if the diff exceeds the limit.
  */
-export function getDiff(cwd: string, baseRef: string, headRef: string): string {
-  return git(cwd, ["diff", `${baseRef}...${headRef}`]);
+export function getDiff(
+  cwd: string,
+  baseRef: string,
+  headRef: string,
+  maxBytes = 500_000,
+): { diff: string; truncated: boolean } {
+  const full = git(cwd, ["diff", `${baseRef}...${headRef}`]);
+  
+  if (Buffer.byteLength(full, "utf8") <= maxBytes) {
+    return { diff: full, truncated: false };
+  }
+
+  // Truncate and add a marker.
+  const truncated = Buffer.from(full, "utf8").subarray(0, maxBytes).toString("utf8");
+  const marker = "\n\n... (diff truncated — read changed files for full context) ...";
+  
+  return { diff: truncated + marker, truncated: true };
 }
