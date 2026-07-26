@@ -8,8 +8,8 @@ const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
 
 // Load secrets from repo root (shell export still wins over file values).
-loadEnv({ path: resolve(repoRoot, ".env") });
-loadEnv({ path: resolve(repoRoot, ".dev.vars"), override: false });
+loadEnv({ path: resolve(repoRoot, ".env"), quiet: true });
+loadEnv({ path: resolve(repoRoot, ".dev.vars"), override: false, quiet: true });
 
 function usage(): never {
   console.error(`Usage:
@@ -22,6 +22,8 @@ Defaults:
 Requires:
   CURSOR_API_KEY
   Node.js >= 22.13
+
+Note: the agent run is silent until the model starts streaming text — often 30–120s.
 `);
   process.exit(1);
 }
@@ -63,10 +65,10 @@ async function main(): Promise<void> {
 
   console.error(`[code-review-agent] cwd=${repoRoot}`);
   console.error(`[code-review-agent] model=${modelId} range=${baseRef}...${headRef}`);
+  console.error(`[code-review-agent] starting local agent (may take 1–2 min before first output)…`);
 
   try {
-    // One-shot: create → send → wait → dispose (see context/sdk/typescript-sdk.md).
-    const result = await Agent.prompt(prompt, {
+    await using agent = await Agent.create({
       apiKey,
       model: { id: modelId },
       name: "plant-it-code-review",
@@ -77,7 +79,20 @@ async function main(): Promise<void> {
       },
     });
 
-    console.error(`[code-review-agent] run=${result.id} status=${result.status}`);
+    const run = await agent.send(prompt);
+    console.error(`[code-review-agent] run=${run.id} agent=${agent.agentId}`);
+
+    for await (const event of run.stream()) {
+      if (event.type !== "assistant") continue;
+      for (const block of event.message.content) {
+        if (block.type === "text") {
+          process.stdout.write(block.text);
+        }
+      }
+    }
+
+    const result = await run.wait();
+    console.error(`\n[code-review-agent] status=${result.status}`);
 
     if (result.status === "error") {
       console.error(result.error?.message ?? "Run failed");
@@ -89,7 +104,12 @@ async function main(): Promise<void> {
       process.exit(2);
     }
 
-    process.stdout.write((result.result ?? "").trimEnd() + "\n");
+    if (!result.result) {
+      process.stdout.write("\n");
+    } else if (!process.stdout.writableEnded) {
+      // Ensure trailing newline if stream already printed the body.
+      process.stdout.write("\n");
+    }
   } catch (err) {
     if (err instanceof CursorAgentError) {
       console.error(
