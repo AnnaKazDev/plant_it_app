@@ -84,13 +84,20 @@ async function main(): Promise<void> {
   console.error(`[code-review-agent] computing diff...`);
   const diffStat = getDiffStat(repoRoot, baseRef, headRef);
   const diffResult = getDiff(repoRoot, baseRef, headRef);
-  
+
   if (diffResult.truncated) {
-    console.error(`[code-review-agent] WARNING: Diff truncated at 500KB. Agent will read files for full context.`);
+    const sizeKb = Math.round(diffResult.maxBytes / 1024);
+    console.error(`[code-review-agent] WARNING: Diff truncated at ${sizeKb}KB. Agent will read files for full context.`);
   }
 
   const modelId = process.env.CURSOR_MODEL?.trim() ?? "composer-2.5";
-  const prompt = buildReviewPrompt({ baseRef, headRef, diffStat, diff: diffResult.diff });
+  const prompt = buildReviewPrompt({
+    baseRef,
+    headRef,
+    diffStat,
+    diff: diffResult.diff,
+    truncated: diffResult.truncated,
+  });
 
   console.error(`[code-review-agent] cwd=${repoRoot}`);
   console.error(`[code-review-agent] model=${modelId} range=${baseRef}...${headRef}`);

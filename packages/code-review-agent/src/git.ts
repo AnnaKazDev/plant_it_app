@@ -88,22 +88,34 @@ export function getDiffStat(cwd: string, baseRef: string, headRef: string): stri
 /**
  * Returns the full diff for the given range, capped at maxBytes.
  * Truncates with a warning message if the diff exceeds the limit.
+ * Hard limit: diffs larger than MAX_BUFFER (10 MiB) will throw.
  */
 export function getDiff(
   cwd: string,
   baseRef: string,
   headRef: string,
   maxBytes = 500_000,
-): { diff: string; truncated: boolean } {
+): { diff: string; truncated: boolean; maxBytes: number } {
   const full = git(cwd, ["diff", `${baseRef}...${headRef}`]);
-  
-  if (Buffer.byteLength(full, "utf8") <= maxBytes) {
-    return { diff: full, truncated: false };
+  const buffer = Buffer.from(full, "utf8");
+
+  if (buffer.byteLength <= maxBytes) {
+    return { diff: full, truncated: false, maxBytes };
   }
 
-  // Truncate and add a marker.
-  const truncated = Buffer.from(full, "utf8").subarray(0, maxBytes).toString("utf8");
+  // Find the last newline before maxBytes to avoid splitting UTF-8 or mid-line.
+  let cutIndex = maxBytes;
+  while (cutIndex > 0 && buffer[cutIndex] !== 0x0a) {
+    cutIndex--;
+  }
+
+  // If no newline found in the first maxBytes, fall back to original limit.
+  if (cutIndex === 0) {
+    cutIndex = maxBytes;
+  }
+
+  const truncated = buffer.subarray(0, cutIndex).toString("utf8");
   const marker = "\n\n... (diff truncated — read changed files for full context) ...";
-  
-  return { diff: truncated + marker, truncated: true };
+
+  return { diff: truncated + marker, truncated: true, maxBytes };
 }

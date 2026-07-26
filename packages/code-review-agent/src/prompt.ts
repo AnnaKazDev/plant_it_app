@@ -7,22 +7,27 @@ export function buildReviewPrompt(options: {
   headRef: string;
   diffStat: string;
   diff: string;
+  truncated: boolean;
 }): string {
-  const { baseRef, headRef, diffStat, diff } = options;
+  const { baseRef, headRef, diffStat, diff, truncated } = options;
+  const diffLabel = truncated ? "Diff (truncated)" : "Full diff";
+  const diffNote = truncated
+    ? "\n\n**Note:** Diff was truncated due to size. Read changed files directly for complete context."
+    : "";
 
   return `You are a code review agent for the Plant It app (Astro 6 SSR + React islands + Supabase + Cloudflare Workers).
 
 ## Task
 Review the git diff between \`${baseRef}\` and \`${headRef}\` in this repository.
 
-The diff has been precomputed for you below. Read only the files needed to understand the change context. Do NOT edit, create, or delete any files. Prefer project conventions in AGENTS.md and CLAUDE.md when they apply.
+The diff has been precomputed for you below. Read only the files needed to understand the change context. Do NOT edit, create, or delete any files. Prefer project conventions in AGENTS.md and CLAUDE.md when they apply.${diffNote}
 
 ## Diff summary (\`git diff --stat\`)
 \`\`\`
 ${diffStat}
 \`\`\`
 
-## Full diff (\`git diff\`)
+## ${diffLabel} (\`git diff\`)
 \`\`\`diff
 ${diff}
 \`\`\`
