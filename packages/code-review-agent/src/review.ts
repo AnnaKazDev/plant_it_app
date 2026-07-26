@@ -1,29 +1,31 @@
 /* eslint-disable no-console -- CLI status/errors go to stderr/stdout */
 import { Agent, CursorAgentError } from "@cursor/sdk";
-import { config as loadEnv } from "dotenv";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
 
-// Load secrets from repo root (shell export still wins over file values).
-loadEnv({ path: resolve(repoRoot, ".env"), quiet: true });
-loadEnv({ path: resolve(repoRoot, ".dev.vars"), override: false, quiet: true });
+// Only CURSOR_* / REVIEW_* — never bulk-load app secrets from .env / .dev.vars.
+// Shell exports still win (load skips keys already set).
+loadReviewEnvFile(resolve(repoRoot, ".env"));
+loadReviewEnvFile(resolve(repoRoot, ".dev.vars"));
 
 function usage(): never {
   console.error(`Usage:
   npm run review -- [--base <ref>] [--head <ref>]
 
 Defaults:
-  --base  origin/main (fallback: main)
+  --base  origin/main (fallback either way: origin/main ↔ main)
   --head  HEAD
 
 Requires:
   CURSOR_API_KEY
   Node.js >= 22.13
+  One-time: npm run review:install (from repo root)
 
 Note: the agent run is silent until the model starts streaming text — often 30–120s.
 `);
@@ -56,7 +58,7 @@ async function main(): Promise<void> {
   const apiKey = process.env.CURSOR_API_KEY?.trim();
   if (!apiKey) {
     console.error(
-      "Missing CURSOR_API_KEY. Set it in the shell, or add CURSOR_API_KEY=... to repo-root .env / .dev.vars (gitignored).",
+      "Missing CURSOR_API_KEY. Set it in the shell, or add CURSOR_API_KEY=... to repo-root .env / .dev.vars (only that key is read from those files).",
     );
     process.exit(1);
   }

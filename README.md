@@ -78,21 +78,21 @@ npm run dev
 
 ## Code review agent (Cursor SDK)
 
-Independent package under `packages/code-review-agent`. Reviews `git diff` via a local Cursor agent (`Agent.create` + `agent.send` + streaming). Not part of the Astro app runtime.
+Independent package under `packages/code-review-agent`. Reviews `git diff` via a local Cursor agent (`Agent.create` + `agent.send` + streaming). Not part of the Astro app runtime. **Manual only for now** — not in CI.
 
-1. One-time setup:
+1. One-time setup (required — root `npm ci` does not install this package):
 
 ```bash
 npm run review:install
 ```
 
-2. Add a user API key to gitignored `.env` or `.dev.vars` (see `.env.example`):
+2. Add a user API key (shell export, or only `CURSOR_API_KEY=...` in gitignored `.env` / `.dev.vars` — see `.env.example`). The review script does **not** bulk-load other secrets from those files.
 
 ```bash
 CURSOR_API_KEY=crsr_...
 ```
 
-Create the key at [Cursor Dashboard → API Keys](https://cursor.com/dashboard/api) (or Integrations / Cloud Agents, depending on UI).
+Create the key at [Cursor Dashboard → API Keys](https://cursor.com/dashboard/api).
 
 3. Run from repo root:
 
@@ -102,7 +102,7 @@ npm run review
 npm run review -- --base main --head HEAD
 ```
 
-Details: [`packages/code-review-agent/README.md`](./packages/code-review-agent/README.md).
+Details and security notes: [`packages/code-review-agent/README.md`](./packages/code-review-agent/README.md).
 
 ## Supabase Configuration
 

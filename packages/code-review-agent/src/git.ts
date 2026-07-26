@@ -17,17 +17,26 @@ export function refExists(cwd: string, ref: string): boolean {
   }
 }
 
-/** Default base: origin/main, then main. Explicit refs are left unchanged. */
+const DEFAULT_BASE_CANDIDATES = ["origin/main", "main"] as const;
+
+/**
+ * Resolve a base ref. For the symbolic defaults `origin/main` / `main`, try both
+ * (preferring the requested spelling first). Other refs are left unchanged.
+ */
 export function resolveBaseRef(cwd: string, requested: string): string {
-  if (requested !== "origin/main") {
+  const isDefaultBase = (DEFAULT_BASE_CANDIDATES as readonly string[]).includes(requested);
+  if (!isDefaultBase) {
     return requested;
   }
-  if (refExists(cwd, "origin/main")) {
-    return "origin/main";
+
+  const ordered = requested === "main" ? (["main", "origin/main"] as const) : (["origin/main", "main"] as const);
+
+  for (const candidate of ordered) {
+    if (refExists(cwd, candidate)) {
+      return candidate;
+    }
   }
-  if (refExists(cwd, "main")) {
-    return "main";
-  }
+
   throw new Error("Neither origin/main nor main exists. Pass --base <ref> or set REVIEW_BASE.");
 }
 
