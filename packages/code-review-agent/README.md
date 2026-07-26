@@ -38,13 +38,15 @@ npm run review:install
 Set the API key (one of):
 
 ```bash
-# shell (preferred)
+# shell (preferred — highest precedence)
 export CURSOR_API_KEY="crsr_..."
 
 # or in the repo root (gitignored) — only CURSOR_* / REVIEW_* keys are read:
 # .env  or  .dev.vars
 CURSOR_API_KEY=crsr_...
 ```
+
+**Precedence:** shell environment > `.env` > `.dev.vars` (first source wins for each key)
 
 ## Usage
 
@@ -70,8 +72,13 @@ export REVIEW_HEAD=HEAD
 | --- | --- |
 | Runtime | **local** (`local.cwd` = monorepo root) |
 | Invocation | `Agent.create` + `agent.send` + streaming (`await using` dispose) |
-| Scope | `git diff base...head` (wrapper preflight; agent runs the diff) |
+| Scope | `git diff base...head` (committed changes only; **excludes** uncommitted/staged changes) |
 | Edits | prompt “review only” + `local.autoReview` (best-effort, not a hard deny-list) |
 | Exit codes | `0` finished / empty diff · `1` startup/`CursorAgentError` · `2` run error/cancel · `3` working tree modified |
+
+**Configuration notes:**
+
+- **Settings isolation:** `settingSources: []` isolates the run from ambient Cursor IDE and project configuration, making behavior predictable in CI/scripts. However, this prevents using repo-level `.cursor/permissions.json` to further restrict tool access. For now, `autoReview` default backend behavior provides the gate.
+- **Uncommitted changes:** The triple-dot diff (`base...head`) compares commits only. Use `git add` + `git commit` before running the review if you want to include working-tree changes.
 
 SDK docs context: `context/sdk/` (cached snapshot — prefer [official TypeScript SDK docs](https://cursor.com/docs/sdk/typescript)).
