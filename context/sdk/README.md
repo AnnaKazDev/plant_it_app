@@ -1,14 +1,22 @@
-# Cursor SDK — local context
+# Cursor SDK — Reference
 
-Cached docs for the scripted code-review agent (`packages/code-review-agent`).
+Context for the scripted code-review agent (`packages/code-review-agent`).
 
-| File | Source |
-| --- | --- |
-| `typescript-sdk.md` | [cursor.com/docs/sdk/typescript](https://cursor.com/docs/sdk/typescript) |
-| `cookbook-quickstart.ts` | [cursor/cookbook sdk/quickstart](https://github.com/cursor/cookbook/tree/main/sdk/quickstart) |
+## Official Documentation
 
-**v1 decision:** TypeScript SDK (`@cursor/sdk`), **local** runtime, `Agent.create` + `agent.send` + streaming — for local scripts and later CI with a repo checkout. Edits constrained by the prompt + `local.autoReview` (best-effort).
+**Always prefer live documentation:** [cursor.com/docs/sdk/typescript](https://cursor.com/docs/sdk/typescript)
 
-Prefer the live docs: [cursor.com/docs/sdk/typescript](https://cursor.com/docs/sdk/typescript).
+The Cursor SDK docs are maintained upstream and updated frequently. Do not cache or duplicate them locally—they will drift and become stale.
 
-`typescript-sdk.md` is a local snapshot for offline agent context — refresh manually when the SDK API changes. Last noted refresh: 2026-07 (approx.; not auto-synced).
+## Minimal Example
+
+`cookbook-quickstart.ts` — A minimal working example from [cursor/cookbook sdk/quickstart](https://github.com/cursor/cookbook/tree/main/sdk/quickstart) showing basic Agent.create + send + streaming pattern.
+
+## Implementation Decision
+
+**v1 approach:** TypeScript SDK (`@cursor/sdk`), **local** runtime
+- `Agent.create` with `local.cwd` pointing to repo root
+- `agent.send` with precomputed diff in prompt
+- Streaming output to stdout
+- Edits constrained by prompt instructions + `local.autoReview` (best-effort gate)
+- For local manual runs and future CI integration with repo checkout

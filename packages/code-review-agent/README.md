@@ -82,4 +82,7 @@ export REVIEW_HEAD=HEAD
 - **Uncommitted changes:** The triple-dot diff (`base...head`) compares commits only. Use `git add` + `git commit` before running the review if you want to include working-tree changes.
 - **Diff size limits:** Diffs are capped at 500 KB in the prompt (truncated with warning if larger). Hard limit: diffs exceeding 10 MiB will cause the process to fail. For large refactors, consider reviewing in smaller chunks.
 
-SDK docs context: `context/sdk/` (cached snapshot — prefer [official TypeScript SDK docs](https://cursor.com/docs/sdk/typescript)).
+## Resources
+
+- [Cursor TypeScript SDK docs](https://cursor.com/docs/sdk/typescript) — official documentation
+- `context/sdk/cookbook-quickstart.ts` — minimal working example
