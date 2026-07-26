@@ -3,7 +3,7 @@ import { Agent, CursorAgentError } from "@cursor/sdk";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
-import { assertRefsExist, isDiffEmpty, resolveBaseRef } from "./git.js";
+import { assertRefsExist, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
@@ -87,6 +87,9 @@ async function main(): Promise<void> {
   console.error(`[code-review-agent] model=${modelId} range=${baseRef}...${headRef}`);
   console.error(`[code-review-agent] starting local agent (may take 1–2 min before first output)…`);
 
+  // Snapshot working tree before agent run to detect any modifications.
+  const statusBefore = getWorkingTreeStatus(repoRoot);
+
   try {
     await using agent = await Agent.create({
       apiKey,
@@ -128,6 +131,15 @@ async function main(): Promise<void> {
 
     // Ensure trailing newline after streamed body.
     process.stdout.write("\n");
+
+    // Safety check: ensure agent did not modify working tree.
+    const statusAfter = getWorkingTreeStatus(repoRoot);
+    if (statusBefore !== statusAfter) {
+      console.error("[code-review-agent] ERROR: Working tree was modified during review run!");
+      console.error("Changes detected:");
+      console.error(statusAfter);
+      process.exit(3);
+    }
   } catch (err) {
     if (err instanceof CursorAgentError) {
       console.error(`Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`);

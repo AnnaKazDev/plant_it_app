@@ -65,3 +65,11 @@ export function isDiffEmpty(cwd: string, baseRef: string, headRef: string): bool
     throw err;
   }
 }
+
+/**
+ * Returns the current working tree status (staged + unstaged changes).
+ * Used to detect if an agent run modified files.
+ */
+export function getWorkingTreeStatus(cwd: string): string {
+  return git(cwd, ["status", "--porcelain"]);
+}

@@ -3,6 +3,25 @@
 Standalone package: local, scripted code review powered by the Cursor SDK (`@cursor/sdk`).
 v1 is for **manual** runs only — not wired into CI/CD yet.
 
+## ⚠️ Security Limitations — READ BEFORE FIRST USE
+
+**This tool is NOT production-safe for CI/CD or untrusted diffs yet.**
+
+Current limitations:
+
+- **Secret exposure risk:** The wrapper loads only `CURSOR_API_KEY`, `CURSOR_MODEL`, `REVIEW_BASE`, and `REVIEW_HEAD` from `.env` / `.dev.vars` (app secrets like `SUPABASE_SERVICE_ROLE_KEY` are NOT imported into `process.env`). However, the local agent still has **full workspace read/shell access** and can read gitignored files (`.env`, `.dev.vars`) directly from disk.
+  
+- **Write protection:** Prompt instructs "review only" and `local.autoReview: true` gates **some** write operations, but these are **best-effort, not a sandbox**. The agent can potentially modify files if misclassified.
+  
+- **Post-run check:** v1 now snapshots `git status --porcelain` before/after and exits with code `3` if the working tree changed. This catches accidental modifications but does not prevent them.
+
+**Do NOT:**
+- Run against untrusted/malicious diffs
+- Use in CI with production secrets present on disk
+- Rely on this as a security boundary
+
+**Future hardening:** diff-injection (no shell git), sandboxing via `local.sandboxOptions.enabled: true`, `preToolUse` hooks to deny write tools, or running in a clean checkout without secret files.
+
 ## Requirements
 
 - Node.js **≥ 22.13** (root `.nvmrc`: `22.14.0`)
@@ -26,11 +45,6 @@ export CURSOR_API_KEY="crsr_..."
 # .env  or  .dev.vars
 CURSOR_API_KEY=crsr_...
 ```
-
-### Security (read this)
-
-- The wrapper loads **only** `CURSOR_API_KEY`, `CURSOR_MODEL`, `REVIEW_BASE`, and `REVIEW_HEAD` from `.env` / `.dev.vars`. Other secrets (e.g. `SUPABASE_SERVICE_ROLE_KEY`) are **not** imported into `process.env`.
-- The local agent still has workspace tool access (read/shell). Prompt “review only” + `local.autoReview` are **best-effort**, not a hard sandbox. Do not treat this as safe to run against untrusted diffs or in CI with production secrets until sandbox / diff-injection work lands.
 
 ## Usage
 
@@ -58,6 +72,6 @@ export REVIEW_HEAD=HEAD
 | Invocation | `Agent.create` + `agent.send` + streaming (`await using` dispose) |
 | Scope | `git diff base...head` (wrapper preflight; agent runs the diff) |
 | Edits | prompt “review only” + `local.autoReview` (best-effort, not a hard deny-list) |
-| Exit codes | `0` finished / empty diff · `1` startup/`CursorAgentError` · `2` run error/cancel |
+| Exit codes | `0` finished / empty diff · `1` startup/`CursorAgentError` · `2` run error/cancel · `3` working tree modified |
 
 SDK docs context: `context/sdk/` (cached snapshot — prefer [official TypeScript SDK docs](https://cursor.com/docs/sdk/typescript)).
