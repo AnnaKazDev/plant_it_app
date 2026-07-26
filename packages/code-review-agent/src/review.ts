@@ -89,7 +89,9 @@ async function main(): Promise<void> {
 
   // Snapshot working tree before agent run to detect any modifications.
   const statusBefore = getWorkingTreeStatus(repoRoot);
+  let agentStarted = false;
 
+  let exitCode = 0;
   try {
     await using agent = await Agent.create({
       apiKey,
@@ -104,6 +106,7 @@ async function main(): Promise<void> {
       },
     });
 
+    agentStarted = true;
     const run = await agent.send(prompt);
     console.error(`[code-review-agent] run=${run.id} agent=${agent.agentId}`);
 
@@ -121,24 +124,13 @@ async function main(): Promise<void> {
 
     if (result.status === "error") {
       console.error(result.error?.message ?? "Run failed");
-      process.exit(2);
-    }
-
-    if (result.status === "cancelled") {
+      exitCode = 2;
+    } else if (result.status === "cancelled") {
       console.error("Run cancelled");
-      process.exit(2);
-    }
-
-    // Ensure trailing newline after streamed body.
-    process.stdout.write("\n");
-
-    // Safety check: ensure agent did not modify working tree.
-    const statusAfter = getWorkingTreeStatus(repoRoot);
-    if (statusBefore !== statusAfter) {
-      console.error("[code-review-agent] ERROR: Working tree was modified during review run!");
-      console.error("Changes detected:");
-      console.error(statusAfter);
-      process.exit(3);
+      exitCode = 2;
+    } else {
+      // Ensure trailing newline after streamed body.
+      process.stdout.write("\n");
     }
   } catch (err) {
     if (err instanceof CursorAgentError) {
@@ -146,7 +138,24 @@ async function main(): Promise<void> {
       process.exit(1);
     }
     throw err;
+  } finally {
+    // Safety check: ensure agent did not modify working tree.
+    // Only check if agent was started (skip if creation failed before any tool access).
+    if (agentStarted) {
+      const statusAfter = getWorkingTreeStatus(repoRoot);
+      if (statusBefore !== statusAfter) {
+        console.error("[code-review-agent] ERROR: Working tree was modified during review run!");
+        console.error("Before:");
+        console.error(statusBefore || "(clean)");
+        console.error("After:");
+        console.error(statusAfter);
+        // Tree modification is more critical than run error/cancel; always use exit 3.
+        exitCode = 3;
+      }
+    }
   }
+
+  process.exit(exitCode);
 }
 
 await main();
