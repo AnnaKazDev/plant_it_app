@@ -1,7 +1,9 @@
+/* eslint-disable no-console -- CLI status/errors go to stderr/stdout */
 import { Agent, CursorAgentError } from "@cursor/sdk";
 import { config as loadEnv } from "dotenv";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertRefsExist, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
@@ -59,8 +61,24 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const { baseRef, headRef } = parseArgs(process.argv.slice(2));
-  const modelId = process.env.CURSOR_MODEL?.trim() || "composer-2.5";
+  const parsed = parseArgs(process.argv.slice(2));
+  let baseRef: string;
+  try {
+    baseRef = resolveBaseRef(repoRoot, parsed.baseRef);
+    assertRefsExist(repoRoot, baseRef, parsed.headRef);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+
+  const headRef = parsed.headRef;
+
+  if (isDiffEmpty(repoRoot, baseRef, headRef)) {
+    console.error(`[code-review-agent] No changes in ${baseRef}...${headRef}. Nothing to review.`);
+    process.exit(0);
+  }
+
+  const modelId = process.env.CURSOR_MODEL?.trim() ?? "composer-2.5";
   const prompt = buildReviewPrompt({ baseRef, headRef });
 
   console.error(`[code-review-agent] cwd=${repoRoot}`);
@@ -76,6 +94,8 @@ async function main(): Promise<void> {
         cwd: repoRoot,
         // Inline config only — do not pull ambient Cursor IDE settings into CI/scripts.
         settingSources: [],
+        // Best-effort gate for shell/MCP/fetch; not a hard security boundary.
+        autoReview: true,
       },
     });
 
@@ -104,17 +124,11 @@ async function main(): Promise<void> {
       process.exit(2);
     }
 
-    if (!result.result) {
-      process.stdout.write("\n");
-    } else if (!process.stdout.writableEnded) {
-      // Ensure trailing newline if stream already printed the body.
-      process.stdout.write("\n");
-    }
+    // Ensure trailing newline after streamed body.
+    process.stdout.write("\n");
   } catch (err) {
     if (err instanceof CursorAgentError) {
-      console.error(
-        `Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`,
-      );
+      console.error(`Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`);
       process.exit(1);
     }
     throw err;

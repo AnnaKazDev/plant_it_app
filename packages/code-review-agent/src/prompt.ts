@@ -2,10 +2,7 @@
  * Builds the one-shot review prompt.
  * Agent runs against the repo root (local cwd) and must not edit files.
  */
-export function buildReviewPrompt(options: {
-  baseRef: string;
-  headRef: string;
-}): string {
+export function buildReviewPrompt(options: { baseRef: string; headRef: string }): string {
   const { baseRef, headRef } = options;
 
   return `You are a code review agent for the Plant It app (Astro 6 SSR + React islands + Supabase + Cloudflare Workers).

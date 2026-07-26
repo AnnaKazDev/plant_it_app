@@ -78,7 +78,7 @@ npm run dev
 
 ## Code review agent (Cursor SDK)
 
-Independent package under `packages/code-review-agent`. Reviews `git diff` via a local Cursor agent (`Agent.prompt`). Not part of the Astro app runtime.
+Independent package under `packages/code-review-agent`. Reviews `git diff` via a local Cursor agent (`Agent.create` + `agent.send` + streaming). Not part of the Astro app runtime.
 
 1. One-time setup:
 
