@@ -91,21 +91,21 @@ jobs:
                               'Review failed';
             
             const body = `## 🤖 AI Code Review ${statusEmoji}
-
-**Status:** ${statusText}
-**Exit code:** ${exitCode}
-
-<details>
-<summary>Review findings</summary>
-
-\`\`\`
-${reviewContent}
-\`\`\`
-
-</details>
-
----
-<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript) • Model: ${process.env.CURSOR_MODEL || 'composer-2.5'}</sub>`;
+            
+            **Status:** ${statusText}
+            **Exit code:** ${exitCode}
+            
+            <details>
+            <summary>Review findings</summary>
+            
+            \`\`\`
+            ${reviewContent}
+            \`\`\`
+            
+            </details>
+            
+            ---
+            <sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript) • Model: ${process.env.CURSOR_MODEL || 'composer-2.5'}</sub>`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
