@@ -2,6 +2,7 @@ name: AI Code Review
 
 on:
   pull_request:
+    types: [opened, synchronize, labeled]
     branches: [main]
 
 permissions:
@@ -10,6 +11,10 @@ permissions:
 
 jobs:
   review:
+    # Run on PR open/update OR when ai-cr:review label added
+    if: |
+      github.event.action != 'labeled' || 
+      github.event.label.name == 'ai-cr:review'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,4 +93,21 @@ jobs:
                 issue_number: context.issue.number,
                 body
               });
+            }
+      
+      - name: Remove retry label
+        if: github.event.action == 'labeled' && github.event.label.name == 'ai-cr:review'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'ai-cr:review'
+              });
+            } catch (e) {
+              // Ignore 404 if label already removed
+              if (e.status !== 404) throw e;
             }

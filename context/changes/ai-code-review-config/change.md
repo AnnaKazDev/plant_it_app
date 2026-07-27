@@ -7,8 +7,10 @@ status: implementing
 
 # AI Code Review Configuration Enhancement
 
-Configure the existing code-review agent workflow to meet all requirements from requirements.md:
-- Composite action pattern for cleaner workflow structure
-- PR label management (ai-cr:failed/passed/review)
-- 10-criteria scoring system (1-10 scale)
-- On-demand retry via label trigger
+Enhance the existing code-review agent workflow:
+- ✅ Composite action pattern for cleaner workflow structure
+- ✅ 10 stack-specific criteria (expanded from 5 generic)
+- ✅ Severity markers (BLOCKER/MAJOR/MINOR/NIT) with issue counts
+- ⏳ On-demand retry via `ai-cr:review` label trigger
+
+**Scope note:** Originally planned scoring system (1-10 scale) and pass/fail labels were removed - severity markers and human judgment are sufficient for advisory review.
