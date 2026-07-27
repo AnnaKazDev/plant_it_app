@@ -223,12 +223,24 @@ async function main(): Promise<void> {
     } else {
       // Parse and validate JSON response
       try {
-        // Extract JSON from markdown code blocks if wrapped
+        // Extract JSON from response - handle preamble text and markdown code blocks
         let jsonStr = fullResponse.trim();
-        const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-        if (jsonMatch) {
-          jsonStr = jsonMatch[1].trim();
+        
+        // First, try to extract from markdown code blocks
+        const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+        if (codeBlockMatch) {
+          jsonStr = codeBlockMatch[1].trim();
         }
+        
+        // Find first { and last } to extract pure JSON (handles preamble text)
+        const firstBrace = jsonStr.indexOf('{');
+        const lastBrace = jsonStr.lastIndexOf('}');
+        
+        if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+          throw new Error('No valid JSON object found in response');
+        }
+        
+        jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
 
         const parsed = JSON.parse(jsonStr);
         const review = ReviewOutputSchema.parse(parsed);
