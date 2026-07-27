@@ -1,4 +1,4 @@
-name: 🤖 AI Code Review
+name: 🤖 AI Review Agent
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  review:
+  ai-code-review:
     # Run on PR open/update OR when ai-cr:review label added
     if: |
       github.event.action != 'labeled' || 

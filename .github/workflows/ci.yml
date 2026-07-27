@@ -1,4 +1,4 @@
-name: ✅ CI · Lint & Build
+name: ✅ Lint · Build · Deploy
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  lint-build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
