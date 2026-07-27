@@ -20,3 +20,8 @@ Enhance the existing code-review agent workflow with structured output for 10xCh
 2. **Zadanie 2**: Structured output with enforced JSON schema - enables mechanical pass/fail decisions in pipeline
 
 **Scope note:** Promptfoo eval suite (Zadanie 3) is optional for this iteration.
+
+**Design decisions:**
+- **Pivot from 1-10 scoring to PASS/FAIL**: Intentional simplification for 10xChampion certification. Severity markers (BLOCKER/MAJOR/MINOR/NIT) provide sufficient granularity without arbitrary numeric thresholds.
+- **Advisory review (no blocking)**: Failing verdict shows ❌ in PR comment but does NOT block merge. Human makes final decision. May add optional blocking in future iterations.
+- **No automatic labels**: Originally planned `ai-cr:passed`/`ai-cr:failed` labels removed. Structured JSON + verdict in PR comment is sufficient.

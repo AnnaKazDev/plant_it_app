@@ -72,10 +72,10 @@ function loadLessons(repoRoot: string): string {
 
 /**
  * Render structured review output to human-readable markdown.
+ * Header is added by workflow, this just renders content.
  */
 function renderMarkdown(review: ReviewOutput): string {
-  const emoji = review.overall_verdict === "PASS" ? "✅" : "🔴";
-  const lines: string[] = [`## 🤖 AI Review ${emoji}\n`];
+  const lines: string[] = [];
 
   // Summary
   lines.push(`### Summary\n\n${review.summary}\n`);

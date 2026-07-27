@@ -11,7 +11,7 @@
 
 ## Code Review Criteria
 
-Each criterion is scored on a 1–10 scale, where 1 is the worst outcome and 10 is the best.
+Agent evaluates 10 stack-specific criteria. Output is structured JSON (zod-validated) with PASS/FAIL verdict per criterion based on findings.
 
 ### 1. Stack Conventions (Astro + React + Cloudflare)
 - **API routes:** Must export `const prerender = false` (SSR mode)
@@ -85,10 +85,15 @@ Each criterion is scored on a 1–10 scale, where 1 is the worst outcome and 10 
 
 ## Expected side-effects
 
-- PR comment with summary
-- labels: `ai-cr:failed` (red) OR `ai-cr:passed` (green)
+- PR comment with structured findings (verdict + issue counts)
+- Structured JSON output (`review-output.json`) for mechanical decisions
 
 ## Expected behavior
 
-- on-demand retry when label `ai-cr:review` is added
+- On-demand retry when label `ai-cr:review` is added
+- **Advisory review** - does not block merge (human makes final decision)
+
+## Note
+
+Originally planned 1-10 scoring and automatic pass/fail labels were simplified to PASS/FAIL verdict with severity markers (BLOCKER/MAJOR/MINOR/NIT). This better aligns with 10xChampion Zadanie 2 requirement (structured output for mechanical decisions) while keeping review advisory.
 
