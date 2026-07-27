@@ -95,7 +95,48 @@ ${diff}
 - **Check historical anti-patterns** from \`context/foundation/lessons.md\`
 - Flag changes that reintroduce previously fixed issues${lessons ? `\n\n**Current lessons:**\n${lessons}` : ""}
 
+## Scoring methodology
+
+Score each criterion on a 1–10 scale using this deduction algorithm:
+1. Start at 10 points
+2. Deduct: 🔴 BLOCKER (-3), 🟡 MAJOR (-2), 🟢 MINOR (-1), ⚪ NIT (-0.5)
+3. Floor at 1 (minimum score)
+4. Round to nearest integer
+
+For each criterion, count findings that apply to it and calculate the score. A finding applies to multiple criteria if it violates multiple rules (e.g., security + code quality).
+
+Calculate overall score as the simple average of all 10 criteria, rounded to one decimal place.
+
+**Pass threshold:** ≥ 7.0/10
+
 ## Output format (strict markdown)
+
+Begin with the scoring table showing all 10 criteria, then provide detailed findings.
+
+## Code Review Score: X.X/10 — [✅ PASS | 🔴 FAIL]
+
+### Score Breakdown
+
+| Criterion | Score | Grade | Issues |
+|:----------|------:|:-----:|:-------|
+| 1. Stack Conventions | X/10 | emoji | 0 blocker, 0 major, 0 minor, 0 nit |
+| 2. Tailwind | X/10 | emoji | No findings |
+| 3. Supabase | X/10 | emoji | issue summary |
+| 4. Cloudflare CPU | X/10 | emoji | issue summary |
+| 5. Security | X/10 | emoji | issue summary |
+| 6. Code Quality | X/10 | emoji | issue summary |
+| 7. Testing | X/10 | emoji | issue summary |
+| 8. Performance | X/10 | emoji | issue summary |
+| 9. Logic & Errors | X/10 | emoji | issue summary |
+| 10. Lessons Learned | X/10 | emoji | issue summary |
+
+**Grade emojis:** 🟢 (8-10), 🟡 (5-7), 🔴 (1-4)
+
+If any criterion scored ≤ 4, add after the table:
+
+**Critical areas:** [criterion name] (X/10) — [brief explanation]
+
+---
 
 ### Summary
 Describe the goal and scope of changes in 2–4 sentences.

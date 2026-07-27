@@ -1164,8 +1164,8 @@ Not applicable - this is an enhancement to existing system, not a data migration
 
 #### Automated
 
-- [ ] 3.1 TypeScript compilation passes
-- [ ] 3.2 Prompt string builds correctly (no syntax errors)
+- [x] 3.1 TypeScript compilation passes
+- [x] 3.2 Prompt string builds correctly (no syntax errors)
 
 #### Manual
 
