@@ -23,6 +23,9 @@ Review the git diff between \`${baseRef}\` and \`${headRef}\` in this repository
 
 The diff has been precomputed for you below. Analyze ONLY the code that was added, modified, or deleted in this branch. Skip unchanged files and areas. Read only the files needed to understand the change context. Do NOT edit, create, or delete any files. Prefer project conventions in AGENTS.md and CLAUDE.md when they apply.${diffNote}
 
+**CRITICAL OUTPUT REQUIREMENT:**
+Your response MUST be a valid JSON object and NOTHING ELSE. Do not include any markdown formatting, code fences, explanatory text, or preamble. Start your response with { and end with }. This is a machine-parsed output - any deviation from pure JSON will cause parse errors.
+
 ## Diff summary (\`git diff --stat\`)
 \`\`\`
 ${diffStat}
@@ -97,30 +100,34 @@ ${diff}
 
 ## Output format (strict JSON)
 
-**CRITICAL:** You must output ONLY valid JSON matching this exact structure. No markdown, no preamble, no explanation - just the JSON object.
+**CRITICAL:** Your ENTIRE response must be ONLY the JSON object below. Do NOT wrap it in markdown code fences. Do NOT add any text before or after the JSON. Start directly with { and end with }.
 
-\`\`\`json
+Example of CORRECT output format (your actual response should follow this structure):
+
 {
-  "overall_verdict": "PASS" | "FAIL",
-  "summary": "2-4 sentences describing goal and scope of changes",
+  "overall_verdict": "PASS",
+  "summary": "This branch adds structured JSON output to the review agent using Zod schema validation. The implementation correctly parses agent responses and renders markdown for PR comments.",
   "criteria": [
     {
       "name": "Stack Conventions (Astro + React + Cloudflare)",
-      "verdict": "PASS" | "FAIL",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Tailwind Class Handling",
+      "verdict": "FAIL",
       "findings": [
         {
-          "severity": "BLOCKER" | "MAJOR" | "MINOR" | "NIT",
-          "location": "path/to/file.ts:line",
-          "issue": "Explanation of the problem and its impact",
-          "fix": "Concrete code snippet or instruction to fix"
+          "severity": "MAJOR",
+          "location": "src/components/Button.tsx:15",
+          "issue": "Manual string concatenation bypasses tailwind-merge",
+          "fix": "Use cn() helper: cn('base-class', conditionalClass)"
         }
       ]
     }
-    // ... repeat for all 10 criteria
   ],
-  "questions": ["Optional clarifying question 1", "Optional question 2"]
+  "questions": []
 }
-\`\`\`
 
 **Verdict logic:**
 - Criterion verdict: FAIL if any BLOCKER or MAJOR finding, otherwise PASS
