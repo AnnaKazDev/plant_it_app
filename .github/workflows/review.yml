@@ -14,15 +14,29 @@ on:
         required: false
         default: 'HEAD'
 
+# Required for posting PR comments
+permissions:
+  contents: read
+  pull-requests: write
+
+# Prevent duplicate reviews on concurrent pushes to the same PR
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   review:
     runs-on: ubuntu-latest
+    # Skip fork PRs (no secrets available)
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           # Fetch full history so agent can compute diffs
           fetch-depth: 0
+          # Checkout PR head (not merge ref) to ensure agent sees actual PR content
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Configure node
         uses: actions/setup-node@v4
@@ -39,11 +53,13 @@ jobs:
       - name: Run code review
         id: review
         run: |
-          # Capture stdout to file (agent writes review to stdout via formatter)
-          npm run review > review-output.txt 2>&1 || true
+          # Capture exit code before masking failure
+          set +e
+          npm run review > review-output.txt
+          exit_code=$?
+          set -e
           
-          # Store exit code for later analysis
-          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          echo "exit_code=${exit_code}" >> $GITHUB_OUTPUT
           
           # Remove ANSI color codes for GitHub comment
           if [ -f review-output.txt ]; then
@@ -59,6 +75,9 @@ jobs:
           else
             echo "Review output file not found" > review-clean.txt
           fi
+          
+          # Continue workflow even on failure so comment step runs
+          exit 0
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           # For PRs: compare PR head against target branch
@@ -90,26 +109,50 @@ jobs:
                               exitCode === '3' ? 'Review completed (working tree modified)' : 
                               'Review failed';
             
-            const body = `## 🤖 AI Code Review ${statusEmoji}
+            const marker = '<!-- plant-it-ai-review -->';
             
-            **Status:** ${statusText}
-            **Exit code:** ${exitCode}
+            const body = `${marker}
+## 🤖 AI Code Review ${statusEmoji}
+
+**Status:** ${statusText}
+**Exit code:** ${exitCode}
+
+<details>
+<summary>Review findings</summary>
+
+${reviewContent}
+
+</details>
+
+---
+<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript) • Model: composer-2.5</sub>`;
             
-            <details>
-            <summary>Review findings</summary>
+            // Find existing review comment to update instead of creating duplicate
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
             
-            \`\`\`
-            ${reviewContent}
-            \`\`\`
-            
-            </details>
-            
-            ---
-            <sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript) • Model: ${process.env.CURSOR_MODEL || 'composer-2.5'}</sub>`;
-            
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number
             });
+            
+            const existingComment = comments.data.find(c => c.body?.includes(marker));
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existingComment.id,
+                body
+              });
+              console.log('Updated existing review comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body
+              });
+              console.log('Created new review comment');
+            }
