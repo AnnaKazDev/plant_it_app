@@ -29,7 +29,6 @@ runs:
     - name: Install review package
       shell: bash
       run: npm run review:install
-      
     - name: Run review
       id: review
       shell: bash
