@@ -62,6 +62,28 @@ describe("parseReviewResponse", () => {
     expect(parseReviewResponse(response)).toEqual(jsonWithNestedString);
   });
 
+  test("handles code snippets with braces in fix field", () => {
+    const jsonWithCodeSnippet = {
+      ...validJson,
+      criteria: [
+        {
+          name: "Test",
+          verdict: "FAIL",
+          findings: [
+            {
+              severity: "MAJOR",
+              location: "test.ts:1",
+              issue: "Problem",
+              fix: 'return { ok: true };',
+            },
+          ],
+        },
+      ],
+    };
+    const response = 'Some preamble text\n' + JSON.stringify(jsonWithCodeSnippet);
+    expect(parseReviewResponse(response)).toEqual(jsonWithCodeSnippet);
+  });
+
   test("throws on response with no JSON object", () => {
     expect(() => parseReviewResponse("No JSON here!")).toThrow("No valid JSON object found");
   });

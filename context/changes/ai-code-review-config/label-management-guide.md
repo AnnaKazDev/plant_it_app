@@ -4,10 +4,10 @@ This guide covers implementing PR label management for the AI code review workfl
 
 ## Overview
 
-The code review workflow uses three labels:
-- `ai-cr:passed` (green) - Review completed with no issues
-- `ai-cr:failed` (red) - Review found issues requiring attention
+The code review workflow uses one label:
 - `ai-cr:review` - Manual trigger label for on-demand reviews
+
+**Note:** Automatic `ai-cr:passed`/`ai-cr:failed` labels were removed. The verdict is now shown in the PR comment instead, with the structured JSON output providing mechanical pass/fail decisions.
 
 ## 1. Adding/Removing Labels with `actions/github-script@v7`
 

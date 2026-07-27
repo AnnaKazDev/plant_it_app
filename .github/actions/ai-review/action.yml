@@ -63,6 +63,6 @@ runs:
           npm run validate-json --prefix packages/code-review-agent -- review-output.json
           echo "validation_exit_code=$?" >> $GITHUB_OUTPUT
         else
-          echo "validation_exit_code=0" >> $GITHUB_OUTPUT
+          echo "validation_exit_code=1" >> $GITHUB_OUTPUT
         fi
         set -e

@@ -2,7 +2,7 @@ name: 🤖 AI Review Agent
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled]
+    types: [opened, synchronize, reopened, labeled]
     branches: [main]
 
 permissions:
@@ -43,7 +43,7 @@ jobs:
           script: |
             const fs = require('fs');
             const exitCode = '${{ steps.review.outputs.exit-code }}';
-            const validationExitCode = '${{ steps.review.outputs.validation-exit-code }}';
+            const validationExitCode = '${{ steps.review.outputs.validation-exit-code }}' || (exitCode === '0' ? '' : '0');
             const marker = '<!-- ai-review -->';
             
             let review = null;
@@ -54,7 +54,7 @@ jobs:
             // Check exit codes first - non-zero means failure regardless of JSON
             if (exitCode !== '0' || validationExitCode !== '0') {
               console.log('Review or validation failed. Review exit code:', exitCode, 'Validation exit code:', validationExitCode);
-              statusText = validationExitCode !== '0' ? 'Validation failed' : 'Review failed';
+              statusText = (exitCode === '0' && validationExitCode !== '0') ? 'Validation failed' : 'Review failed';
               emoji = '❌';
               
               // Try to read any error output

@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
-import { ReviewOutputSchema, type ReviewOutput, computeCriterionVerdict, computeOverallVerdict } from "./review-schema.js";
+import { ReviewOutputSchema, type ReviewOutput, computeCriterionVerdict, computeOverallVerdict, REQUIRED_CRITERIA } from "./review-schema.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
@@ -134,6 +134,7 @@ export function renderMarkdown(review: ReviewOutput): string {
 /**
  * Extract and parse JSON from agent response.
  * Handles preamble text and markdown code blocks.
+ * Uses balanced brace parsing to handle embedded braces in strings.
  * Exported for testing.
  */
 export function parseReviewResponse(fullResponse: string): unknown {
@@ -145,12 +146,53 @@ export function parseReviewResponse(fullResponse: string): unknown {
     jsonStr = codeBlockMatch[1].trim();
   }
   
-  // Find first { and last } to extract pure JSON (handles preamble text)
+  // Find first { to start extraction
   const firstBrace = jsonStr.indexOf('{');
-  const lastBrace = jsonStr.lastIndexOf('}');
-  
-  if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+  if (firstBrace === -1) {
     throw new Error('No valid JSON object found in response');
+  }
+  
+  // Extract JSON using balanced brace counting (respects strings)
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let lastBrace = -1;
+  
+  for (let i = firstBrace; i < jsonStr.length; i++) {
+    const char = jsonStr[i];
+    
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    
+    if (char === '\\' && inString) {
+      escaped = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    
+    if (inString) {
+      continue;
+    }
+    
+    if (char === '{') {
+      depth++;
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0) {
+        lastBrace = i;
+        break;
+      }
+    }
+  }
+  
+  if (lastBrace === -1 || firstBrace >= lastBrace) {
+    throw new Error('No valid JSON object found in response (unbalanced braces)');
   }
   
   jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
@@ -186,18 +228,11 @@ async function main(): Promise<void> {
     const emptyReview: ReviewOutput = {
       overall_verdict: "PASS",
       summary: `No changes between ${baseRef} and ${headRef}`,
-      criteria: [
-        { name: "Stack Conventions (Astro + React + Cloudflare)", verdict: "PASS", findings: [] },
-        { name: "Tailwind Class Handling", verdict: "PASS", findings: [] },
-        { name: "Supabase Patterns", verdict: "PASS", findings: [] },
-        { name: "Cloudflare Workers CPU Constraint", verdict: "PASS", findings: [] },
-        { name: "Security & Validation", verdict: "PASS", findings: [] },
-        { name: "Code Quality & TypeScript", verdict: "PASS", findings: [] },
-        { name: "Testing", verdict: "PASS", findings: [] },
-        { name: "Performance & Optimization", verdict: "PASS", findings: [] },
-        { name: "Logic & Error Handling", verdict: "PASS", findings: [] },
-        { name: "Lessons Learned Compliance", verdict: "PASS", findings: [] },
-      ],
+      criteria: REQUIRED_CRITERIA.map(name => ({ 
+        name, 
+        verdict: 'PASS' as const, 
+        findings: [] 
+      })),
       questions: [],
     };
     
