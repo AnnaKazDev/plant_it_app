@@ -46,10 +46,65 @@ jobs:
             const fs = require('fs');
             const content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'No output';
             const exitCode = '${{ steps.review.outputs.exit_code }}';
-            const emoji = exitCode === '0' ? '✅' : '❌';
             const marker = '<!-- ai-review -->';
             
-            const body = `${marker}\n## 🤖 AI Review ${emoji}\n\n**Exit:** ${exitCode}\n\n<details>\n<summary>Details</summary>\n\n${content}\n\n</details>`;
+            // Parse issues from review output
+            const blockerCount = (content.match(/🔴 BLOCKER/g) || []).length;
+            const majorCount = (content.match(/🟡 MAJOR/g) || []).length;
+            const minorCount = (content.match(/🟢 MINOR/g) || []).length;
+            const nitCount = (content.match(/⚪ NIT/g) || []).length;
+            
+            const totalIssues = blockerCount + majorCount + minorCount + nitCount;
+            const hasBlockers = blockerCount > 0;
+            const hasMajor = majorCount > 0;
+            
+            // Determine status
+            let statusEmoji = '✅';
+            let statusText = 'Review passed';
+            
+            if (exitCode !== '0') {
+              statusEmoji = '❌';
+              statusText = 'Review failed';
+            } else if (hasBlockers) {
+              statusEmoji = '🔴';
+              statusText = 'Blockers found';
+            } else if (hasMajor) {
+              statusEmoji = '🟡';
+              statusText = 'Major issues found';
+            } else if (totalIssues > 0) {
+              statusEmoji = '✅';
+              statusText = 'Review passed with suggestions';
+            } else {
+              statusEmoji = '✅';
+              statusText = 'No issues found';
+            }
+            
+            // Build issues summary
+            const issueParts = [];
+            if (blockerCount > 0) issueParts.push(`${blockerCount} blocker${blockerCount > 1 ? 's' : ''}`);
+            if (majorCount > 0) issueParts.push(`${majorCount} major`);
+            if (minorCount > 0) issueParts.push(`${minorCount} minor`);
+            if (nitCount > 0) issueParts.push(`${nitCount} nit${nitCount > 1 ? 's' : ''}`);
+            
+            const issuesSummary = totalIssues === 0 
+              ? 'No issues found' 
+              : issueParts.join(', ');
+            
+            const body = `${marker}
+## 🤖 AI Review ${statusEmoji}
+
+**Status:** ${statusText}
+**Issues found:** ${issuesSummary}
+
+<details>
+<summary>View detailed findings</summary>
+
+${content}
+
+</details>
+
+---
+<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)</sub>`;
             
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,
