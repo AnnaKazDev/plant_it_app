@@ -108,7 +108,7 @@ The agent evaluates code against five dimensions:
 
 ## Troubleshooting
 
-Common issues and solutions when running the code review agent.
+Common issues and their solutions when running the code review agent.
 
 ### Exit code 1: "Missing CURSOR_API_KEY"
 
