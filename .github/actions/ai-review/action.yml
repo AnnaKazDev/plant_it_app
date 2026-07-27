@@ -15,17 +15,27 @@ inputs:
   head-ref:
     description: Head git ref for diff
     required: false
-    default: ${{ github.sha }}
+    default: HEAD
 outputs:
   exit-code:
     description: Review exit code
     value: ${{ steps.review.outputs.exit_code }}
+  validation-exit-code:
+    description: Validation exit code
+    value: ${{ steps.validate.outputs.validation_exit_code }}
   review-output:
     description: Path to cleaned review output
     value: review-clean.txt
 runs:
   using: composite
   steps:
+    - name: Cache code-review-agent node_modules
+      uses: actions/cache@v4
+      with:
+        path: packages/code-review-agent/node_modules
+        key: review-agent-${{ runner.os }}-${{ hashFiles('packages/code-review-agent/package-lock.json') }}
+        restore-keys: |
+          review-agent-${{ runner.os }}-
     - name: Install review package
       shell: bash
       run: npm run review:install
@@ -44,9 +54,15 @@ runs:
         REVIEW_BASE: ${{ inputs.base-ref }}
         REVIEW_HEAD: ${{ inputs.head-ref }}
     - name: Validate and recompute verdicts
+      id: validate
       if: steps.review.outputs.exit_code == '0'
       shell: bash
       run: |
+        set +e
         if [ -f review-output.json ]; then
           npm run validate-json --prefix packages/code-review-agent -- review-output.json
+          echo "validation_exit_code=$?" >> $GITHUB_OUTPUT
+        else
+          echo "validation_exit_code=0" >> $GITHUB_OUTPUT
         fi
+        set -e

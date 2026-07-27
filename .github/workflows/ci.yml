@@ -23,7 +23,15 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
-      # Typecheck and test code-review-agent package
+      # Cache and install code-review-agent package
+      - name: Cache code-review-agent node_modules
+        uses: actions/cache@v4
+        with:
+          path: packages/code-review-agent/node_modules
+          key: review-agent-${{ runner.os }}-${{ hashFiles('packages/code-review-agent/package-lock.json') }}
+          restore-keys: |
+            review-agent-${{ runner.os }}-
+      
       - name: Install, typecheck, and test code-review-agent
         run: |
           npm run review:install

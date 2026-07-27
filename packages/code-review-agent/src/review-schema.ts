@@ -15,6 +15,20 @@ export const FindingSchema = z.object({
 });
 export type Finding = z.infer<typeof FindingSchema>;
 
+/** Canonical criterion names in required order */
+export const REQUIRED_CRITERIA = [
+  "Stack Conventions (Astro + React + Cloudflare)",
+  "Tailwind Class Handling",
+  "Supabase Patterns",
+  "Cloudflare Workers CPU Constraint",
+  "Security & Validation",
+  "Code Quality & TypeScript",
+  "Testing",
+  "Performance & Optimization",
+  "Logic & Error Handling",
+  "Lessons Learned Compliance",
+] as const;
+
 export const CriterionReviewSchema = z.object({
   name: z.string().describe("Criterion name (e.g., 'Stack Conventions', 'Security')"),
   verdict: z.enum(["PASS", "FAIL"]).describe("FAIL if any BLOCKER or MAJOR finding, otherwise PASS"),
@@ -22,17 +36,31 @@ export const CriterionReviewSchema = z.object({
 });
 export type CriterionReview = z.infer<typeof CriterionReviewSchema>;
 
-export const ReviewOutputSchema = z.object({
-  overall_verdict: z
-    .enum(["PASS", "FAIL"])
-    .describe("FAIL if any BLOCKER or 3+ MAJOR findings across all criteria combined, otherwise PASS"),
-  summary: z.string().describe("2-4 sentences describing goal and scope of changes"),
-  criteria: z
-    .array(CriterionReviewSchema)
-    .length(10)
-    .describe("Review results for all 10 criteria"),
-  questions: z.array(z.string()).optional().describe("Optional clarifying questions for the author"),
-});
+export const ReviewOutputSchema = z
+  .object({
+    overall_verdict: z
+      .enum(["PASS", "FAIL"])
+      .describe("FAIL if any BLOCKER or 3+ MAJOR findings across all criteria combined, otherwise PASS"),
+    summary: z.string().describe("2-4 sentences describing goal and scope of changes"),
+    criteria: z
+      .array(CriterionReviewSchema)
+      .length(10)
+      .describe("Review results for all 10 criteria"),
+    questions: z
+      .array(z.string())
+      .optional()
+      .nullable()
+      .describe("Optional clarifying questions for the author"),
+  })
+  .refine(
+    (data) => {
+      // Validate criteria names match required list in order
+      return data.criteria.every((criterion, index) => criterion.name === REQUIRED_CRITERIA[index]);
+    },
+    {
+      message: `Criteria must match required names in order: ${REQUIRED_CRITERIA.join(", ")}`,
+    }
+  );
 export type ReviewOutput = z.infer<typeof ReviewOutputSchema>;
 
 /**

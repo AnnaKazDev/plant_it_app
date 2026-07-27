@@ -58,12 +58,22 @@ function parseArgs(argv: string[]): { baseRef: string; headRef: string } {
 
 /**
  * Reads context/foundation/lessons.md from repo root.
- * Returns content or empty string if file doesn't exist.
+ * Returns content truncated to 4000 chars or empty string if file doesn't exist.
+ * Prevents token bloat as lessons accumulate over time.
  */
 function loadLessons(repoRoot: string): string {
   try {
     const lessonsPath = resolve(repoRoot, "context/foundation/lessons.md");
-    return readFileSync(lessonsPath, "utf8");
+    const content = readFileSync(lessonsPath, "utf8");
+    const MAX_LESSONS_CHARS = 4000;
+    
+    if (content.length <= MAX_LESSONS_CHARS) {
+      return content;
+    }
+    
+    // Truncate and add note
+    const truncated = content.slice(0, MAX_LESSONS_CHARS);
+    return truncated + `\n\n... (truncated at ${MAX_LESSONS_CHARS} chars; review full file for complete history)`;
   } catch {
     // lessons.md is optional; return empty string if missing
     return "";
@@ -298,11 +308,12 @@ async function main(): Promise<void> {
           );
         }
 
-        // Replace with computed verdicts
+        // Replace with computed verdicts and normalize questions
         review = {
           ...review,
           overall_verdict: computedOverallVerdict,
           criteria: computedCriteria,
+          questions: review.questions ?? [],
         };
 
         // Save raw JSON for workflow

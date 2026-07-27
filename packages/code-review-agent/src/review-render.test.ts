@@ -2,7 +2,7 @@
  * Unit tests for renderMarkdown and JSON extraction
  */
 import { describe, it, expect } from "vitest";
-import { renderMarkdown } from "./review.js";
+import { renderMarkdown, parseReviewResponse } from "./review.js";
 import type { ReviewOutput } from "./review-schema.js";
 
 describe("renderMarkdown", () => {
@@ -219,89 +219,68 @@ describe("renderMarkdown", () => {
   });
 });
 
-describe("JSON extraction patterns", () => {
-  it("extracts JSON from code block", () => {
+describe("JSON extraction via parseReviewResponse", () => {
+  // Note: Detailed parseReviewResponse tests live in review.test.ts
+  // These tests verify the same patterns work through the actual parser
+  
+  it("extracts JSON from code block via parseReviewResponse", () => {
+    const validJson = {
+      overall_verdict: "PASS",
+      summary: "Test",
+      criteria: [],
+    };
     const response = `Here's the review:
 
 \`\`\`json
-{
-  "overall_verdict": "PASS",
-  "summary": "Test",
-  "criteria": []
-}
+${JSON.stringify(validJson)}
 \`\`\`
 
 That's it.`;
 
-    const codeBlockMatch = response.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-    expect(codeBlockMatch).not.toBeNull();
-    if (codeBlockMatch) {
-      const jsonStr = codeBlockMatch[1].trim();
-      const parsed = JSON.parse(jsonStr);
-      expect(parsed.overall_verdict).toBe("PASS");
-    }
+    expect(parseReviewResponse(response)).toEqual(validJson);
   });
 
-  it("extracts JSON from response with preamble", () => {
+  it("extracts JSON from response with preamble via parseReviewResponse", () => {
+    const validJson = {
+      overall_verdict: "PASS",
+      summary: "Test",
+      criteria: [],
+    };
     const response = `Let me analyze the changes.
 
-{
-  "overall_verdict": "PASS",
-  "summary": "Test",
-  "criteria": []
-}`;
+${JSON.stringify(validJson)}`;
 
-    const firstBrace = response.indexOf("{");
-    const lastBrace = response.lastIndexOf("}");
-    expect(firstBrace).toBeGreaterThan(0);
-    expect(lastBrace).toBeGreaterThan(firstBrace);
-
-    const jsonStr = response.substring(firstBrace, lastBrace + 1);
-    const parsed = JSON.parse(jsonStr);
-    expect(parsed.overall_verdict).toBe("PASS");
+    expect(parseReviewResponse(response)).toEqual(validJson);
   });
 
-  it("handles JSON with trailing text", () => {
-    const response = `{
-  "overall_verdict": "PASS",
-  "summary": "Test",
-  "criteria": []
-}
+  it("handles JSON with trailing text via parseReviewResponse", () => {
+    const validJson = {
+      overall_verdict: "PASS",
+      summary: "Test",
+      criteria: [],
+    };
+    const response = `${JSON.stringify(validJson)}
 
 Hope this helps!`;
 
-    const firstBrace = response.indexOf("{");
-    const lastBrace = response.lastIndexOf("}");
-    const jsonStr = response.substring(firstBrace, lastBrace + 1);
-    const parsed = JSON.parse(jsonStr);
-    expect(parsed.overall_verdict).toBe("PASS");
+    expect(parseReviewResponse(response)).toEqual(validJson);
   });
 
-  it("detects missing braces", () => {
+  it("detects missing braces via parseReviewResponse", () => {
     const invalidResponse = "This is not JSON";
-
-    const firstBrace = invalidResponse.indexOf("{");
-    const lastBrace = invalidResponse.lastIndexOf("}");
-
-    expect(firstBrace).toBe(-1);
-    expect(lastBrace).toBe(-1);
+    expect(() => parseReviewResponse(invalidResponse)).toThrow("No valid JSON object found");
   });
 
-  it("extracts JSON from code block without language tag", () => {
+  it("extracts JSON from code block without language tag via parseReviewResponse", () => {
+    const validJson = {
+      overall_verdict: "FAIL",
+      summary: "Issues found",
+      criteria: [],
+    };
     const response = `\`\`\`
-{
-  "overall_verdict": "FAIL",
-  "summary": "Issues found",
-  "criteria": []
-}
+${JSON.stringify(validJson)}
 \`\`\``;
 
-    const codeBlockMatch = response.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-    expect(codeBlockMatch).not.toBeNull();
-    if (codeBlockMatch) {
-      const jsonStr = codeBlockMatch[1].trim();
-      const parsed = JSON.parse(jsonStr);
-      expect(parsed.overall_verdict).toBe("FAIL");
-    }
+    expect(parseReviewResponse(response)).toEqual(validJson);
   });
 });

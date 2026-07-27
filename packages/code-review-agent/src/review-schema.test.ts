@@ -6,6 +6,7 @@ import {
   ReviewOutputSchema,
   computeCriterionVerdict,
   computeOverallVerdict,
+  REQUIRED_CRITERIA,
   type Finding,
   type CriterionReview,
 } from "./review-schema.js";
@@ -15,9 +16,9 @@ describe("ReviewOutputSchema", () => {
     const validReview = {
       overall_verdict: "PASS",
       summary: "This change adds a new feature without breaking existing functionality.",
-      criteria: Array.from({ length: 10 }, (_, i) => ({
-        name: `Criterion ${i + 1}`,
-        verdict: "PASS",
+      criteria: REQUIRED_CRITERIA.map(name => ({
+        name,
+        verdict: "PASS" as const,
         findings: [],
       })),
     };
@@ -54,20 +55,29 @@ describe("ReviewOutputSchema", () => {
 
   it("validates review with findings", () => {
     const reviewWithFindings = {
-      overall_verdict: "FAIL",
+      overall_verdict: "FAIL" as const,
       summary: "This change has issues that need to be addressed.",
-      criteria: Array.from({ length: 10 }, (_, i) => ({
-        name: `Criterion ${i + 1}`,
-        verdict: i === 0 ? "FAIL" : "PASS",
-        findings: i === 0 ? [
-          {
-            severity: "BLOCKER",
-            location: "src/utils.ts:42",
-            issue: "Missing error handling",
-            fix: "Add try/catch block",
-          },
-        ] : [],
-      })),
+      criteria: REQUIRED_CRITERIA.map((name, i) => {
+        if (i === 0) {
+          return {
+            name,
+            verdict: "FAIL" as const,
+            findings: [
+              {
+                severity: "BLOCKER" as const,
+                location: "src/utils.ts:42",
+                issue: "Missing error handling",
+                fix: "Add try/catch block",
+              },
+            ],
+          };
+        }
+        return {
+          name,
+          verdict: "PASS" as const,
+          findings: [],
+        };
+      }),
     };
 
     expect(() => ReviewOutputSchema.parse(reviewWithFindings)).not.toThrow();

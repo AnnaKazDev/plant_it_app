@@ -43,6 +43,7 @@ jobs:
           script: |
             const fs = require('fs');
             const exitCode = '${{ steps.review.outputs.exit-code }}';
+            const validationExitCode = '${{ steps.review.outputs.validation-exit-code }}';
             const marker = '<!-- ai-review -->';
             
             let review = null;
@@ -50,17 +51,17 @@ jobs:
             let statusText = 'Review failed';
             let emoji = '❌';
             
-            // Check exit code first - non-zero means failure regardless of JSON
-            if (exitCode !== '0') {
-              console.log('Review failed with exit code:', exitCode);
-              statusText = 'Review failed';
+            // Check exit codes first - non-zero means failure regardless of JSON
+            if (exitCode !== '0' || validationExitCode !== '0') {
+              console.log('Review or validation failed. Review exit code:', exitCode, 'Validation exit code:', validationExitCode);
+              statusText = validationExitCode !== '0' ? 'Validation failed' : 'Review failed';
               emoji = '❌';
               
               // Try to read any error output
               if (fs.existsSync('review-clean.txt')) {
                 content = fs.readFileSync('review-clean.txt', 'utf8');
               } else {
-                content = 'Review agent failed with exit code ' + exitCode;
+                content = 'Review agent failed with exit code ' + exitCode + (validationExitCode !== '0' ? ', validation exit code ' + validationExitCode : '');
               }
             } else if (fs.existsSync('review-output.json')) {
               // Exit code 0 and JSON exists - parse and validate
@@ -92,17 +93,35 @@ jobs:
                 }
                 
                 const totalIssues = blockerCount + majorCount + minorCount + nitCount;
-                emoji = review.overall_verdict === 'PASS' ? '✅' : '🔴';
                 
+                // Recompute overall verdict from counts (BLOCKER or 3+ MAJOR = FAIL)
+                const recomputedVerdict = (blockerCount > 0 || majorCount >= 3) ? 'FAIL' : 'PASS';
+                
+                // Derive display emoji from severity counts, not just verdict
                 if (totalIssues === 0) {
+                  emoji = '✅';
                   statusText = 'No issues found';
-                } else {
+                } else if (blockerCount > 0 || recomputedVerdict === 'FAIL') {
+                  emoji = '🔴';
                   const parts = [];
                   if (blockerCount > 0) parts.push('🔴 ' + blockerCount + ' blocker' + (blockerCount > 1 ? 's' : ''));
                   if (majorCount > 0) parts.push('🟡 ' + majorCount + ' major');
                   if (minorCount > 0) parts.push('🟢 ' + minorCount + ' minor');
                   if (nitCount > 0) parts.push('⚪ ' + nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
-                  statusText = `${review.overall_verdict} | ${parts.join(', ')}`;
+                  statusText = `${recomputedVerdict} | ${parts.join(', ')}`;
+                } else if (majorCount > 0) {
+                  emoji = '🟡';
+                  const parts = [];
+                  if (majorCount > 0) parts.push('🟡 ' + majorCount + ' major');
+                  if (minorCount > 0) parts.push('🟢 ' + minorCount + ' minor');
+                  if (nitCount > 0) parts.push('⚪ ' + nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
+                  statusText = `${recomputedVerdict} | ${parts.join(', ')}`;
+                } else {
+                  emoji = '🟢';
+                  const parts = [];
+                  if (minorCount > 0) parts.push('🟢 ' + minorCount + ' minor');
+                  if (nitCount > 0) parts.push('⚪ ' + nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
+                  statusText = `${recomputedVerdict} | ${parts.join(', ')}`;
                 }
                 
                 // Read markdown output
@@ -146,7 +165,7 @@ jobs:
             }
       
       - name: Remove retry label
-        if: github.event.action == 'labeled' && github.event.label.name == 'ai-cr:review' && steps.review.outputs.exit-code == '0'
+        if: always() && github.event.action == 'labeled' && github.event.label.name == 'ai-cr:review'
         uses: actions/github-script@v7
         with:
           script: |
