@@ -29,7 +29,7 @@ A modern, opinionated starter template for building fast, accessible web applica
 
 ## Getting Started
 
-Follow these steps to set up the project locally:
+Follow these simple steps to set up the project locally:
 
 1. Clone the repository:
 
