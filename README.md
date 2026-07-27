@@ -13,6 +13,14 @@ A modern, opinionated starter template for building fast, accessible web applica
 - [Supabase](https://supabase.com/) - Authentication and backend-as-a-service
 - [Cloudflare Workers](https://workers.cloudflare.com/) - Edge deployment runtime
 
+## Features
+
+- **AI Code Review** - Automated code review on pull requests using Cursor SDK
+- **Type Safety** - Full TypeScript coverage with strict mode
+- **Modern UI** - Tailwind CSS 4 with shadcn/ui components
+- **Authentication** - Built-in Supabase auth with middleware protection
+- **Edge Deployment** - Optimized for Cloudflare Workers
+
 ## Prerequisites
 
 - Node.js v22.14.0 (as specified in `.nvmrc`)
