@@ -106,6 +106,45 @@ The agent evaluates code against five dimensions:
 4. **Code quality** — SOLID/DRY, naming, TypeScript strictness, conventions
 5. **Testing** — coverage of non-trivial behavior and edge cases
 
+## Troubleshooting
+
+Common issues and their solutions when running the code review agent.
+
+### Exit code 1: "Missing CURSOR_API_KEY"
+
+Ensure the environment variable is set:
+
+```bash
+# Check if key is present
+echo $CURSOR_API_KEY
+
+# If missing, add to .env or .dev.vars:
+CURSOR_API_KEY=your_key_here
+```
+
+### Exit code 3: Working tree modified
+
+The agent made unexpected file changes. Check `git status` output in logs. This usually indicates:
+
+- Agent misclassified review as implementation task
+- Prompt needs refinement to clarify "review only" intent
+- Bug in `autoReview` gating
+
+### 403 Forbidden in GitHub Actions
+
+The workflow needs `pull-requests: write` permission. Verify `.github/workflows/ai-review.yml` includes:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+```
+
+### Review output is empty or truncated
+
+- **Empty diff:** Ensure commits exist in `REVIEW_BASE...REVIEW_HEAD` range
+- **Truncated:** Diff exceeds 500 KB; review smaller commit ranges or file subsets
+
 ## Resources
 
 - [Cursor TypeScript SDK docs](https://cursor.com/docs/sdk/typescript) — official documentation
