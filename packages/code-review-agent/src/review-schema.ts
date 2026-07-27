@@ -27,7 +27,39 @@ export const ReviewOutputSchema = z.object({
     .enum(["PASS", "FAIL"])
     .describe("FAIL if any criterion has BLOCKER or 3+ MAJOR findings, otherwise PASS"),
   summary: z.string().describe("2-4 sentences describing goal and scope of changes"),
-  criteria: z.array(CriterionReviewSchema).describe("Review results for all 10 criteria"),
+  criteria: z
+    .array(CriterionReviewSchema)
+    .length(10)
+    .describe("Review results for all 10 criteria"),
   questions: z.array(z.string()).optional().describe("Optional clarifying questions for the author"),
 });
 export type ReviewOutput = z.infer<typeof ReviewOutputSchema>;
+
+/**
+ * Compute criterion verdict based on findings.
+ * FAIL if any BLOCKER or MAJOR finding, otherwise PASS.
+ */
+export function computeCriterionVerdict(findings: Finding[]): "PASS" | "FAIL" {
+  const hasBlockerOrMajor = findings.some(
+    (f) => f.severity === "BLOCKER" || f.severity === "MAJOR"
+  );
+  return hasBlockerOrMajor ? "FAIL" : "PASS";
+}
+
+/**
+ * Compute overall verdict based on all criteria findings.
+ * FAIL if any BLOCKER or 3+ MAJOR findings across all criteria, otherwise PASS.
+ */
+export function computeOverallVerdict(criteria: CriterionReview[]): "PASS" | "FAIL" {
+  let blockerCount = 0;
+  let majorCount = 0;
+
+  for (const criterion of criteria) {
+    for (const finding of criterion.findings) {
+      if (finding.severity === "BLOCKER") blockerCount++;
+      if (finding.severity === "MAJOR") majorCount++;
+    }
+  }
+
+  return blockerCount > 0 || majorCount >= 3 ? "FAIL" : "PASS";
+}

@@ -50,14 +50,39 @@ jobs:
             let statusText = 'Review failed';
             let emoji = '❌';
             
-            // Try to read structured JSON output
-            if (fs.existsSync('review-output.json')) {
+            // Check exit code first - non-zero means failure regardless of JSON
+            if (exitCode !== '0') {
+              console.log('Review failed with exit code:', exitCode);
+              statusText = 'Review failed';
+              emoji = '❌';
+              
+              // Try to read any error output
+              if (fs.existsSync('review-clean.txt')) {
+                content = fs.readFileSync('review-clean.txt', 'utf8');
+              } else {
+                content = 'Review agent failed with exit code ' + exitCode;
+              }
+            } else if (fs.existsSync('review-output.json')) {
+              // Exit code 0 and JSON exists - parse and validate
               try {
-                review = JSON.parse(fs.readFileSync('review-output.json', 'utf8'));
+                const jsonContent = fs.readFileSync('review-output.json', 'utf8');
+                review = JSON.parse(jsonContent);
+                
+                // Basic schema validation (inline)
+                if (!review.overall_verdict || !review.summary || !Array.isArray(review.criteria)) {
+                  throw new Error('Invalid review JSON structure');
+                }
+                
+                if (review.criteria.length !== 10) {
+                  throw new Error('Expected exactly 10 criteria, got ' + review.criteria.length);
+                }
                 
                 // Count findings by severity
                 let blockerCount = 0, majorCount = 0, minorCount = 0, nitCount = 0;
                 for (const criterion of review.criteria) {
+                  if (!Array.isArray(criterion.findings)) {
+                    throw new Error('Criterion missing findings array: ' + criterion.name);
+                  }
                   for (const finding of criterion.findings) {
                     if (finding.severity === 'BLOCKER') blockerCount++;
                     else if (finding.severity === 'MAJOR') majorCount++;
@@ -83,13 +108,15 @@ jobs:
                 // Read markdown output
                 content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : review.summary;
               } catch (err) {
-                console.error('Failed to parse review JSON:', err);
-                content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Parse error';
+                console.error('Failed to parse or validate review JSON:', err);
+                emoji = '❌';
+                statusText = 'JSON parse/validation failed';
+                content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Parse error: ' + err.message;
               }
-            } else if (exitCode !== '0') {
-              content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Review agent failed';
             } else {
-              content = 'No structured output generated';
+              // Exit code 0 but no JSON - unexpected
+              statusText = 'No structured output generated';
+              content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Review completed but produced no output';
             }
             
             const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)</sub>';

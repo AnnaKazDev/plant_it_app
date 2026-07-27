@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
-import { ReviewOutputSchema, type ReviewOutput } from "./review-schema.js";
+import { ReviewOutputSchema, type ReviewOutput, computeCriterionVerdict, computeOverallVerdict } from "./review-schema.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
@@ -72,12 +72,14 @@ function loadLessons(repoRoot: string): string {
 
 /**
  * Render structured review output to human-readable markdown.
- * Header is added by workflow, this just renders content.
+ * Does NOT include top-level header - workflow adds that.
+ * Just renders Summary and Findings sections.
+ * Exported for testing.
  */
-function renderMarkdown(review: ReviewOutput): string {
+export function renderMarkdown(review: ReviewOutput): string {
   const lines: string[] = [];
 
-  // Summary
+  // Summary (no top-level header)
   lines.push(`### Summary\n\n${review.summary}\n`);
 
   // Findings by criterion
@@ -243,7 +245,34 @@ async function main(): Promise<void> {
         jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
 
         const parsed = JSON.parse(jsonStr);
-        const review = ReviewOutputSchema.parse(parsed);
+        let review = ReviewOutputSchema.parse(parsed);
+
+        // Compute verdicts from findings (don't trust LLM)
+        const computedCriteria = review.criteria.map((criterion) => {
+          const computedVerdict = computeCriterionVerdict(criterion.findings);
+          if (computedVerdict !== criterion.verdict) {
+            console.error(
+              `[code-review-agent] Verdict mismatch for "${criterion.name}": ` +
+              `LLM said ${criterion.verdict}, computed ${computedVerdict} from findings`
+            );
+          }
+          return { ...criterion, verdict: computedVerdict };
+        });
+
+        const computedOverallVerdict = computeOverallVerdict(computedCriteria);
+        if (computedOverallVerdict !== review.overall_verdict) {
+          console.error(
+            `[code-review-agent] Overall verdict mismatch: ` +
+            `LLM said ${review.overall_verdict}, computed ${computedOverallVerdict} from findings`
+          );
+        }
+
+        // Replace with computed verdicts
+        review = {
+          ...review,
+          overall_verdict: computedOverallVerdict,
+          criteria: computedCriteria,
+        };
 
         // Save raw JSON for workflow
         const jsonPath = resolve(repoRoot, "review-output.json");
@@ -299,4 +328,7 @@ async function main(): Promise<void> {
   process.exit(exitCode);
 }
 
-await main();
+// Only run main() when this file is executed directly (not when imported)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  await main();
+}
