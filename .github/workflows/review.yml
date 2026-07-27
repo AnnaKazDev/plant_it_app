@@ -1,0 +1,115 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Base ref to compare against'
+        required: false
+        default: 'origin/main'
+      head:
+        description: 'Head ref to review'
+        required: false
+        default: 'HEAD'
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so agent can compute diffs
+          fetch-depth: 0
+
+      - name: Configure node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install review agent
+        run: npm run review:install
+
+      - name: Run code review
+        id: review
+        run: |
+          # Capture stdout to file (agent writes review to stdout via formatter)
+          npm run review > review-output.txt 2>&1 || true
+          
+          # Store exit code for later analysis
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          
+          # Remove ANSI color codes for GitHub comment
+          if [ -f review-output.txt ]; then
+            # Remove ANSI escape sequences (colors, OSC 8 hyperlinks)
+            sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt
+            
+            # Truncate if too large (GitHub comment limit ~65k chars)
+            if [ $(wc -c < review-clean.txt) -gt 60000 ]; then
+              head -c 60000 review-clean.txt > review-truncated.txt
+              echo -e "\n\n... (output truncated, see workflow logs for full review)" >> review-truncated.txt
+              mv review-truncated.txt review-clean.txt
+            fi
+          else
+            echo "Review output file not found" > review-clean.txt
+          fi
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          # For PRs: compare PR head against target branch
+          REVIEW_BASE: ${{ github.event.pull_request.base.ref || github.event.inputs.base || 'origin/main' }}
+          REVIEW_HEAD: ${{ github.event.pull_request.head.sha || github.event.inputs.head || 'HEAD' }}
+          # Optional: override model (default: composer-2.5)
+          # CURSOR_MODEL: composer-2.5
+
+      - name: Comment review on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let reviewContent = 'Review completed. Check workflow logs for details.';
+            
+            try {
+              if (fs.existsSync('review-clean.txt')) {
+                reviewContent = fs.readFileSync('review-clean.txt', 'utf8');
+              }
+            } catch (error) {
+              console.error('Failed to read review output:', error);
+            }
+            
+            const exitCode = '${{ steps.review.outputs.exit_code }}';
+            const statusEmoji = exitCode === '0' ? '✅' : exitCode === '3' ? '⚠️' : '❌';
+            const statusText = exitCode === '0' ? 'Review completed' : 
+                              exitCode === '3' ? 'Review completed (working tree modified)' : 
+                              'Review failed';
+            
+            const body = `## 🤖 AI Code Review ${statusEmoji}
+
+**Status:** ${statusText}
+**Exit code:** ${exitCode}
+
+<details>
+<summary>Review findings</summary>
+
+\`\`\`
+${reviewContent}
+\`\`\`
+
+</details>
+
+---
+<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript) • Model: ${process.env.CURSOR_MODEL || 'composer-2.5'}</sub>`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
