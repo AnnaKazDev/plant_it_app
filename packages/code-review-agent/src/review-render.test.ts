@@ -67,7 +67,7 @@ describe("renderMarkdown", () => {
     expect(markdown).toContain("### Summary");
     expect(markdown).toContain("This change has issues.");
     expect(markdown).toContain("### Findings");
-    expect(markdown).toContain("#### 🔴 Code Quality");
+    expect(markdown).toContain("#### ⭐ CODE QUALITY");
     expect(markdown).toContain("**🔴 BLOCKER**");
     expect(markdown).toContain("**Location:** `src/utils.ts:42`");
     expect(markdown).toContain("**Issue:** Missing error handling");
@@ -124,7 +124,7 @@ describe("renderMarkdown", () => {
 
     const markdown = renderMarkdown(review);
 
-    expect(markdown).toContain("#### 🔴 Security");
+    expect(markdown).toContain("#### ⭐ SECURITY");
     expect(markdown).toContain("**🔴 BLOCKER**");
     expect(markdown).toContain("**🟡 MAJOR**");
     expect(markdown).toContain("**🟢 MINOR**");
@@ -212,8 +212,8 @@ describe("renderMarkdown", () => {
 
     const markdown = renderMarkdown(review);
 
-    expect(markdown).toContain("#### 🔴 Criterion 1");
-    expect(markdown).toContain("#### 🔴 Criterion 4");
+    expect(markdown).toContain("#### ⭐ CRITERION 1");
+    expect(markdown).toContain("#### ⭐ CRITERION 4");
     expect(markdown).not.toContain("Criterion 2");
     expect(markdown).not.toContain("Criterion 3");
   });

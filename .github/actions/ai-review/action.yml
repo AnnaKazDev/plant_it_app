@@ -43,3 +43,10 @@ runs:
         CURSOR_MODEL: ${{ inputs.model }}
         REVIEW_BASE: ${{ inputs.base-ref }}
         REVIEW_HEAD: ${{ inputs.head-ref }}
+    - name: Validate and recompute verdicts
+      if: steps.review.outputs.exit_code == '0'
+      shell: bash
+      run: |
+        if [ -f review-output.json ]; then
+          npm run validate-json --prefix packages/code-review-agent -- review-output.json
+        fi

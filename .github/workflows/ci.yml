@@ -23,11 +23,12 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
-      # Typecheck code-review-agent package
-      - name: Install and typecheck code-review-agent
+      # Typecheck and test code-review-agent package
+      - name: Install, typecheck, and test code-review-agent
         run: |
           npm run review:install
           npm run typecheck --prefix packages/code-review-agent
+          npm run test --prefix packages/code-review-agent
 
       # Auto-deploy to Cloudflare Workers on push to main
       - name: Deploy to Cloudflare Workers

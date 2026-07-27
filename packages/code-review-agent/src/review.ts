@@ -2,7 +2,7 @@
 import { Agent, CursorAgentError } from "@cursor/sdk";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
@@ -91,8 +91,7 @@ export function renderMarkdown(review: ReviewOutput): string {
     lines.push("### Findings\n");
     
     for (const criterion of criteriaWithFindings) {
-      const criterionEmoji = criterion.verdict === "PASS" ? "🟢" : "🔴";
-      lines.push(`\n#### ${criterionEmoji} ${criterion.name}\n`);
+      lines.push(`\n#### ⭐ ${criterion.name.toUpperCase()}\n`);
       
       for (const finding of criterion.findings) {
         const severityEmoji = {
@@ -122,6 +121,33 @@ export function renderMarkdown(review: ReviewOutput): string {
   return lines.join("");
 }
 
+/**
+ * Extract and parse JSON from agent response.
+ * Handles preamble text and markdown code blocks.
+ * Exported for testing.
+ */
+export function parseReviewResponse(fullResponse: string): unknown {
+  let jsonStr = fullResponse.trim();
+  
+  // First, try to extract from markdown code blocks
+  const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (codeBlockMatch) {
+    jsonStr = codeBlockMatch[1].trim();
+  }
+  
+  // Find first { and last } to extract pure JSON (handles preamble text)
+  const firstBrace = jsonStr.indexOf('{');
+  const lastBrace = jsonStr.lastIndexOf('}');
+  
+  if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+    throw new Error('No valid JSON object found in response');
+  }
+  
+  jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+  
+  return JSON.parse(jsonStr);
+}
+
 async function main(): Promise<void> {
   const apiKey = process.env.CURSOR_API_KEY?.trim();
   if (!apiKey) {
@@ -145,6 +171,30 @@ async function main(): Promise<void> {
 
   if (isDiffEmpty(repoRoot, baseRef, headRef)) {
     console.error(`[code-review-agent] No changes in ${baseRef}...${headRef}. Nothing to review.`);
+    
+    // Write minimal valid JSON for workflow (PASS with no findings)
+    const emptyReview: ReviewOutput = {
+      overall_verdict: "PASS",
+      summary: `No changes between ${baseRef} and ${headRef}`,
+      criteria: [
+        { name: "Stack Conventions (Astro + React + Cloudflare)", verdict: "PASS", findings: [] },
+        { name: "Tailwind Class Handling", verdict: "PASS", findings: [] },
+        { name: "Supabase Patterns", verdict: "PASS", findings: [] },
+        { name: "Cloudflare Workers CPU Constraint", verdict: "PASS", findings: [] },
+        { name: "Security & Validation", verdict: "PASS", findings: [] },
+        { name: "Code Quality & TypeScript", verdict: "PASS", findings: [] },
+        { name: "Testing", verdict: "PASS", findings: [] },
+        { name: "Performance & Optimization", verdict: "PASS", findings: [] },
+        { name: "Logic & Error Handling", verdict: "PASS", findings: [] },
+        { name: "Lessons Learned Compliance", verdict: "PASS", findings: [] },
+      ],
+      questions: [],
+    };
+    
+    const jsonPath = resolve(repoRoot, "review-output.json");
+    writeFileSync(jsonPath, JSON.stringify(emptyReview, null, 2), "utf8");
+    console.error(`[code-review-agent] Saved empty review to ${jsonPath}`);
+    
     process.exit(0);
   }
 
@@ -225,26 +275,7 @@ async function main(): Promise<void> {
     } else {
       // Parse and validate JSON response
       try {
-        // Extract JSON from response - handle preamble text and markdown code blocks
-        let jsonStr = fullResponse.trim();
-        
-        // First, try to extract from markdown code blocks
-        const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-        if (codeBlockMatch) {
-          jsonStr = codeBlockMatch[1].trim();
-        }
-        
-        // Find first { and last } to extract pure JSON (handles preamble text)
-        const firstBrace = jsonStr.indexOf('{');
-        const lastBrace = jsonStr.lastIndexOf('}');
-        
-        if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
-          throw new Error('No valid JSON object found in response');
-        }
-        
-        jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
-
-        const parsed = JSON.parse(jsonStr);
+        const parsed = parseReviewResponse(fullResponse);
         let review = ReviewOutputSchema.parse(parsed);
 
         // Compute verdicts from findings (don't trust LLM)
@@ -329,6 +360,6 @@ async function main(): Promise<void> {
 }
 
 // Only run main() when this file is executed directly (not when imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   await main();
 }

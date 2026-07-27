@@ -102,7 +102,7 @@ ${diff}
 
 **CRITICAL:** Your ENTIRE response must be ONLY the JSON object below. Do NOT wrap it in markdown code fences. Do NOT add any text before or after the JSON. Start directly with { and end with }.
 
-Example of CORRECT output format (your actual response should follow this structure):
+Example of CORRECT output format (your actual response must include all 10 criteria):
 
 {
   "overall_verdict": "PASS",
@@ -115,15 +115,48 @@ Example of CORRECT output format (your actual response should follow this struct
     },
     {
       "name": "Tailwind Class Handling",
-      "verdict": "FAIL",
-      "findings": [
-        {
-          "severity": "MAJOR",
-          "location": "src/components/Button.tsx:15",
-          "issue": "Manual string concatenation bypasses tailwind-merge",
-          "fix": "Use cn() helper: cn('base-class', conditionalClass)"
-        }
-      ]
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Supabase Patterns",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Cloudflare Workers CPU Constraint",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Security & Validation",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Code Quality & TypeScript",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Testing",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Performance & Optimization",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Logic & Error Handling",
+      "verdict": "PASS",
+      "findings": []
+    },
+    {
+      "name": "Lessons Learned Compliance",
+      "verdict": "PASS",
+      "findings": []
     }
   ],
   "questions": []
@@ -131,7 +164,7 @@ Example of CORRECT output format (your actual response should follow this struct
 
 **Verdict logic:**
 - Criterion verdict: FAIL if any BLOCKER or MAJOR finding, otherwise PASS
-- Overall verdict: FAIL if any criterion has BLOCKER or 3+ MAJOR findings, otherwise PASS
+- Overall verdict: FAIL if any BLOCKER or 3+ MAJOR findings across all criteria combined, otherwise PASS
 
 **All 10 criteria must be present** in the output:
 1. Stack Conventions (Astro + React + Cloudflare)

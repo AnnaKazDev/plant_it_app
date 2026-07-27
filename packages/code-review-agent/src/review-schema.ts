@@ -25,7 +25,7 @@ export type CriterionReview = z.infer<typeof CriterionReviewSchema>;
 export const ReviewOutputSchema = z.object({
   overall_verdict: z
     .enum(["PASS", "FAIL"])
-    .describe("FAIL if any criterion has BLOCKER or 3+ MAJOR findings, otherwise PASS"),
+    .describe("FAIL if any BLOCKER or 3+ MAJOR findings across all criteria combined, otherwise PASS"),
   summary: z.string().describe("2-4 sentences describing goal and scope of changes"),
   criteria: z
     .array(CriterionReviewSchema)
