@@ -1,0 +1,24 @@
+{
+  "name": "@plant-it/code-review-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Scripted local code-review agent powered by Cursor SDK",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "review": "tsx src/review.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.23",
+    "dotenv": "^17.4.2",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3"
+  }
+}

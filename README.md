@@ -56,6 +56,8 @@ npm run dev
 - `npm run lint` - Run ESLint with type-checked rules
 - `npm run lint:fix` - Auto-fix ESLint issues
 - `npm run format` - Run Prettier
+- `npm run review:install` - Install deps for the local Cursor SDK code-review agent
+- `npm run review` - Run the scripted code review (`packages/code-review-agent`)
 
 ## Project Structure
 
@@ -67,9 +69,40 @@ npm run dev
 │ │ └── api/ # API endpoints
 │ ├── components/ # UI components (Astro & React)
 │ └── assets/ # Static assets
+├── packages/
+│ └── code-review-agent/ # Independent Cursor SDK review script (v1, local)
+├── context/sdk/ # Cached Cursor SDK docs for the review agent
 ├── public/ # Public assets
 ├── wrangler.jsonc # Cloudflare Workers config
 ```
+
+## Code review agent (Cursor SDK)
+
+Independent package under `packages/code-review-agent`. Reviews `git diff` via a local Cursor agent (`Agent.create` + `agent.send` + streaming). Not part of the Astro app runtime. Runs automatically on PRs via GitHub Actions (`.github/workflows/review.yml`), and can be invoked manually.
+
+1. One-time setup (required — root `npm ci` does not install this package):
+
+```bash
+npm run review:install
+```
+
+2. Add a user API key (shell export, or only `CURSOR_API_KEY=...` in gitignored `.env` / `.dev.vars` — see `.env.example`). The review script does **not** bulk-load other secrets from those files.
+
+```bash
+CURSOR_API_KEY=crsr_...
+```
+
+Create the key at [Cursor Dashboard → API Keys](https://cursor.com/dashboard/api).
+
+3. Run from repo root:
+
+```bash
+npm run review
+# optional range:
+npm run review -- --base main --head HEAD
+```
+
+Details and security notes: [`packages/code-review-agent/README.md`](./packages/code-review-agent/README.md).
 
 ## Supabase Configuration
 

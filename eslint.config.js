@@ -77,6 +77,8 @@ const generatedTypesConfig = tseslint.config({
 
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
+  // Cached SDK reference material — not app code; @cursor/sdk lives in packages/code-review-agent.
+  { ignores: ["context/sdk/**", "packages/**"] },
   baseConfig,
   reactConfig,
   eslintPluginAstro.configs["flat/recommended"],

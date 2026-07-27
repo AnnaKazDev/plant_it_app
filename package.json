@@ -15,7 +15,9 @@
     "test:integration": "vitest run",
     "test:watch": "vitest --ui",
     "test:e2e": "npm run build && playwright test",
-    "test:e2e:ui": "npm run build && playwright test --ui"
+    "test:e2e:ui": "npm run build && playwright test --ui",
+    "review": "npm run review --prefix packages/code-review-agent --",
+    "review:install": "npm install --prefix packages/code-review-agent"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",
