@@ -95,36 +95,55 @@ ${diff}
 - **Check historical anti-patterns** from \`context/foundation/lessons.md\`
 - Flag changes that reintroduce previously fixed issues${lessons ? `\n\n**Current lessons:**\n${lessons}` : ""}
 
-## Output format (strict markdown)
+## Output format (strict JSON)
 
-### Summary
-Describe the goal and scope of changes in 2–4 sentences.
+**CRITICAL:** You must output ONLY valid JSON matching this exact structure. No markdown, no preamble, no explanation - just the JSON object.
 
-### Findings
-For each issue, use this exact format:
-
-**🔴 BLOCKER** | **🟡 MAJOR** | **🟢 MINOR** | **⚪ NIT**
-
-**Location:** \`path/to/file.ts:line\`
-
-**Issue:** Explain why this is a problem and what impact it may have.
-
-**Fix:** Provide a ready-to-use code snippet with the correction.
-
-\`\`\`typescript
-// concrete fix here
+\`\`\`json
+{
+  "overall_verdict": "PASS" | "FAIL",
+  "summary": "2-4 sentences describing goal and scope of changes",
+  "criteria": [
+    {
+      "name": "Stack Conventions (Astro + React + Cloudflare)",
+      "verdict": "PASS" | "FAIL",
+      "findings": [
+        {
+          "severity": "BLOCKER" | "MAJOR" | "MINOR" | "NIT",
+          "location": "path/to/file.ts:line",
+          "issue": "Explanation of the problem and its impact",
+          "fix": "Concrete code snippet or instruction to fix"
+        }
+      ]
+    }
+    // ... repeat for all 10 criteria
+  ],
+  "questions": ["Optional clarifying question 1", "Optional question 2"]
+}
 \`\`\`
 
----
+**Verdict logic:**
+- Criterion verdict: FAIL if any BLOCKER or MAJOR finding, otherwise PASS
+- Overall verdict: FAIL if any criterion has BLOCKER or 3+ MAJOR findings, otherwise PASS
 
-If there are NO issues, write exactly: "✅ No findings. Code looks good."
+**All 10 criteria must be present** in the output:
+1. Stack Conventions (Astro + React + Cloudflare)
+2. Tailwind Class Handling
+3. Supabase Patterns
+4. Cloudflare Workers CPU Constraint
+5. Security & Validation
+6. Code Quality & TypeScript
+7. Testing
+8. Performance & Optimization
+9. Logic & Error Handling
+10. Lessons Learned Compliance
 
-### Questions
-Optional clarifying questions for the author. Omit section if none.
+If a criterion has no findings, use: \`"findings": []\` and \`"verdict": "PASS"\`
 
 ---
 
 **Important:**
+- Output ONLY the JSON object, nothing else
 - Do not review code outside the diff scope
 - Focus on concrete, verifiable observations
 - Avoid generalities; every comment must have technical justification

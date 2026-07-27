@@ -1160,48 +1160,44 @@ Not applicable - this is an enhancement to existing system, not a data migration
 - [x] 2.7 Compare comment to previous PR comments - format should be identical — PR #49
 - [x] 2.8 Verify exit code handling: try PR with known issues, check emoji changes — PR #49 (after fixes)
 
-### Phase 3: Scoring System Implementation
+### Phase 3: Structured Output Implementation (Zadanie 2 - 10xChampion)
 
-**STATUS: CANCELLED** - Decision: Keep review advisory with severity markers only. No numerical scoring needed - human makes merge decision based on findings.
-
-### Phase 4: Label Management Integration
-
-**STATUS: CANCELLED** - Decision: No automatic passed/failed labels. Severity markers (BLOCKER/MAJOR/MINOR/NIT) and issue counts in PR comment are sufficient for human decision-making.
+**Overview**: Replace free-form markdown with enforced JSON schema. Enables mechanical pass/fail decisions in pipeline.
 
 #### Automated
 
-- [ ] 4.1 Workflow YAML parses correctly
-- [ ] 4.2 No syntax errors in JavaScript code
+- [x] 3.1 Create zod schema (`review-schema.ts`) with Finding/Criterion/ReviewOutput types
+- [x] 3.2 Add zod dependency to package.json
+- [x] 3.3 Update prompt to require strict JSON output
+- [x] 3.4 Update review.ts to collect, parse, and validate JSON response
+- [x] 3.5 Add renderMarkdown() function for human-readable output
+- [x] 3.6 Update workflow to parse JSON and generate PR comment
+- [x] 3.7 TypeScript compilation passes
 
 #### Manual
 
-- [ ] 4.3 Draft PR with clean code: verify comment shows score + "No issues found" with ✅
-- [ ] 4.4 Draft PR with clean code: verify `ai-cr:passed` label added (green)
-- [ ] 4.5 Draft PR with minor issues: verify comment shows score + issue counts
-- [ ] 4.6 Draft PR with minor issues: verify `ai-cr:passed` label added
-- [ ] 4.7 Draft PR with 2 blockers: verify comment shows score + issue counts with 🔴
-- [ ] 4.8 Draft PR with 2 blockers: verify `ai-cr:failed` label added (red)
-- [ ] 4.9 Update existing labeled PR: verify old label removed, new label added
-- [ ] 4.10 Verify no duplicate labels
-- [ ] 4.11 Check label colors in PR list view (green/red)
+- [ ] 3.8 Test local review with JSON output (npm run review)
+- [ ] 3.9 Verify JSON validates against schema
+- [ ] 3.10 Verify markdown rendering is readable
+- [ ] 3.11 Test on PR with findings (verify verdict PASS/FAIL)
+- [ ] 3.12 Verify workflow parses JSON and shows correct status
 
-### Phase 5: Retry Trigger Configuration
+### Phase 4: Retry Trigger Configuration
 
 #### Automated
 
-- [x] 5.1 Workflow YAML parses correctly
-- [x] 5.2 Conditional syntax is valid
+- [x] 4.1 Workflow YAML parses correctly
+- [x] 4.2 Conditional syntax is valid
 
 #### Manual
 
-- [ ] 5.3 Add `ai-cr:review` label manually: verify workflow triggers
-- [ ] 5.4 Verify review runs successfully
-- [ ] 5.5 Verify `ai-cr:review` label removed after completion
-- [ ] 5.6 Verify appropriate `ai-cr:passed` or `ai-cr:failed` label added
-- [ ] 5.7 Verify PR comment updates with new review results
-- [ ] 5.8 Test error case: add label, cancel workflow mid-run
+- [ ] 4.3 Add `ai-cr:review` label manually: verify workflow triggers
+- [ ] 4.4 Verify review runs successfully
+- [ ] 4.5 Verify `ai-cr:review` label removed after completion
+- [ ] 4.6 Verify PR comment updates with new review results
+- [ ] 4.7 Test error case: add label, cancel workflow mid-run
 
-### Phase 6: Integration Testing
+### Phase 5: Integration Testing (10xChampion Evidence)
 
 #### Automated
 
@@ -1219,7 +1215,7 @@ Not applicable - this is an enhancement to existing system, not a data migration
 - [ ] 6.9 No regressions in existing functionality
 - [ ] 6.10 Review output renders correctly as markdown
 
-### Phase 7: Documentation & Cleanup
+### Phase 6: Documentation & Cleanup
 
 #### Automated
 

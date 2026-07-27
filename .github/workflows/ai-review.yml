@@ -42,31 +42,54 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'No output';
             const exitCode = '${{ steps.review.outputs.exit-code }}';
             const marker = '<!-- ai-review -->';
             
-            const blockerCount = (content.match(/\*\*🔴 BLOCKER\*\*/g) || []).length;
-            const majorCount = (content.match(/\*\*🟡 MAJOR\*\*/g) || []).length;
-            const minorCount = (content.match(/\*\*🟢 MINOR\*\*/g) || []).length;
-            const nitCount = (content.match(/\*\*⚪ NIT\*\*/g) || []).length;
-            const totalIssues = blockerCount + majorCount + minorCount + nitCount;
+            let review = null;
+            let content = '';
+            let statusText = 'Review failed';
+            let emoji = '❌';
             
-            let statusText = 'No issues found';
-            let emoji = '✅';
-            
-            if (exitCode !== '0') {
-              statusText = 'Review failed';
-              emoji = '❌';
-            } else if (totalIssues > 0) {
-              const parts = [];
-              if (blockerCount > 0) parts.push(blockerCount + ' blocker' + (blockerCount > 1 ? 's' : ''));
-              if (majorCount > 0) parts.push(majorCount + ' major');
-              if (minorCount > 0) parts.push(minorCount + ' minor');
-              if (nitCount > 0) parts.push(nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
-              statusText = parts.join(', ');
-              if (blockerCount > 0) emoji = '🔴';
-              else if (majorCount > 0) emoji = '🟡';
+            // Try to read structured JSON output
+            if (fs.existsSync('review-output.json')) {
+              try {
+                review = JSON.parse(fs.readFileSync('review-output.json', 'utf8'));
+                
+                // Count findings by severity
+                let blockerCount = 0, majorCount = 0, minorCount = 0, nitCount = 0;
+                for (const criterion of review.criteria) {
+                  for (const finding of criterion.findings) {
+                    if (finding.severity === 'BLOCKER') blockerCount++;
+                    else if (finding.severity === 'MAJOR') majorCount++;
+                    else if (finding.severity === 'MINOR') minorCount++;
+                    else if (finding.severity === 'NIT') nitCount++;
+                  }
+                }
+                
+                const totalIssues = blockerCount + majorCount + minorCount + nitCount;
+                emoji = review.overall_verdict === 'PASS' ? '✅' : '🔴';
+                
+                if (totalIssues === 0) {
+                  statusText = 'No issues found';
+                } else {
+                  const parts = [];
+                  if (blockerCount > 0) parts.push(blockerCount + ' blocker' + (blockerCount > 1 ? 's' : ''));
+                  if (majorCount > 0) parts.push(majorCount + ' major');
+                  if (minorCount > 0) parts.push(minorCount + ' minor');
+                  if (nitCount > 0) parts.push(nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
+                  statusText = `${review.overall_verdict} | ${parts.join(', ')}`;
+                }
+                
+                // Read markdown output
+                content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : review.summary;
+              } catch (err) {
+                console.error('Failed to parse review JSON:', err);
+                content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Parse error';
+              }
+            } else if (exitCode !== '0') {
+              content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Review agent failed';
+            } else {
+              content = 'No structured output generated';
             }
             
             const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)</sub>';

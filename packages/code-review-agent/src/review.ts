@@ -1,12 +1,12 @@
 /* eslint-disable no-console -- CLI status/errors go to stderr/stdout */
 import { Agent, CursorAgentError } from "@cursor/sdk";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
-import { FormattedOutputStream } from "./formatter.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
+import { ReviewOutputSchema, type ReviewOutput } from "./review-schema.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
@@ -70,6 +70,56 @@ function loadLessons(repoRoot: string): string {
   }
 }
 
+/**
+ * Render structured review output to human-readable markdown.
+ */
+function renderMarkdown(review: ReviewOutput): string {
+  const emoji = review.overall_verdict === "PASS" ? "✅" : "🔴";
+  const lines: string[] = [`## 🤖 AI Review ${emoji}\n`];
+
+  // Summary
+  lines.push(`### Summary\n\n${review.summary}\n`);
+
+  // Findings by criterion
+  const criteriaWithFindings = review.criteria.filter((c) => c.findings.length > 0);
+  
+  if (criteriaWithFindings.length === 0) {
+    lines.push("### Findings\n\n✅ No findings. Code looks good.\n");
+  } else {
+    lines.push("### Findings\n");
+    
+    for (const criterion of criteriaWithFindings) {
+      const criterionEmoji = criterion.verdict === "PASS" ? "🟢" : "🔴";
+      lines.push(`\n#### ${criterionEmoji} ${criterion.name}\n`);
+      
+      for (const finding of criterion.findings) {
+        const severityEmoji = {
+          BLOCKER: "🔴",
+          MAJOR: "🟡",
+          MINOR: "🟢",
+          NIT: "⚪",
+        }[finding.severity];
+        
+        lines.push(`\n**${severityEmoji} ${finding.severity}**\n`);
+        lines.push(`**Location:** \`${finding.location}\`\n`);
+        lines.push(`\n**Issue:** ${finding.issue}\n`);
+        lines.push(`\n**Fix:** ${finding.fix}\n`);
+        lines.push("\n---\n");
+      }
+    }
+  }
+
+  // Questions
+  if (review.questions && review.questions.length > 0) {
+    lines.push("\n### Questions\n");
+    for (const question of review.questions) {
+      lines.push(`- ${question}\n`);
+    }
+  }
+
+  return lines.join("");
+}
+
 async function main(): Promise<void> {
   const apiKey = process.env.CURSOR_API_KEY?.trim();
   if (!apiKey) {
@@ -128,7 +178,6 @@ async function main(): Promise<void> {
   let agentStarted = false;
 
   let exitCode = 0;
-  const formatter = new FormattedOutputStream(repoRoot);
 
   try {
     await using agent = await Agent.create({
@@ -148,17 +197,21 @@ async function main(): Promise<void> {
     const run = await agent.send(prompt);
     console.error(`[code-review-agent] run=${run.id} agent=${agent.agentId}`);
 
+    // Collect full response for JSON parsing
+    let fullResponse = "";
+    
     for await (const event of run.stream()) {
       if (event.type !== "assistant") continue;
       for (const block of event.message.content) {
         if (block.type === "text") {
-          formatter.write(block.text);
+          fullResponse += block.text;
+          // Still show progress to stderr for local runs
+          process.stderr.write(".");
         }
       }
     }
 
     const result = await run.wait();
-    formatter.flush(); // Ensure all buffered content is written
     console.error(`\n[code-review-agent] status=${result.status}`);
 
     if (result.status === "error") {
@@ -167,6 +220,43 @@ async function main(): Promise<void> {
     } else if (result.status === "cancelled") {
       console.error("Run cancelled");
       exitCode = 2;
+    } else {
+      // Parse and validate JSON response
+      try {
+        // Extract JSON from markdown code blocks if wrapped
+        let jsonStr = fullResponse.trim();
+        const jsonMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+        if (jsonMatch) {
+          jsonStr = jsonMatch[1].trim();
+        }
+
+        const parsed = JSON.parse(jsonStr);
+        const review = ReviewOutputSchema.parse(parsed);
+
+        // Save raw JSON for workflow
+        const jsonPath = resolve(repoRoot, "review-output.json");
+        writeFileSync(jsonPath, JSON.stringify(review, null, 2), "utf8");
+        console.error(`[code-review-agent] Saved structured output to ${jsonPath}`);
+
+        // Render and output markdown for humans
+        const markdown = renderMarkdown(review);
+        console.log(markdown);
+
+        // Set exit code based on verdict
+        // Note: exitCode stays 0 even for FAIL verdict - this is advisory review
+        // Workflow can decide whether to block based on verdict
+        if (review.overall_verdict === "FAIL") {
+          console.error(`[code-review-agent] Overall verdict: FAIL (advisory only)`);
+        } else {
+          console.error(`[code-review-agent] Overall verdict: PASS`);
+        }
+      } catch (err) {
+        console.error("[code-review-agent] Failed to parse structured output:");
+        console.error(err);
+        console.error("\nRaw response:");
+        console.error(fullResponse.slice(0, 1000)); // Show first 1KB for debugging
+        exitCode = 2;
+      }
     }
   } catch (err) {
     if (err instanceof CursorAgentError) {
