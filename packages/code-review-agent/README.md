@@ -81,6 +81,20 @@ export REVIEW_HEAD=HEAD
 - **Settings isolation:** `settingSources: []` isolates the run from ambient Cursor IDE and project configuration, making behavior predictable in CI/scripts. However, this prevents using repo-level `.cursor/permissions.json` to further restrict tool access. For now, `autoReview` default backend behavior provides the gate.
 - **Uncommitted changes:** The triple-dot diff (`base...head`) compares commits only. Use `git add` + `git commit` before running the review if you want to include working-tree changes.
 - **Diff size limits:** Diffs are capped at 500 KB in the prompt (truncated with warning if larger). Hard limit: diffs exceeding 10 MiB will cause the process to fail. For large refactors, consider reviewing in smaller chunks.
+- **Output formatting:** Terminal output includes:
+  - **Colors:** Severity markers (🔴 red for blocker, 🟡 yellow for major, 🟢 green for minor, ⚪ gray for nit)
+  - **Clickable links:** File paths are hyperlinked (OSC 8) — click to open in VS Code (works in VS Code terminal, iTerm2, Windows Terminal)
+  - **Structured sections:** Headers, issues, and code snippets are visually separated
+
+## Review criteria
+
+The agent evaluates code against five dimensions:
+
+1. **Logic and bugs** — errors, regressions, unhandled edge cases
+2. **Security** — input validation, secrets, auth, RLS policies
+3. **Performance** — N+1 queries, unnecessary loops, optimization opportunities
+4. **Code quality** — SOLID/DRY, naming, TypeScript strictness, conventions
+5. **Testing** — coverage of non-trivial behavior and edge cases
 
 ## Resources
 

@@ -3,6 +3,7 @@ import { Agent, CursorAgentError } from "@cursor/sdk";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
+import { FormattedOutputStream } from "./formatter.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
 
@@ -108,6 +109,8 @@ async function main(): Promise<void> {
   let agentStarted = false;
 
   let exitCode = 0;
+  const formatter = new FormattedOutputStream(repoRoot);
+
   try {
     await using agent = await Agent.create({
       apiKey,
@@ -130,12 +133,13 @@ async function main(): Promise<void> {
       if (event.type !== "assistant") continue;
       for (const block of event.message.content) {
         if (block.type === "text") {
-          process.stdout.write(block.text);
+          formatter.write(block.text);
         }
       }
     }
 
     const result = await run.wait();
+    formatter.flush(); // Ensure all buffered content is written
     console.error(`\n[code-review-agent] status=${result.status}`);
 
     if (result.status === "error") {
@@ -144,9 +148,6 @@ async function main(): Promise<void> {
     } else if (result.status === "cancelled") {
       console.error("Run cancelled");
       exitCode = 2;
-    } else {
-      // Ensure trailing newline after streamed body.
-      process.stdout.write("\n");
     }
   } catch (err) {
     if (err instanceof CursorAgentError) {
