@@ -1,5 +1,6 @@
 name: AI Code Review
 
+# Automated code review using Cursor SDK
 on:
   pull_request:
     branches: [main]
