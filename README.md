@@ -23,8 +23,9 @@ A modern, opinionated starter template for building fast, accessible web applica
 
 ## Prerequisites
 
-- Node.js v22.14.0 (as specified in `.nvmrc`)
+- Node.js v22.14.0 or higher (see `.nvmrc`)
 - npm (comes with Node.js)
+- Docker (for local Supabase development)
 
 ## Getting Started
 
