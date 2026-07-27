@@ -22,14 +22,21 @@ jobs:
           cache: npm
           
       - run: npm ci
+      - run: npm run review:install
       
-      - name: Run AI Review
+      - name: Run review
         id: review
-        uses: ./.github/actions/ai-review
-        with:
-          api-key: ${{ secrets.CURSOR_API_KEY }}
-          base-ref: origin/main
-          head-ref: ${{ github.sha }}
+        run: |
+          set +e
+          npm run review > review-output.txt
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          set -e
+          sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt || echo "No output" > review-clean.txt
+          exit 0
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          REVIEW_BASE: origin/main
+          REVIEW_HEAD: ${{ github.sha }}
       
       - name: Comment
         if: always()

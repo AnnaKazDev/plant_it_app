@@ -1,0 +1,46 @@
+name: AI Code Review
+description: Run code review agent and output results
+inputs:
+  api-key:
+    description: Cursor API key
+    required: true
+  model:
+    description: Model ID for review
+    required: false
+    default: composer-2.5
+  base-ref:
+    description: Base git ref for diff
+    required: false
+    default: origin/main
+  head-ref:
+    description: Head git ref for diff
+    required: false
+    default: ${{ github.sha }}
+outputs:
+  exit-code:
+    description: Review exit code
+    value: ${{ steps.review.outputs.exit_code }}
+  review-output:
+    description: Path to cleaned review output
+    value: review-clean.txt
+runs:
+  using: composite
+  steps:
+    - name: Install review package
+      shell: bash
+      run: npm run review:install
+      
+    - name: Run review
+      id: review
+      shell: bash
+      run: |
+        set +e
+        npm run review > review-output.txt
+        echo "exit_code=$?" >> $GITHUB_OUTPUT
+        set -e
+        sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt || echo "No output" > review-clean.txt
+      env:
+        CURSOR_API_KEY: ${{ inputs.api-key }}
+        CURSOR_MODEL: ${{ inputs.model }}
+        REVIEW_BASE: ${{ inputs.base-ref }}
+        REVIEW_HEAD: ${{ inputs.head-ref }}
