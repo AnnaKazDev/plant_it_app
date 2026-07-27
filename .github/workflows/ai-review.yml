@@ -50,7 +50,7 @@ jobs:
           exit 0
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          REVIEW_BASE: ${{ format('origin/{0}', github.event.pull_request.base.ref) }}
+          REVIEW_BASE: origin/${{ github.event.pull_request.base.ref }}
           REVIEW_HEAD: ${{ github.event.pull_request.head.sha }}
       
       - name: Comment on PR
