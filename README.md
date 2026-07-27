@@ -15,7 +15,7 @@ A modern, opinionated starter template for building fast, accessible web applica
 
 ## Features
 
-- **AI Code Review** - Automated code review on pull requests using Cursor SDK
+- **AI Code Review** - Automated code review on pull requests powered by Cursor SDK
 - **Type Safety** - Full TypeScript coverage with strict mode
 - **Modern UI** - Tailwind CSS 4 with shadcn/ui components
 - **Authentication** - Built-in Supabase auth with middleware protection
