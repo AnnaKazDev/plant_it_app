@@ -1,5 +1,6 @@
 /* eslint-disable no-console -- CLI status/errors go to stderr/stdout */
 import { Agent, CursorAgentError } from "@cursor/sdk";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
@@ -55,6 +56,20 @@ function parseArgs(argv: string[]): { baseRef: string; headRef: string } {
   return { baseRef, headRef };
 }
 
+/**
+ * Reads context/foundation/lessons.md from repo root.
+ * Returns content or empty string if file doesn't exist.
+ */
+function loadLessons(repoRoot: string): string {
+  try {
+    const lessonsPath = resolve(repoRoot, "context/foundation/lessons.md");
+    return readFileSync(lessonsPath, "utf8");
+  } catch {
+    // lessons.md is optional; return empty string if missing
+    return "";
+  }
+}
+
 async function main(): Promise<void> {
   const apiKey = process.env.CURSOR_API_KEY?.trim();
   if (!apiKey) {
@@ -91,6 +106,9 @@ async function main(): Promise<void> {
     console.error(`[code-review-agent] WARNING: Diff truncated at ${sizeKb}KB. Agent will read files for full context.`);
   }
 
+  // Load lessons.md for historical anti-patterns
+  const lessons = loadLessons(repoRoot);
+
   const modelId = process.env.CURSOR_MODEL?.trim() ?? "composer-2.5";
   const prompt = buildReviewPrompt({
     baseRef,
@@ -98,6 +116,7 @@ async function main(): Promise<void> {
     diffStat,
     diff: diffResult.diff,
     truncated: diffResult.truncated,
+    lessons,
   });
 
   console.error(`[code-review-agent] cwd=${repoRoot}`);
