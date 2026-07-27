@@ -9,91 +9,68 @@ permissions:
   pull-requests: write
 
 jobs:
-  ai-review:
+  review:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          # Fetch full history so agent can compute diffs
           fetch-depth: 0
-          # Checkout PR head (not merge ref) to ensure agent sees actual PR content
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-
-      - name: Configure node
-        uses: actions/setup-node@v4
+          
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: npm
-
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Install review agent
-        run: npm run review:install
-
-      - name: Run code review
+          
+      - run: npm ci
+      - run: npm run review:install
+      
+      - name: Run review
         id: review
         run: |
           set +e
           npm run review > review-output.txt
           echo "exit_code=$?" >> $GITHUB_OUTPUT
           set -e
-          
-          # Clean ANSI codes
-          if [ -f review-output.txt ]; then
-            sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt
-          else
-            echo "Review output not found" > review-clean.txt
-          fi
-          
+          sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt || echo "No output" > review-clean.txt
           exit 0
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          REVIEW_BASE: origin/${{ github.event.pull_request.base.ref }}
-          REVIEW_HEAD: ${{ github.event.pull_request.head.sha }}
+          REVIEW_BASE: origin/main
+          REVIEW_HEAD: ${{ github.sha }}
       
-      - name: Comment on PR
+      - name: Comment
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const reviewContent = fs.existsSync('review-clean.txt') 
-              ? fs.readFileSync('review-clean.txt', 'utf8')
-              : 'Review output not available. Check workflow logs.';
-            
+            const content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'No output';
             const exitCode = '${{ steps.review.outputs.exit_code }}';
-            const statusEmoji = exitCode === '0' ? '✅' : exitCode === '3' ? '⚠️' : '❌';
-            const statusText = exitCode === '0' ? 'Review completed' : 
-                              exitCode === '3' ? 'Working tree modified' : 
-                              'Review failed';
+            const emoji = exitCode === '0' ? '✅' : '❌';
+            const marker = '<!-- ai-review -->';
             
-            const marker = '<!-- plant-it-ai-review -->';
-            const body = `${marker}
-## 🤖 AI Code Review ${statusEmoji}
-
-**Status:** ${statusText}
-**Exit code:** ${exitCode}
-
-<details>
-<summary>Review findings</summary>
-
-${reviewContent}
-
-</details>
-
----
-<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript) • Model: composer-2.5</sub>`;
+            const body = `${marker}\n## 🤖 AI Review ${emoji}\n\n**Exit:** ${exitCode}\n\n<details>\n<summary>Details</summary>\n\n${content}\n\n</details>`;
             
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
+            const {data: comments} = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
             
-            const comments = await github.rest.issues.listComments({ owner, repo, issue_number });
-            const existing = comments.data.find(c => c.body?.includes(marker));
+            const existing = comments.find(c => c.body?.includes(marker));
             
             if (existing) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
             } else {
-              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
             }
