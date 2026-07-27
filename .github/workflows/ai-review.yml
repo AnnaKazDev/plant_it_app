@@ -98,10 +98,10 @@ jobs:
                   statusText = 'No issues found';
                 } else {
                   const parts = [];
-                  if (blockerCount > 0) parts.push(blockerCount + ' blocker' + (blockerCount > 1 ? 's' : ''));
-                  if (majorCount > 0) parts.push(majorCount + ' major');
-                  if (minorCount > 0) parts.push(minorCount + ' minor');
-                  if (nitCount > 0) parts.push(nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
+                  if (blockerCount > 0) parts.push('🔴 ' + blockerCount + ' blocker' + (blockerCount > 1 ? 's' : ''));
+                  if (majorCount > 0) parts.push('🟡 ' + majorCount + ' major');
+                  if (minorCount > 0) parts.push('🟢 ' + minorCount + ' minor');
+                  if (nitCount > 0) parts.push('⚪ ' + nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
                   statusText = `${review.overall_verdict} | ${parts.join(', ')}`;
                 }
                 
