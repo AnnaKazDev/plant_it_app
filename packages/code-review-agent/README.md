@@ -132,7 +132,7 @@ The agent made unexpected file changes. Check `git status` output in logs. This 
 
 ### 403 Forbidden in GitHub Actions
 
-The workflow needs `pull-requests: write` permission. Verify `.github/workflows/review.yml` includes:
+The workflow needs `pull-requests: write` permission. Verify `.github/workflows/ai-review.yml` includes:
 
 ```yaml
 permissions:
