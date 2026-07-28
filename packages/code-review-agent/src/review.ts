@@ -102,13 +102,15 @@ export { renderMarkdown } from "./render-markdown.js";
  */
 export function parseReviewResponse(fullResponse: string): unknown {
   let jsonStr = fullResponse.trim();
-  
-  // First, try to extract from markdown code blocks
-  const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-  if (codeBlockMatch) {
-    jsonStr = codeBlockMatch[1].trim();
-  }
-  
+
+  // Deliberately no markdown-code-block stripping here. A naive "first ``` ... ```"
+  // regex would happily match a code fence embedded *inside* a JSON string value
+  // (e.g. a finding's "fix" field showing a suggested snippet) instead of the fence
+  // wrapping the whole response, extracting garbage instead of the JSON envelope.
+  // The balanced-brace scan below is string-aware and already skips over any
+  // ``` markers, braces, etc. that appear inside JSON strings, so it correctly
+  // finds the outer JSON object whether or not the agent wrapped it in a fence.
+
   // Find first { to start extraction
   const firstBrace = jsonStr.indexOf('{');
   if (firstBrace === -1) {

@@ -84,6 +84,32 @@ describe("parseReviewResponse", () => {
     expect(parseReviewResponse(response)).toEqual(jsonWithCodeSnippet);
   });
 
+  test("handles markdown code fence embedded inside a fix field (regression)", () => {
+    // Reproduces a real failure: the agent prefixed its reply with a preamble
+    // sentence, and a finding's "fix" field contained its own ```typescript```
+    // snippet. A naive "first fence in the whole response" regex would grab that
+    // inner snippet instead of the outer JSON object.
+    const jsonWithEmbeddedFence = {
+      ...validJson,
+      criteria: [
+        {
+          name: "Test",
+          verdict: "FAIL",
+          findings: [
+            {
+              severity: "MAJOR",
+              location: "test.ts:1",
+              issue: "Problem",
+              fix: "Use this instead:\n\n```typescript\nfunction f(opts: { a: number }) {\n  return opts;\n}\n```",
+            },
+          ],
+        },
+      ],
+    };
+    const response = "Reviewing the diff and reading key files for context.\n" + JSON.stringify(jsonWithEmbeddedFence);
+    expect(parseReviewResponse(response)).toEqual(jsonWithEmbeddedFence);
+  });
+
   test("throws on response with no JSON object", () => {
     expect(() => parseReviewResponse("No JSON here!")).toThrow("No valid JSON object found");
   });
