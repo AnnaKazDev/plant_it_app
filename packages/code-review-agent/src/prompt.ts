@@ -180,6 +180,17 @@ Example of CORRECT output format (your actual response must include all 10 crite
 
 If a criterion has no findings, use: \`"findings": []\` and \`"verdict": "PASS"\`
 
+**Each finding MUST use exactly these fields** (not \`file\`, \`line\`, or \`message\`):
+
+\`\`\`json
+{
+  "severity": "MAJOR",
+  "location": "src/pages/api/example.ts:42",
+  "issue": "What is wrong and why it matters",
+  "fix": "Concrete instruction or code snippet to fix it"
+}
+\`\`\`
+
 ---
 
 **Important:**

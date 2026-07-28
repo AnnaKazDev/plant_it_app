@@ -2,11 +2,12 @@ import { describe, it, expect } from "vitest";
 import {
   extractUsefulLogContent,
   formatFailureReport,
+  formatValidationDetails,
   stripNpmNoise,
 } from "./review-failure.js";
 
 describe("formatFailureReport", () => {
-  it("includes reason and raw response", () => {
+  it("includes reason without dumping raw response to PR report", () => {
     const report = formatFailureReport({
       reason: "No valid JSON object found",
       rawResponse: '{"summary":"test"}',
@@ -14,7 +15,21 @@ describe("formatFailureReport", () => {
 
     expect(report).toContain("### Review agent error");
     expect(report).toContain("**Reason:** No valid JSON object found");
-    expect(report).toContain('{"summary":"test"}');
+    expect(report).not.toContain('{"summary":"test"}');
+    expect(report).toContain("workflow logs");
+  });
+});
+
+describe("formatValidationDetails", () => {
+  it("summarizes zod issue arrays", () => {
+    const details = JSON.stringify([
+      { path: ["criteria", 0, "findings", 0, "location"], message: "expected string" },
+    ]);
+
+    const formatted = formatValidationDetails(details);
+    expect(formatted).toContain("Schema validation failed");
+    expect(formatted).toContain("location");
+    expect(formatted).toContain("file`/`line`/`message`");
   });
 });
 

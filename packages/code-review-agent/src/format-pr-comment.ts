@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 import {
   ReviewOutputSchema,
   computeOverallVerdict,
-  normalizeCriteriaNames,
+  normalizeReviewData,
   applyComputedVerdicts,
   type ReviewOutput,
 } from "./review-schema.js";
@@ -17,6 +17,7 @@ import { renderMarkdown } from "./render-markdown.js";
 import { resolveValidationExitCode } from "./review-ci.js";
 import {
   extractUsefulLogContent,
+  sanitizePrFailureContent,
   REVIEW_FAILURE_FILENAME,
 } from "./review-failure.js";
 import type { GateResult } from "./gate-policy.js";
@@ -119,7 +120,7 @@ function loadReview(jsonPath: string): LoadedReview {
   try {
     const parsed = JSON.parse(readFileSync(jsonPath, "utf8"));
     const review = applyComputedVerdicts(
-      ReviewOutputSchema.parse(normalizeCriteriaNames(parsed)),
+      ReviewOutputSchema.parse(normalizeReviewData(parsed)),
     );
     return { kind: "ok", review };
   } catch (err) {
@@ -158,9 +159,14 @@ function buildFailureContent(
   logTxt: string | null,
   exitCode: string,
 ): string {
-  return (
-    extractUsefulLogContent(failureTxt, cleanTxt, logTxt) ??
-    fallbackContent(cleanTxt, `Review agent failed with exit code ${exitCode}`)
+  const useful = extractUsefulLogContent(failureTxt, cleanTxt, logTxt);
+  if (useful) {
+    return useful;
+  }
+
+  return fallbackContent(
+    cleanTxt ? sanitizePrFailureContent(cleanTxt) : null,
+    `Review agent failed with exit code ${exitCode}. See workflow logs for full output.`,
   );
 }
 
