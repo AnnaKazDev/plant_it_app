@@ -6,6 +6,7 @@ import {
   ReviewOutputSchema,
   computeCriterionVerdict,
   computeOverallVerdict,
+  normalizeCriteriaNames,
   REQUIRED_CRITERIA,
   type Finding,
   type CriterionReview,
@@ -81,6 +82,29 @@ describe("ReviewOutputSchema", () => {
     };
 
     expect(() => ReviewOutputSchema.parse(reviewWithFindings)).not.toThrow();
+  });
+});
+
+describe("normalizeCriteriaNames", () => {
+  it("maps paraphrased criterion names to canonical names by index", () => {
+    const paraphrased = {
+      overall_verdict: "PASS",
+      summary: "Test",
+      criteria: REQUIRED_CRITERIA.map((_, index) => ({
+        name: index === 4 ? "Security" : `Criterion ${index + 1}`,
+        verdict: "PASS",
+        findings: [],
+      })),
+    };
+
+    const normalized = normalizeCriteriaNames(paraphrased) as typeof paraphrased;
+    expect(() => ReviewOutputSchema.parse(normalized)).not.toThrow();
+    expect(normalized.criteria[4].name).toBe("Security & Validation");
+  });
+
+  it("returns input unchanged when criteria count differs", () => {
+    const input = { criteria: [{ name: "Only one", verdict: "PASS", findings: [] }] };
+    expect(normalizeCriteriaNames(input)).toEqual(input);
   });
 });
 

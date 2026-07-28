@@ -10,6 +10,7 @@
   "scripts": {
     "review": "tsx src/review.ts",
     "validate-json": "tsx src/validate-review-json.ts",
+    "format-pr-comment": "tsx src/format-pr-comment.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit"

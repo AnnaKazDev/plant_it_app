@@ -1,6 +1,7 @@
 name: AI Code Review
 description: Run code review agent and output results
 inputs:
+  # SECURITY: never echo or log inputs.api-key — it contains CURSOR_API_KEY.
   api-key:
     description: Cursor API key
     required: true

@@ -5,7 +5,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { ReviewOutputSchema, computeCriterionVerdict, computeOverallVerdict } from "./review-schema.js";
+import { ReviewOutputSchema, computeCriterionVerdict, computeOverallVerdict, normalizeCriteriaNames } from "./review-schema.js";
 
 const jsonPath = process.argv[2] ?? "review-output.json";
 const fullPath = resolve(process.cwd(), jsonPath);
@@ -13,7 +13,7 @@ const fullPath = resolve(process.cwd(), jsonPath);
 try {
   const jsonContent = readFileSync(fullPath, "utf8");
   const parsed = JSON.parse(jsonContent);
-  let review = ReviewOutputSchema.parse(parsed);
+  let review = ReviewOutputSchema.parse(normalizeCriteriaNames(parsed));
 
   // Recompute all verdicts
   const computedCriteria = review.criteria.map((criterion) => {

@@ -36,108 +36,24 @@ jobs:
           base-ref: origin/main
           head-ref: ${{ github.sha }}
       
+      - name: Format PR comment
+        if: always()
+        run: |
+          npm run format-pr-comment --prefix packages/code-review-agent -- \
+            --exit-code "${{ steps.review.outputs.exit-code }}" \
+            --validation-exit-code "${{ steps.review.outputs.validation-exit-code }}" \
+            --json-path review-output.json \
+            --clean-txt-path review-clean.txt \
+            > pr-comment.json
+      
       - name: Comment
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const exitCode = '${{ steps.review.outputs.exit-code }}';
-            const validationExitCode = '${{ steps.review.outputs.validation-exit-code }}' || (exitCode === '0' ? '' : '0');
+            const { statusText, emoji, content } = JSON.parse(fs.readFileSync('pr-comment.json', 'utf8'));
             const marker = '<!-- ai-review -->';
-            
-            let review = null;
-            let content = '';
-            let statusText = 'Review failed';
-            let emoji = '❌';
-            
-            // Check exit codes first - non-zero means failure regardless of JSON
-            if (exitCode !== '0' || validationExitCode !== '0') {
-              console.log('Review or validation failed. Review exit code:', exitCode, 'Validation exit code:', validationExitCode);
-              statusText = (exitCode === '0' && validationExitCode !== '0') ? 'Validation failed' : 'Review failed';
-              emoji = '❌';
-              
-              // Try to read any error output
-              if (fs.existsSync('review-clean.txt')) {
-                content = fs.readFileSync('review-clean.txt', 'utf8');
-              } else {
-                content = 'Review agent failed with exit code ' + exitCode + (validationExitCode !== '0' ? ', validation exit code ' + validationExitCode : '');
-              }
-            } else if (fs.existsSync('review-output.json')) {
-              // Exit code 0 and JSON exists - parse and validate
-              try {
-                const jsonContent = fs.readFileSync('review-output.json', 'utf8');
-                review = JSON.parse(jsonContent);
-                
-                // Basic schema validation (inline)
-                if (!review.overall_verdict || !review.summary || !Array.isArray(review.criteria)) {
-                  throw new Error('Invalid review JSON structure');
-                }
-                
-                if (review.criteria.length !== 10) {
-                  throw new Error('Expected exactly 10 criteria, got ' + review.criteria.length);
-                }
-                
-                // Count findings by severity
-                let blockerCount = 0, majorCount = 0, minorCount = 0, nitCount = 0;
-                for (const criterion of review.criteria) {
-                  if (!Array.isArray(criterion.findings)) {
-                    throw new Error('Criterion missing findings array: ' + criterion.name);
-                  }
-                  for (const finding of criterion.findings) {
-                    if (finding.severity === 'BLOCKER') blockerCount++;
-                    else if (finding.severity === 'MAJOR') majorCount++;
-                    else if (finding.severity === 'MINOR') minorCount++;
-                    else if (finding.severity === 'NIT') nitCount++;
-                  }
-                }
-                
-                const totalIssues = blockerCount + majorCount + minorCount + nitCount;
-                
-                // Recompute overall verdict from counts (BLOCKER or 3+ MAJOR = FAIL)
-                const recomputedVerdict = (blockerCount > 0 || majorCount >= 3) ? 'FAIL' : 'PASS';
-                
-                // Derive display emoji from severity counts, not just verdict
-                if (totalIssues === 0) {
-                  emoji = '✅';
-                  statusText = 'No issues found';
-                } else if (blockerCount > 0 || recomputedVerdict === 'FAIL') {
-                  emoji = '🔴';
-                  const parts = [];
-                  if (blockerCount > 0) parts.push('🔴 ' + blockerCount + ' blocker' + (blockerCount > 1 ? 's' : ''));
-                  if (majorCount > 0) parts.push('🟡 ' + majorCount + ' major');
-                  if (minorCount > 0) parts.push('🟢 ' + minorCount + ' minor');
-                  if (nitCount > 0) parts.push('⚪ ' + nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
-                  statusText = `${recomputedVerdict} | ${parts.join(', ')}`;
-                } else if (majorCount > 0) {
-                  emoji = '🟡';
-                  const parts = [];
-                  if (majorCount > 0) parts.push('🟡 ' + majorCount + ' major');
-                  if (minorCount > 0) parts.push('🟢 ' + minorCount + ' minor');
-                  if (nitCount > 0) parts.push('⚪ ' + nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
-                  statusText = `${recomputedVerdict} | ${parts.join(', ')}`;
-                } else {
-                  emoji = '🟢';
-                  const parts = [];
-                  if (minorCount > 0) parts.push('🟢 ' + minorCount + ' minor');
-                  if (nitCount > 0) parts.push('⚪ ' + nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
-                  statusText = `${recomputedVerdict} | ${parts.join(', ')}`;
-                }
-                
-                // Read markdown output
-                content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : review.summary;
-              } catch (err) {
-                console.error('Failed to parse or validate review JSON:', err);
-                emoji = '❌';
-                statusText = 'JSON parse/validation failed';
-                content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Parse error: ' + err.message;
-              }
-            } else {
-              // Exit code 0 but no JSON - unexpected
-              statusText = 'No structured output generated';
-              content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'Review completed but produced no output';
-            }
-            
             const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)</sub>';
             
             const {data: comments} = await github.rest.issues.listComments({

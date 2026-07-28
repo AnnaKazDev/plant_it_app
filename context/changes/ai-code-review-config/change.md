@@ -24,7 +24,7 @@ Enhance the existing code-review agent workflow with structured output for 10xCh
 
 **Design decisions:**
 - **Pivot from 1-10 scoring to PASS/FAIL**: Intentional simplification for 10xChampion certification. Severity markers (BLOCKER/MAJOR/MINOR/NIT) provide sufficient granularity without arbitrary numeric thresholds.
-- **Advisory review (no blocking)**: Failing verdict shows ❌ in PR comment but does NOT block merge. Human makes final decision. May add optional blocking in future iterations.
+- **Advisory review (comment-only, no blocking)**: Failing verdict shows ❌ in PR comment but does NOT block merge. Human makes final decision. This remains comment-only indefinitely.
 - **No automatic labels**: Originally planned `ai-cr:passed`/`ai-cr:failed` labels removed. Structured JSON + verdict in PR comment is sufficient.
 
 ## Code Quality Improvements (2026-07-27)
@@ -39,13 +39,14 @@ Fixed critical and major issues identified by AI code review:
    - Overall FAIL: any BLOCKER or 3+ MAJOR findings
    - LLM verdicts are now computed and replaced, with mismatch warnings logged
 3. **✅ Workflow exit code handling** - Workflow now checks `exitCode` first before trusting JSON verdict. Non-zero exit codes force failed status regardless of JSON content.
-4. **✅ JSON validation in workflow** - Added inline schema validation (10 criteria, required fields, findings array) with proper error handling
+4. **✅ JSON validation in workflow** - PR comment formatting delegated to `format-pr-comment.ts` (shared schema + verdict logic)
 5. **✅ Duplicate header fix** - Removed top-level header from `renderMarkdown()` since workflow already adds it
 6. **✅ Dead code removal** - Deleted `formatter.ts` (no longer used after JSON refactor)
 7. **✅ Test coverage** - Added comprehensive Vitest tests:
-   - `review-schema.test.ts` - Schema validation and verdict computation (19 tests)
-   - `review-render.test.ts` - Markdown rendering and JSON extraction (11 tests)
-   - All 30 tests passing
+   - `review-schema.test.ts` - Schema validation, normalization, and verdict computation
+   - `review-render.test.ts` - Markdown rendering and JSON extraction
+   - `format-pr-comment.test.ts` - PR comment formatting and validation exit-code handling
+   - All 66 Vitest tests passing
 
 ### Technical Details
 

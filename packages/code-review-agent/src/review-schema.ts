@@ -64,6 +64,30 @@ export const ReviewOutputSchema = z
 export type ReviewOutput = z.infer<typeof ReviewOutputSchema>;
 
 /**
+ * Map criteria names to canonical REQUIRED_CRITERIA by index.
+ * LLMs often paraphrase names (e.g. "Security" vs "Security & Validation").
+ */
+export function normalizeCriteriaNames(data: unknown): unknown {
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "criteria" in data &&
+    Array.isArray((data as { criteria: unknown }).criteria) &&
+    (data as { criteria: unknown[] }).criteria.length === REQUIRED_CRITERIA.length
+  ) {
+    const review = data as { criteria: Array<Record<string, unknown>> };
+    return {
+      ...review,
+      criteria: review.criteria.map((criterion, index) => ({
+        ...criterion,
+        name: REQUIRED_CRITERIA[index],
+      })),
+    };
+  }
+  return data;
+}
+
+/**
  * Compute criterion verdict based on findings.
  * FAIL if any BLOCKER or MAJOR finding, otherwise PASS.
  */

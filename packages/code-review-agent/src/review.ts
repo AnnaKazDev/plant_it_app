@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
-import { ReviewOutputSchema, type ReviewOutput, computeCriterionVerdict, computeOverallVerdict, REQUIRED_CRITERIA } from "./review-schema.js";
+import { ReviewOutputSchema, type ReviewOutput, computeCriterionVerdict, computeOverallVerdict, REQUIRED_CRITERIA, normalizeCriteriaNames } from "./review-schema.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
@@ -321,7 +321,7 @@ async function main(): Promise<void> {
       // Parse and validate JSON response
       try {
         const parsed = parseReviewResponse(fullResponse);
-        let review = ReviewOutputSchema.parse(parsed);
+        let review = ReviewOutputSchema.parse(normalizeCriteriaNames(parsed));
 
         // Compute verdicts from findings (don't trust LLM)
         const computedCriteria = review.criteria.map((criterion) => {
