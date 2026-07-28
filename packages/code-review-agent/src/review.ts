@@ -6,7 +6,14 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
-import { ReviewOutputSchema, type ReviewOutput, computeCriterionVerdict, computeOverallVerdict, REQUIRED_CRITERIA, normalizeCriteriaNames } from "./review-schema.js";
+import { renderMarkdown } from "./render-markdown.js";
+import {
+  ReviewOutputSchema,
+  type ReviewOutput,
+  applyComputedVerdicts,
+  REQUIRED_CRITERIA,
+  normalizeCriteriaNames,
+} from "./review-schema.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
@@ -82,54 +89,9 @@ function loadLessons(repoRoot: string): string {
 
 /**
  * Render structured review output to human-readable markdown.
- * Does NOT include top-level header - workflow adds that.
- * Just renders Summary and Findings sections.
- * Exported for testing.
+ * Re-exported for tests that import from review.ts.
  */
-export function renderMarkdown(review: ReviewOutput): string {
-  const lines: string[] = [];
-
-  // Summary (no top-level header)
-  lines.push(`### Summary\n\n${review.summary}\n`);
-
-  // Findings by criterion
-  const criteriaWithFindings = review.criteria.filter((c) => c.findings.length > 0);
-  
-  if (criteriaWithFindings.length === 0) {
-    lines.push("### Findings\n\n✅ No findings. Code looks good.\n");
-  } else {
-    lines.push("### Findings\n");
-    
-    for (const criterion of criteriaWithFindings) {
-      lines.push(`\n#### ⭐ ${criterion.name.toUpperCase()}\n`);
-      
-      for (const finding of criterion.findings) {
-        const severityEmoji = {
-          BLOCKER: "🔴",
-          MAJOR: "🟡",
-          MINOR: "🟢",
-          NIT: "⚪",
-        }[finding.severity];
-        
-        lines.push(`\n**${severityEmoji} ${finding.severity}**\n`);
-        lines.push(`**Location:** \`${finding.location}\`\n`);
-        lines.push(`\n**Issue:** ${finding.issue}\n`);
-        lines.push(`\n**Fix:** ${finding.fix}\n`);
-        lines.push("\n---\n");
-      }
-    }
-  }
-
-  // Questions
-  if (review.questions && review.questions.length > 0) {
-    lines.push("\n### Questions\n");
-    for (const question of review.questions) {
-      lines.push(`- ${question}\n`);
-    }
-  }
-
-  return lines.join("");
-}
+export { renderMarkdown } from "./render-markdown.js";
 
 /**
  * Extract and parse JSON from agent response.
@@ -237,9 +199,11 @@ async function main(): Promise<void> {
     };
     
     const jsonPath = resolve(repoRoot, "review-output.json");
+    const markdown = renderMarkdown(emptyReview);
+    console.log(markdown);
     writeFileSync(jsonPath, JSON.stringify(emptyReview, null, 2), "utf8");
     console.error(`[code-review-agent] Saved empty review to ${jsonPath}`);
-    
+
     process.exit(0);
   }
 
@@ -321,35 +285,9 @@ async function main(): Promise<void> {
       // Parse and validate JSON response
       try {
         const parsed = parseReviewResponse(fullResponse);
-        let review = ReviewOutputSchema.parse(normalizeCriteriaNames(parsed));
-
-        // Compute verdicts from findings (don't trust LLM)
-        const computedCriteria = review.criteria.map((criterion) => {
-          const computedVerdict = computeCriterionVerdict(criterion.findings);
-          if (computedVerdict !== criterion.verdict) {
-            console.error(
-              `[code-review-agent] Verdict mismatch for "${criterion.name}": ` +
-              `LLM said ${criterion.verdict}, computed ${computedVerdict} from findings`
-            );
-          }
-          return { ...criterion, verdict: computedVerdict };
-        });
-
-        const computedOverallVerdict = computeOverallVerdict(computedCriteria);
-        if (computedOverallVerdict !== review.overall_verdict) {
-          console.error(
-            `[code-review-agent] Overall verdict mismatch: ` +
-            `LLM said ${review.overall_verdict}, computed ${computedOverallVerdict} from findings`
-          );
-        }
-
-        // Replace with computed verdicts and normalize questions
-        review = {
-          ...review,
-          overall_verdict: computedOverallVerdict,
-          criteria: computedCriteria,
-          questions: review.questions ?? [],
-        };
+        const review = applyComputedVerdicts(
+          ReviewOutputSchema.parse(normalizeCriteriaNames(parsed)),
+        );
 
         // Save raw JSON for workflow
         const jsonPath = resolve(repoRoot, "review-output.json");

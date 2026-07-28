@@ -7,6 +7,8 @@ import {
   computeCriterionVerdict,
   computeOverallVerdict,
   normalizeCriteriaNames,
+  CriteriaMappingError,
+  applyComputedVerdicts,
   REQUIRED_CRITERIA,
   type Finding,
   type CriterionReview,
@@ -86,12 +88,12 @@ describe("ReviewOutputSchema", () => {
 });
 
 describe("normalizeCriteriaNames", () => {
-  it("maps paraphrased criterion names to canonical names by index", () => {
+  it("maps paraphrased criterion names to canonical names by alias", () => {
     const paraphrased = {
       overall_verdict: "PASS",
       summary: "Test",
-      criteria: REQUIRED_CRITERIA.map((_, index) => ({
-        name: index === 4 ? "Security" : `Criterion ${index + 1}`,
+      criteria: REQUIRED_CRITERIA.map((name) => ({
+        name: name === "Security & Validation" ? "Security" : name,
         verdict: "PASS",
         findings: [],
       })),
@@ -99,12 +101,73 @@ describe("normalizeCriteriaNames", () => {
 
     const normalized = normalizeCriteriaNames(paraphrased) as typeof paraphrased;
     expect(() => ReviewOutputSchema.parse(normalized)).not.toThrow();
-    expect(normalized.criteria[4].name).toBe("Security & Validation");
+    expect(normalized.criteria.find((c) => c.name === "Security & Validation")).toBeDefined();
+  });
+
+  it("maps criteria by name regardless of array order", () => {
+    const reordered = {
+      overall_verdict: "PASS",
+      summary: "Test",
+      criteria: [...REQUIRED_CRITERIA].reverse().map((name) => ({
+        name,
+        verdict: "PASS",
+        findings: [],
+      })),
+    };
+
+    const normalized = normalizeCriteriaNames(reordered) as typeof reordered;
+    expect(() => ReviewOutputSchema.parse(normalized)).not.toThrow();
+    expect(normalized.criteria.map((criterion) => criterion.name)).toEqual([...REQUIRED_CRITERIA]);
+  });
+
+  it("rejects unknown criterion names", () => {
+    const unknownNames = {
+      overall_verdict: "PASS",
+      summary: "Test",
+      criteria: REQUIRED_CRITERIA.map((_, index) => ({
+        name: `Criterion ${index + 1}`,
+        verdict: "PASS",
+        findings: [],
+      })),
+    };
+
+    expect(() => normalizeCriteriaNames(unknownNames)).toThrow(CriteriaMappingError);
   });
 
   it("returns input unchanged when criteria count differs", () => {
     const input = { criteria: [{ name: "Only one", verdict: "PASS", findings: [] }] };
     expect(normalizeCriteriaNames(input)).toEqual(input);
+  });
+});
+
+describe("applyComputedVerdicts", () => {
+  it("recomputes criterion and overall verdicts from findings", () => {
+    const review = {
+      overall_verdict: "PASS" as const,
+      summary: "Test",
+      criteria: REQUIRED_CRITERIA.map((name, index) =>
+        index === 0
+          ? {
+              name,
+              verdict: "PASS" as const,
+              findings: [
+                {
+                  severity: "BLOCKER" as const,
+                  location: "src/a.ts:1",
+                  issue: "Critical",
+                  fix: "Fix it",
+                },
+              ],
+            }
+          : { name, verdict: "PASS" as const, findings: [] },
+      ),
+      questions: null,
+    };
+
+    const result = applyComputedVerdicts(review);
+    expect(result.criteria[0].verdict).toBe("FAIL");
+    expect(result.overall_verdict).toBe("FAIL");
+    expect(result.questions).toEqual([]);
   });
 });
 

@@ -10,8 +10,10 @@ import {
   ReviewOutputSchema,
   computeOverallVerdict,
   normalizeCriteriaNames,
+  applyComputedVerdicts,
   type ReviewOutput,
 } from "./review-schema.js";
+import { renderMarkdown } from "./render-markdown.js";
 
 export interface FormatPrCommentInput {
   exitCode: string;
@@ -60,13 +62,14 @@ function countFindings(review: ReviewOutput) {
   return { blockerCount, majorCount, minorCount, nitCount };
 }
 
-function buildStatusFromReview(review: ReviewOutput): Pick<FormatPrCommentOutput, "statusText" | "emoji"> {
+/** Colored severity summary line shown in PR status and as first line of details. */
+export function buildSeveritySummary(review: ReviewOutput): string {
   const { blockerCount, majorCount, minorCount, nitCount } = countFindings(review);
   const totalIssues = blockerCount + majorCount + minorCount + nitCount;
   const recomputedVerdict = computeOverallVerdict(review.criteria);
 
   if (totalIssues === 0) {
-    return { emoji: "✅", statusText: "No issues found" };
+    return "No issues found";
   }
 
   const parts: string[] = [];
@@ -75,7 +78,17 @@ function buildStatusFromReview(review: ReviewOutput): Pick<FormatPrCommentOutput
   if (minorCount > 0) parts.push(`🟢 ${minorCount} minor`);
   if (nitCount > 0) parts.push(`⚪ ${nitCount} nit${nitCount > 1 ? "s" : ""}`);
 
-  const statusText = `${recomputedVerdict} | ${parts.join(", ")}`;
+  return `${recomputedVerdict} | ${parts.join(", ")}`;
+}
+
+function buildStatusFromReview(review: ReviewOutput): Pick<FormatPrCommentOutput, "statusText" | "emoji"> {
+  const statusText = buildSeveritySummary(review);
+  const { blockerCount, majorCount } = countFindings(review);
+  const recomputedVerdict = computeOverallVerdict(review.criteria);
+
+  if (statusText === "No issues found") {
+    return { emoji: "✅", statusText };
+  }
 
   if (blockerCount > 0 || recomputedVerdict === "FAIL") {
     return { emoji: "🔴", statusText };
@@ -86,50 +99,118 @@ function buildStatusFromReview(review: ReviewOutput): Pick<FormatPrCommentOutput
   return { emoji: "🟢", statusText };
 }
 
+type LoadedReview =
+  | { kind: "ok"; review: ReviewOutput }
+  | { kind: "error"; message: string }
+  | { kind: "missing" };
+
+function loadReview(jsonPath: string): LoadedReview {
+  if (!existsSync(jsonPath)) {
+    return { kind: "missing" };
+  }
+
+  try {
+    const parsed = JSON.parse(readFileSync(jsonPath, "utf8"));
+    const review = applyComputedVerdicts(
+      ReviewOutputSchema.parse(normalizeCriteriaNames(parsed)),
+    );
+    return { kind: "ok", review };
+  } catch (err) {
+    return { kind: "error", message: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+function buildDetailContent(review: ReviewOutput, cleanTxt: string | null): string {
+  const trimmedClean = cleanTxt?.trim();
+  const body = trimmedClean ? trimmedClean : `${review.summary}\n\n${renderMarkdown(review)}`;
+  const severityLine = buildSeveritySummary(review);
+
+  if (severityLine === "No issues found") {
+    return body;
+  }
+
+  return `${severityLine}\n\n${body}`;
+}
+
+function prefixStatus(prefix: string, statusText: string): string {
+  return `${prefix} | ${statusText}`;
+}
+
+function fallbackContent(cleanTxt: string | null, fallback: string): string {
+  return cleanTxt?.trim() || fallback;
+}
+
 export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOutput {
   const cwd = input.cwd ?? process.cwd();
   const jsonPath = resolve(cwd, input.jsonPath ?? "review-output.json");
   const cleanTxtPath = resolve(cwd, input.cleanTxtPath ?? "review-clean.txt");
   const cleanTxt = readTextFile(cleanTxtPath);
+  const loaded = loadReview(jsonPath);
 
   const resolvedValidationExitCode = resolveValidationExitCode(input.exitCode, input.validationExitCode);
-  const hasFailure = input.exitCode !== "0" || resolvedValidationExitCode !== "0";
+  const reviewFailed = input.exitCode !== "0";
+  const validationFailed = !reviewFailed && resolvedValidationExitCode !== "0";
 
-  if (hasFailure) {
-    const statusText =
-      input.exitCode === "0" && resolvedValidationExitCode !== "0" ? "Validation failed" : "Review failed";
-    const content =
-      cleanTxt ??
-      `Review agent failed with exit code ${input.exitCode}${
-        resolvedValidationExitCode !== "0" ? `, validation exit code ${resolvedValidationExitCode}` : ""
-      }`;
+  if (reviewFailed) {
+    if (loaded.kind === "ok") {
+      const { statusText, emoji } = buildStatusFromReview(loaded.review);
+      return {
+        statusText: prefixStatus("Review failed", statusText),
+        emoji,
+        content: buildDetailContent(loaded.review, cleanTxt),
+      };
+    }
 
-    return { statusText, emoji: "❌", content };
+    return {
+      statusText: "Review failed",
+      emoji: "❌",
+      content: fallbackContent(cleanTxt, `Review agent failed with exit code ${input.exitCode}`),
+    };
   }
 
-  if (!existsSync(jsonPath)) {
+  if (validationFailed) {
+    if (loaded.kind === "ok") {
+      const { statusText, emoji } = buildStatusFromReview(loaded.review);
+      const validationOutputMissing = input.validationExitCode === "";
+      return {
+        statusText: prefixStatus("Validation failed", statusText),
+        emoji: validationOutputMissing ? "❌" : emoji,
+        content: buildDetailContent(loaded.review, cleanTxt),
+      };
+    }
+
+    return {
+      statusText: "Validation failed",
+      emoji: "❌",
+      content: fallbackContent(
+        cleanTxt,
+        `Validation exit code ${resolvedValidationExitCode}`,
+      ),
+    };
+  }
+
+  if (loaded.kind === "missing") {
     return {
       statusText: "No structured output generated",
       emoji: "❌",
-      content: cleanTxt ?? "Review completed but produced no output",
+      content: fallbackContent(cleanTxt, "Review completed but produced no output"),
     };
   }
 
-  try {
-    const parsed = JSON.parse(readFileSync(jsonPath, "utf8"));
-    const review = ReviewOutputSchema.parse(normalizeCriteriaNames(parsed));
-    const { statusText, emoji } = buildStatusFromReview(review);
-    const content = cleanTxt ?? review.summary;
-
-    return { statusText, emoji, content };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  if (loaded.kind === "error") {
     return {
       statusText: "JSON parse/validation failed",
       emoji: "❌",
-      content: cleanTxt ?? `Parse error: ${message}`,
+      content: fallbackContent(cleanTxt, `Parse error: ${loaded.message}`),
     };
   }
+
+  const { statusText, emoji } = buildStatusFromReview(loaded.review);
+  return {
+    statusText,
+    emoji,
+    content: buildDetailContent(loaded.review, cleanTxt),
+  };
 }
 
 function parseArgs(argv: string[]): { input: FormatPrCommentInput; outputPath?: string } {

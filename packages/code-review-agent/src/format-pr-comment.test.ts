@@ -93,7 +93,37 @@ describe("formatPrComment", () => {
     const result = run({ exitCode: "0", validationExitCode: "" });
 
     expect(result.emoji).toBe("❌");
-    expect(result.statusText).toBe("Validation failed");
+    expect(result.statusText).toBe("Validation failed | No issues found");
+  });
+
+  it("shows severity summary on validation failure when JSON is readable", () => {
+    const review = createValidReview({
+      overall_verdict: "FAIL",
+      criteria: REQUIRED_CRITERIA.map((name, index) =>
+        index === 4
+          ? {
+              name,
+              verdict: "FAIL",
+              findings: [
+                {
+                  severity: "MAJOR",
+                  location: "src/api.ts:1",
+                  issue: "Missing validation",
+                  fix: "Add zod schema",
+                },
+              ],
+            }
+          : { name, verdict: "PASS", findings: [] },
+      ),
+    });
+
+    writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(review), "utf8");
+    writeFileSync(resolve(tempDir, "review-clean.txt"), "### Summary\n\nDetails", "utf8");
+
+    const result = run({ exitCode: "0", validationExitCode: "1" });
+
+    expect(result.statusText).toBe("Validation failed | PASS | 🟡 1 major");
+    expect(result.content).toMatch(/^PASS \| 🟡 1 major\n\n### Summary/);
   });
 
   it("computes FAIL status from blocker findings", () => {
@@ -118,18 +148,20 @@ describe("formatPrComment", () => {
     });
 
     writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(review), "utf8");
+    writeFileSync(resolve(tempDir, "review-clean.txt"), "### Summary\n\nDetails", "utf8");
 
     const result = run();
 
     expect(result.emoji).toBe("🔴");
     expect(result.statusText).toContain("FAIL");
     expect(result.statusText).toContain("1 blocker");
+    expect(result.content).toMatch(/^FAIL \| 🔴 1 blocker\n\n### Summary/);
   });
 
   it("accepts paraphrased criterion names via normalization", () => {
     const review = createValidReview({
-      criteria: REQUIRED_CRITERIA.map((_, index) => ({
-        name: index === 4 ? "Security" : `Criterion ${index + 1}`,
+      criteria: REQUIRED_CRITERIA.map((name) => ({
+        name: name === "Security & Validation" ? "Security" : name,
         verdict: "PASS",
         findings: [],
       })),
@@ -141,6 +173,19 @@ describe("formatPrComment", () => {
 
     expect(result.emoji).toBe("✅");
     expect(result.statusText).toBe("No issues found");
+  });
+
+  it("falls back to summary and rendered markdown when review-clean.txt is empty", () => {
+    writeFileSync(resolve(tempDir, "review-clean.txt"), "", "utf8");
+    writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(createValidReview()), "utf8");
+
+    const result = run();
+
+    expect(result.emoji).toBe("✅");
+    expect(result.statusText).toBe("No issues found");
+    expect(result.content).toContain("Clean changes.");
+    expect(result.content).toContain("### Summary");
+    expect(result.content).toContain("### Findings");
   });
 
   it("returns parse error when JSON is invalid", () => {

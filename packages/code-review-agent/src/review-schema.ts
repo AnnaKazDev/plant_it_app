@@ -63,9 +63,104 @@ export const ReviewOutputSchema = z
   );
 export type ReviewOutput = z.infer<typeof ReviewOutputSchema>;
 
+export class CriteriaMappingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CriteriaMappingError";
+  }
+}
+
+function normalizeCriterionKey(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+const CRITERION_ALIASES: Record<string, (typeof REQUIRED_CRITERIA)[number]> = {};
+
+function registerAliases(
+  canonical: (typeof REQUIRED_CRITERIA)[number],
+  ...aliases: string[]
+): void {
+  CRITERION_ALIASES[normalizeCriterionKey(canonical)] = canonical;
+  for (const alias of aliases) {
+    CRITERION_ALIASES[normalizeCriterionKey(alias)] = canonical;
+  }
+}
+
+registerAliases(
+  "Stack Conventions (Astro + React + Cloudflare)",
+  "stack conventions",
+  "astro react cloudflare",
+);
+registerAliases("Tailwind Class Handling", "tailwind", "tailwind handling");
+registerAliases("Supabase Patterns", "supabase", "supabase patterns");
+registerAliases(
+  "Cloudflare Workers CPU Constraint",
+  "cloudflare",
+  "cloudflare cpu",
+  "cloudflare workers",
+);
+registerAliases("Security & Validation", "security", "security validation");
+registerAliases("Code Quality & TypeScript", "code quality", "code quality typescript");
+registerAliases("Testing", "tests", "test coverage");
+registerAliases("Performance & Optimization", "performance", "performance optimization");
+registerAliases("Logic & Error Handling", "logic", "error handling", "logic error handling");
+registerAliases("Lessons Learned Compliance", "lessons learned", "lessons");
+
+function resolveCanonicalName(name: string): (typeof REQUIRED_CRITERIA)[number] | null {
+  const trimmed = name.trim();
+  if ((REQUIRED_CRITERIA as readonly string[]).includes(trimmed)) {
+    return trimmed as (typeof REQUIRED_CRITERIA)[number];
+  }
+
+  const key = normalizeCriterionKey(trimmed);
+  if (CRITERION_ALIASES[key]) {
+    return CRITERION_ALIASES[key];
+  }
+
+  for (const canonical of REQUIRED_CRITERIA) {
+    if (normalizeCriterionKey(canonical) === key) {
+      return canonical;
+    }
+  }
+
+  return null;
+}
+
 /**
- * Map criteria names to canonical REQUIRED_CRITERIA by index.
- * LLMs often paraphrase names (e.g. "Security" vs "Security & Validation").
+ * Map criteria to canonical REQUIRED_CRITERIA by name (with aliases).
+ * Fails closed when names cannot be uniquely resolved — reordering is not silently accepted.
+ */
+export function mapCriteriaByName(criteria: CriterionReview[]): CriterionReview[] {
+  const mapped = new Map<string, CriterionReview>();
+
+  for (const criterion of criteria) {
+    const canonical = resolveCanonicalName(criterion.name);
+    if (!canonical) {
+      throw new CriteriaMappingError(`Could not map criterion "${criterion.name}" to a canonical name`);
+    }
+    if (mapped.has(canonical)) {
+      throw new CriteriaMappingError(`Duplicate criterion mapping for "${canonical}"`);
+    }
+    mapped.set(canonical, { ...criterion, name: canonical });
+  }
+
+  if (mapped.size !== REQUIRED_CRITERIA.length) {
+    const missing = REQUIRED_CRITERIA.filter((name) => !mapped.has(name));
+    throw new CriteriaMappingError(
+      `Could not map all criteria to canonical names. Missing: ${missing.join(", ")}`,
+    );
+  }
+
+  return REQUIRED_CRITERIA.map((name) => mapped.get(name)!);
+}
+
+/**
+ * Normalize paraphrased criterion names before schema validation.
+ * LLMs often shorten names (e.g. "Security" vs "Security & Validation").
  */
 export function normalizeCriteriaNames(data: unknown): unknown {
   if (
@@ -75,13 +170,10 @@ export function normalizeCriteriaNames(data: unknown): unknown {
     Array.isArray((data as { criteria: unknown }).criteria) &&
     (data as { criteria: unknown[] }).criteria.length === REQUIRED_CRITERIA.length
   ) {
-    const review = data as { criteria: Array<Record<string, unknown>> };
+    const review = data as { criteria: CriterionReview[] };
     return {
       ...review,
-      criteria: review.criteria.map((criterion, index) => ({
-        ...criterion,
-        name: REQUIRED_CRITERIA[index],
-      })),
+      criteria: mapCriteriaByName(review.criteria),
     };
   }
   return data;
@@ -114,4 +206,21 @@ export function computeOverallVerdict(criteria: CriterionReview[]): "PASS" | "FA
   }
 
   return blockerCount > 0 || majorCount >= 3 ? "FAIL" : "PASS";
+}
+
+/**
+ * Recompute criterion and overall verdicts from findings (don't trust LLM).
+ */
+export function applyComputedVerdicts(review: ReviewOutput): ReviewOutput {
+  const computedCriteria = review.criteria.map((criterion) => ({
+    ...criterion,
+    verdict: computeCriterionVerdict(criterion.findings),
+  }));
+
+  return {
+    ...review,
+    overall_verdict: computeOverallVerdict(computedCriteria),
+    criteria: computedCriteria,
+    questions: review.questions ?? [],
+  };
 }

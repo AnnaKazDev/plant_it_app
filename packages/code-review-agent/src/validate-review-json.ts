@@ -5,7 +5,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { ReviewOutputSchema, computeCriterionVerdict, computeOverallVerdict, normalizeCriteriaNames } from "./review-schema.js";
+import { ReviewOutputSchema, applyComputedVerdicts, normalizeCriteriaNames } from "./review-schema.js";
 
 const jsonPath = process.argv[2] ?? "review-output.json";
 const fullPath = resolve(process.cwd(), jsonPath);
@@ -13,22 +13,9 @@ const fullPath = resolve(process.cwd(), jsonPath);
 try {
   const jsonContent = readFileSync(fullPath, "utf8");
   const parsed = JSON.parse(jsonContent);
-  let review = ReviewOutputSchema.parse(normalizeCriteriaNames(parsed));
-
-  // Recompute all verdicts
-  const computedCriteria = review.criteria.map((criterion) => {
-    const computedVerdict = computeCriterionVerdict(criterion.findings);
-    return { ...criterion, verdict: computedVerdict };
-  });
-
-  const computedOverallVerdict = computeOverallVerdict(computedCriteria);
-
-  // Replace with computed verdicts
-  review = {
-    ...review,
-    overall_verdict: computedOverallVerdict,
-    criteria: computedCriteria,
-  };
+  let review = applyComputedVerdicts(
+    ReviewOutputSchema.parse(normalizeCriteriaNames(parsed)),
+  );
 
   // Overwrite file with recomputed verdicts
   writeFileSync(fullPath, JSON.stringify(review, null, 2), "utf8");
