@@ -40,6 +40,7 @@ jobs:
         if: always()
         run: |
           npm run format-pr-comment --prefix packages/code-review-agent -- \
+            --cwd "${{ github.workspace }}" \
             --exit-code "${{ steps.review.outputs.exit-code }}" \
             --validation-exit-code "${{ steps.review.outputs.validation-exit-code }}" \
             --json-path review-output.json \
@@ -52,8 +53,23 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const { statusText, emoji, content } = JSON.parse(fs.readFileSync('pr-comment.json', 'utf8'));
             const marker = '<!-- ai-review -->';
+            let statusText = 'Review failed';
+            let emoji = '❌';
+            let content = 'Could not format review output.';
+
+            try {
+              const formatted = JSON.parse(fs.readFileSync('pr-comment.json', 'utf8'));
+              statusText = formatted.statusText;
+              emoji = formatted.emoji;
+              content = formatted.content;
+            } catch (err) {
+              console.error('Failed to read pr-comment.json:', err);
+              if (fs.existsSync('review-clean.txt')) {
+                content = fs.readFileSync('review-clean.txt', 'utf8');
+              }
+            }
+
             const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)</sub>';
             
             const {data: comments} = await github.rest.issues.listComments({
