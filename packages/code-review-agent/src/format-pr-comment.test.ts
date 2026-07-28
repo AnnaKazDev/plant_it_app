@@ -2,7 +2,7 @@
  * Unit tests for format-pr-comment
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { writeFileSync, readFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
@@ -176,13 +176,14 @@ describe("format-pr-comment CLI", () => {
     }
   });
 
-  it("outputs JSON to stdout", () => {
-    const output = execSync(
-      `tsx ${CLI_PATH} --exit-code 0 --validation-exit-code 0 --cwd ${tempDir}`,
+  it("writes JSON to --output file", () => {
+    const outputPath = resolve(tempDir, "comment.json");
+    execSync(
+      `tsx ${CLI_PATH} --exit-code 0 --validation-exit-code 0 --cwd ${tempDir} --output comment.json`,
       { encoding: "utf8" }
     );
 
-    const parsed = JSON.parse(output);
+    const parsed = JSON.parse(readFileSync(outputPath, "utf8"));
     expect(parsed.emoji).toBe("✅");
     expect(parsed.statusText).toBe("No issues found");
   });

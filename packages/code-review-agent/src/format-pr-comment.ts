@@ -3,7 +3,7 @@
  * Format PR comment metadata from review outputs.
  * Used by the ai-review workflow instead of inlining validation logic.
  */
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -132,11 +132,12 @@ export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOut
   }
 }
 
-function parseArgs(argv: string[]): FormatPrCommentInput {
+function parseArgs(argv: string[]): { input: FormatPrCommentInput; outputPath?: string } {
   const input: FormatPrCommentInput = {
     exitCode: "0",
     validationExitCode: "",
   };
+  let outputPath: string | undefined;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -150,13 +151,22 @@ function parseArgs(argv: string[]): FormatPrCommentInput {
       input.cleanTxtPath = argv[++i];
     } else if (arg === "--cwd") {
       input.cwd = argv[++i];
+    } else if (arg === "--output") {
+      outputPath = argv[++i];
     }
   }
 
-  return input;
+  return { input, outputPath };
 }
 
 if (import.meta.url === pathToFileURL(resolve(process.argv[1] ?? "")).href) {
-  const result = formatPrComment(parseArgs(process.argv.slice(2)));
-  process.stdout.write(JSON.stringify(result));
+  const { input, outputPath } = parseArgs(process.argv.slice(2));
+  const result = formatPrComment(input);
+  const json = JSON.stringify(result);
+
+  if (outputPath) {
+    writeFileSync(resolve(input.cwd ?? process.cwd(), outputPath), json, "utf8");
+  } else {
+    process.stdout.write(json);
+  }
 }

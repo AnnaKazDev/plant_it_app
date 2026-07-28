@@ -44,7 +44,7 @@ jobs:
             --validation-exit-code "${{ steps.review.outputs.validation-exit-code }}" \
             --json-path review-output.json \
             --clean-txt-path review-clean.txt \
-            > pr-comment.json
+            --output pr-comment.json
       
       - name: Comment
         if: always()
