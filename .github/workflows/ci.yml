@@ -1,4 +1,4 @@
-name: CI
+name: ✅ Lint · Build · Deploy
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  ci:
+  lint-build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,11 +23,20 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       
-      # Typecheck code-review-agent package
-      - name: Install and typecheck code-review-agent
+      # Cache and install code-review-agent package
+      - name: Cache code-review-agent node_modules
+        uses: actions/cache@v4
+        with:
+          path: packages/code-review-agent/node_modules
+          key: review-agent-${{ runner.os }}-${{ hashFiles('packages/code-review-agent/package-lock.json') }}
+          restore-keys: |
+            review-agent-${{ runner.os }}-
+      
+      - name: Install, typecheck, and test code-review-agent
         run: |
           npm run review:install
           npm run typecheck --prefix packages/code-review-agent
+          npm run test --prefix packages/code-review-agent
 
       # Auto-deploy to Cloudflare Workers on push to main
       - name: Deploy to Cloudflare Workers

@@ -1,0 +1,75 @@
+name: AI Code Review
+description: Run code review agent and output results
+inputs:
+  # SECURITY: never echo or log inputs.api-key — it contains CURSOR_API_KEY.
+  api-key:
+    description: Cursor API key
+    required: true
+  model:
+    description: Model ID for review
+    required: false
+    default: composer-2.5
+  base-ref:
+    description: Base git ref for diff
+    required: false
+    default: origin/main
+  head-ref:
+    description: Head git ref for diff
+    required: false
+    default: HEAD
+outputs:
+  exit-code:
+    description: Review exit code
+    value: ${{ steps.review.outputs.exit_code }}
+  validation-exit-code:
+    description: Validation exit code
+    value: ${{ steps.validate.outputs.validation_exit_code }}
+  review-output:
+    description: Path to cleaned review output
+    value: review-clean.txt
+  model-id:
+    description: Model ID used for review
+    value: ${{ inputs.model }}
+runs:
+  using: composite
+  steps:
+    - name: Cache code-review-agent node_modules
+      uses: actions/cache@v4
+      with:
+        path: packages/code-review-agent/node_modules
+        key: review-agent-${{ runner.os }}-${{ hashFiles('packages/code-review-agent/package-lock.json') }}
+        restore-keys: |
+          review-agent-${{ runner.os }}-
+    - name: Install review package
+      shell: bash
+      run: npm run review:install
+    - name: Run review
+      id: review
+      shell: bash
+      run: |
+        set +e
+        npm run review --prefix packages/code-review-agent --silent -- > review-output.txt 2>&1
+        echo "exit_code=$?" >> $GITHUB_OUTPUT
+        set -e
+        sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt || echo "No output" > review-clean.txt
+      env:
+        CURSOR_API_KEY: ${{ inputs.api-key }}
+        CURSOR_MODEL: ${{ inputs.model }}
+        REVIEW_BASE: ${{ inputs.base-ref }}
+        REVIEW_HEAD: ${{ inputs.head-ref }}
+    - name: Validate and recompute verdicts
+      id: validate
+      if: steps.review.outputs.exit_code == '0'
+      shell: bash
+      run: |
+        set +e
+        if [ -f review-output.json ]; then
+          # `npm run --prefix` runs the script with cwd set to that package dir,
+          # so a relative path here would resolve against packages/code-review-agent
+          # instead of the repo root where review.ts writes review-output.json.
+          npm run validate-json --prefix packages/code-review-agent -- "$(pwd)/review-output.json"
+          echo "validation_exit_code=$?" >> $GITHUB_OUTPUT
+        else
+          echo "validation_exit_code=1" >> $GITHUB_OUTPUT
+        fi
+        set -e

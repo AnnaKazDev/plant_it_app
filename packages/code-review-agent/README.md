@@ -91,10 +91,11 @@ export REVIEW_HEAD=HEAD
 - **Settings isolation:** `settingSources: []` isolates the run from ambient Cursor IDE and project configuration, making behavior predictable in CI/scripts. However, this prevents using repo-level `.cursor/permissions.json` to further restrict tool access. For now, `autoReview` default backend behavior provides the gate.
 - **Uncommitted changes:** The triple-dot diff (`base...head`) compares commits only. Use `git add` + `git commit` before running the review if you want to include working-tree changes.
 - **Diff size limits:** Diffs are capped at 500 KB in the prompt (truncated with warning if larger). Hard limit: diffs exceeding 10 MiB will cause the process to fail. For large refactors, consider reviewing in smaller chunks.
-- **Output formatting:** Terminal output includes:
-  - **Colors:** Severity markers (🔴 red for blocker, 🟡 yellow for major, 🟢 green for minor, ⚪ gray for nit)
-  - **Clickable links:** File paths are hyperlinked (OSC 8) — click to open in VS Code (works in VS Code terminal, iTerm2, Windows Terminal)
-  - **Structured sections:** Headers, issues, and code snippets are visually separated
+- **Output formatting:** 
+  - **Structured JSON:** The agent now outputs structured JSON validated by Zod schema to `review-output.json`
+  - **Markdown rendering:** Terminal output shows a rendered markdown summary (no colors or hyperlinks in local runs)
+  - **CI integration:** GitHub Actions parses the JSON and renders a formatted PR comment with severity emojis and collapsible findings
+  - **Verdict computation:** Pass/fail decisions are computed from findings in TypeScript (not trusted from LLM output)
 
 ## Review criteria
 

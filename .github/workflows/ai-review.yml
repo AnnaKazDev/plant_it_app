@@ -1,7 +1,8 @@
-name: AI Code Review
+name: 🤖 AI Review Agent
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches: [main]
 
 permissions:
@@ -9,7 +10,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  review:
+  ai-code-review:
+    # Run on PR open/update OR when ai-cr:review label added
+    if: |
+      github.event.action != 'labeled' || 
+      github.event.label.name == 'ai-cr:review'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,21 +27,44 @@ jobs:
           cache: npm
           
       - run: npm ci
-      - run: npm run review:install
       
-      - name: Run review
+      - name: Run AI Review
         id: review
-        run: |
-          set +e
-          npm run review > review-output.txt
-          echo "exit_code=$?" >> $GITHUB_OUTPUT
-          set -e
-          sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt || echo "No output" > review-clean.txt
-          exit 0
+        uses: ./.github/actions/ai-review
+        with:
+          api-key: ${{ secrets.CURSOR_API_KEY }}
+          base-ref: origin/main
+          head-ref: ${{ github.sha }}
+      
+      - name: Evaluate merge gate
+        if: always()
         env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          REVIEW_BASE: origin/main
-          REVIEW_HEAD: ${{ github.sha }}
+          AI_REVIEW_GATE_MODE: ${{ vars.AI_REVIEW_GATE_MODE || 'advisory' }}
+          AI_REVIEW_GATE_POLICY: ${{ vars.AI_REVIEW_GATE_POLICY || 'default' }}
+        run: |
+          npm run evaluate-gate --prefix packages/code-review-agent -- \
+            --cwd "${{ github.workspace }}" \
+            --policy "${AI_REVIEW_GATE_POLICY}" \
+            --mode "${AI_REVIEW_GATE_MODE}" \
+            --review-exit-code "${{ steps.review.outputs.exit-code }}" \
+            --validation-exit-code "${{ steps.review.outputs.validation-exit-code }}" \
+            --json-path review-output.json \
+            --output gate-result.json
+      
+      - name: Format PR comment
+        if: always()
+        run: |
+          npm run format-pr-comment --prefix packages/code-review-agent -- \
+            --cwd "${{ github.workspace }}" \
+            --exit-code "${{ steps.review.outputs.exit-code }}" \
+            --validation-exit-code "${{ steps.review.outputs.validation-exit-code }}" \
+            --json-path review-output.json \
+            --clean-txt-path review-clean.txt \
+            --failure-txt-path review-failure.txt \
+            --log-txt-path review-output.txt \
+            --gate-result-path gate-result.json \
+            --model "${{ steps.review.outputs.model-id }}" \
+            --output pr-comment.json
       
       - name: Comment
         if: always()
@@ -44,34 +72,30 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const content = fs.existsSync('review-clean.txt') ? fs.readFileSync('review-clean.txt', 'utf8') : 'No output';
-            const exitCode = '${{ steps.review.outputs.exit_code }}';
             const marker = '<!-- ai-review -->';
-            
-            const blockerCount = (content.match(/BLOCKER/g) || []).length;
-            const majorCount = (content.match(/MAJOR/g) || []).length;
-            const minorCount = (content.match(/MINOR/g) || []).length;
-            const nitCount = (content.match(/NIT/g) || []).length;
-            const totalIssues = blockerCount + majorCount + minorCount + nitCount;
-            
-            let statusText = 'No issues found';
-            let emoji = '✅';
-            
-            if (exitCode !== '0') {
-              statusText = 'Review failed';
-              emoji = '❌';
-            } else if (totalIssues > 0) {
-              const parts = [];
-              if (blockerCount > 0) parts.push(blockerCount + ' blocker' + (blockerCount > 1 ? 's' : ''));
-              if (majorCount > 0) parts.push(majorCount + ' major');
-              if (minorCount > 0) parts.push(minorCount + ' minor');
-              if (nitCount > 0) parts.push(nitCount + ' nit' + (nitCount > 1 ? 's' : ''));
-              statusText = parts.join(', ');
-              if (blockerCount > 0) emoji = '🔴';
-              else if (majorCount > 0) emoji = '🟡';
+            let statusText = 'Review failed';
+            let emoji = '❌';
+            let content = 'Could not format review output.';
+            let gateStatusText = '';
+            let model = '';
+
+            try {
+              const formatted = JSON.parse(fs.readFileSync('pr-comment.json', 'utf8'));
+              statusText = formatted.statusText;
+              emoji = formatted.emoji;
+              content = formatted.content;
+              gateStatusText = formatted.gateStatusText || '';
+              model = formatted.model || '';
+            } catch (err) {
+              console.error('Failed to read pr-comment.json:', err);
+              if (fs.existsSync('review-clean.txt')) {
+                content = fs.readFileSync('review-clean.txt', 'utf8');
+              }
             }
-            
-            const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)</sub>';
+
+            const footer = '---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)' + (model ? ' · Model: `' + model + '`' : '') + '</sub>';
+            const gateLine = gateStatusText ? '\n\n**Merge gate:** ' + gateStatusText : '';
+            const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + gateLine + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n' + footer;
             
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -95,4 +119,21 @@ jobs:
                 issue_number: context.issue.number,
                 body
               });
+            }
+      
+      - name: Remove retry label
+        if: always() && github.event.action == 'labeled' && github.event.label.name == 'ai-cr:review'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: 'ai-cr:review'
+              });
+            } catch (e) {
+              // Ignore 404 if label already removed
+              if (e.status !== 404) throw e;
             }

@@ -1,11 +1,20 @@
 /* eslint-disable no-console -- CLI status/errors go to stderr/stdout */
 import { Agent, CursorAgentError } from "@cursor/sdk";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadReviewEnvFile } from "./env.js";
-import { FormattedOutputStream } from "./formatter.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
+import { renderMarkdown } from "./render-markdown.js";
+import { formatFailureReport, REVIEW_FAILURE_FILENAME } from "./review-failure.js";
+import {
+  ReviewOutputSchema,
+  type ReviewOutput,
+  applyComputedVerdicts,
+  REQUIRED_CRITERIA,
+  normalizeCriteriaNames,
+} from "./review-schema.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = resolve(packageDir, "../..");
@@ -55,6 +64,116 @@ function parseArgs(argv: string[]): { baseRef: string; headRef: string } {
   return { baseRef, headRef };
 }
 
+/**
+ * Reads context/foundation/lessons.md from repo root.
+ * Returns content truncated to 4000 chars or empty string if file doesn't exist.
+ * Prevents token bloat as lessons accumulate over time.
+ */
+function loadLessons(repoRoot: string): string {
+  try {
+    const lessonsPath = resolve(repoRoot, "context/foundation/lessons.md");
+    const content = readFileSync(lessonsPath, "utf8");
+    const MAX_LESSONS_CHARS = 4000;
+    
+    if (content.length <= MAX_LESSONS_CHARS) {
+      return content;
+    }
+    
+    // Truncate and add note
+    const truncated = content.slice(0, MAX_LESSONS_CHARS);
+    return truncated + `\n\n... (truncated at ${MAX_LESSONS_CHARS} chars; review full file for complete history)`;
+  } catch {
+    // lessons.md is optional; return empty string if missing
+    return "";
+  }
+}
+
+/**
+ * Render structured review output to human-readable markdown.
+ * Re-exported for tests that import from review.ts.
+ */
+export { renderMarkdown } from "./render-markdown.js";
+
+/**
+ * Extract and parse JSON from agent response.
+ * Handles preamble text and markdown code blocks.
+ * Uses balanced brace parsing to handle embedded braces in strings.
+ * Exported for testing.
+ */
+export function parseReviewResponse(fullResponse: string): unknown {
+  let jsonStr = fullResponse.trim();
+
+  // Deliberately no markdown-code-block stripping here. A naive "first ``` ... ```"
+  // regex would happily match a code fence embedded *inside* a JSON string value
+  // (e.g. a finding's "fix" field showing a suggested snippet) instead of the fence
+  // wrapping the whole response, extracting garbage instead of the JSON envelope.
+  // The balanced-brace scan below is string-aware and already skips over any
+  // ``` markers, braces, etc. that appear inside JSON strings, so it correctly
+  // finds the outer JSON object whether or not the agent wrapped it in a fence.
+
+  // Find first { to start extraction
+  const firstBrace = jsonStr.indexOf('{');
+  if (firstBrace === -1) {
+    throw new Error('No valid JSON object found in response');
+  }
+  
+  // Extract JSON using balanced brace counting (respects strings)
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let lastBrace = -1;
+  
+  for (let i = firstBrace; i < jsonStr.length; i++) {
+    const char = jsonStr[i];
+    
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    
+    if (char === '\\' && inString) {
+      escaped = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    
+    if (inString) {
+      continue;
+    }
+    
+    if (char === '{') {
+      depth++;
+    } else if (char === '}') {
+      depth--;
+      if (depth === 0) {
+        lastBrace = i;
+        break;
+      }
+    }
+  }
+  
+  if (lastBrace === -1 || firstBrace >= lastBrace) {
+    throw new Error('No valid JSON object found in response (unbalanced braces)');
+  }
+  
+  jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+  
+  return JSON.parse(jsonStr);
+}
+
+function emitFailureReport(
+  root: string,
+  input: { reason: string; rawResponse?: string; details?: string },
+): void {
+  const content = formatFailureReport(input);
+  writeFileSync(resolve(root, REVIEW_FAILURE_FILENAME), content, "utf8");
+  console.log(content);
+}
+
 async function main(): Promise<void> {
   const apiKey = process.env.CURSOR_API_KEY?.trim();
   if (!apiKey) {
@@ -78,6 +197,25 @@ async function main(): Promise<void> {
 
   if (isDiffEmpty(repoRoot, baseRef, headRef)) {
     console.error(`[code-review-agent] No changes in ${baseRef}...${headRef}. Nothing to review.`);
+    
+    // Write minimal valid JSON for workflow (PASS with no findings)
+    const emptyReview: ReviewOutput = {
+      overall_verdict: "PASS",
+      summary: `No changes between ${baseRef} and ${headRef}`,
+      criteria: REQUIRED_CRITERIA.map(name => ({ 
+        name, 
+        verdict: 'PASS' as const, 
+        findings: [] 
+      })),
+      questions: [],
+    };
+    
+    const jsonPath = resolve(repoRoot, "review-output.json");
+    const markdown = renderMarkdown(emptyReview);
+    console.log(markdown);
+    writeFileSync(jsonPath, JSON.stringify(emptyReview, null, 2), "utf8");
+    console.error(`[code-review-agent] Saved empty review to ${jsonPath}`);
+
     process.exit(0);
   }
 
@@ -91,6 +229,9 @@ async function main(): Promise<void> {
     console.error(`[code-review-agent] WARNING: Diff truncated at ${sizeKb}KB. Agent will read files for full context.`);
   }
 
+  // Load lessons.md for historical anti-patterns
+  const lessons = loadLessons(repoRoot);
+
   const modelId = process.env.CURSOR_MODEL?.trim() ?? "composer-2.5";
   const prompt = buildReviewPrompt({
     baseRef,
@@ -98,6 +239,7 @@ async function main(): Promise<void> {
     diffStat,
     diff: diffResult.diff,
     truncated: diffResult.truncated,
+    lessons,
   });
 
   console.error(`[code-review-agent] cwd=${repoRoot}`);
@@ -109,7 +251,12 @@ async function main(): Promise<void> {
   let agentStarted = false;
 
   let exitCode = 0;
-  const formatter = new FormattedOutputStream(repoRoot);
+  let failureReported = false;
+
+  const reportFailure = (input: { reason: string; rawResponse?: string; details?: string }) => {
+    emitFailureReport(repoRoot, input);
+    failureReported = true;
+  };
 
   try {
     await using agent = await Agent.create({
@@ -129,33 +276,79 @@ async function main(): Promise<void> {
     const run = await agent.send(prompt);
     console.error(`[code-review-agent] run=${run.id} agent=${agent.agentId}`);
 
+    // Collect full response for JSON parsing
+    let fullResponse = "";
+    
     for await (const event of run.stream()) {
       if (event.type !== "assistant") continue;
       for (const block of event.message.content) {
         if (block.type === "text") {
-          formatter.write(block.text);
+          fullResponse += block.text;
+          // Still show progress to stderr for local runs
+          process.stderr.write(".");
         }
       }
     }
 
     const result = await run.wait();
-    formatter.flush(); // Ensure all buffered content is written
     console.error(`\n[code-review-agent] status=${result.status}`);
 
     if (result.status === "error") {
-      console.error(result.error?.message ?? "Run failed");
+      const message = result.error?.message ?? "Run failed";
+      console.error(message);
+      reportFailure({ reason: "Agent run failed", details: message });
       exitCode = 2;
     } else if (result.status === "cancelled") {
       console.error("Run cancelled");
+      reportFailure({ reason: "Agent run was cancelled" });
       exitCode = 2;
+    } else {
+      // Parse and validate JSON response
+      try {
+        const parsed = parseReviewResponse(fullResponse);
+        const review = applyComputedVerdicts(
+          ReviewOutputSchema.parse(normalizeCriteriaNames(parsed)),
+        );
+
+        // Save raw JSON for workflow
+        const jsonPath = resolve(repoRoot, "review-output.json");
+        writeFileSync(jsonPath, JSON.stringify(review, null, 2), "utf8");
+        console.error(`[code-review-agent] Saved structured output to ${jsonPath}`);
+
+        // Render and output markdown for humans
+        const markdown = renderMarkdown(review);
+        console.log(markdown);
+
+        // Set exit code based on verdict
+        // Note: exitCode stays 0 even for FAIL verdict - this is advisory review
+        // Workflow can decide whether to block based on verdict
+        if (review.overall_verdict === "FAIL") {
+          console.error(`[code-review-agent] Overall verdict: FAIL (advisory only)`);
+        } else {
+          console.error(`[code-review-agent] Overall verdict: PASS`);
+        }
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        console.error("[code-review-agent] Failed to parse structured output:");
+        console.error(err);
+        reportFailure({
+          reason: "Could not parse structured JSON from agent response",
+          details: reason,
+          rawResponse: fullResponse,
+        });
+        exitCode = 2;
+      }
     }
   } catch (err) {
     if (err instanceof CursorAgentError) {
-      console.error(`Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`);
+      const message = `Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`;
+      console.error(message);
+      reportFailure({ reason: "Could not start review agent", details: err.message });
       exitCode = 1;
     } else {
-      // Unexpected error; log and exit 1 after finally runs.
+      const message = err instanceof Error ? err.message : String(err);
       console.error("Unexpected error:", err);
+      reportFailure({ reason: "Unexpected review error", details: message });
       exitCode = 1;
     }
   } finally {
@@ -169,13 +362,24 @@ async function main(): Promise<void> {
         console.error(statusBefore || "(clean)");
         console.error("After:");
         console.error(statusAfter);
+        reportFailure({
+          reason: "Review agent modified the working tree",
+          details: "The agent must be read-only in CI. Check tool permissions and prompt.",
+        });
         // Tree modification is more critical than run error/cancel; always use exit 3.
         exitCode = 3;
       }
+    }
+
+    if (exitCode !== 0 && !failureReported) {
+      emitFailureReport(repoRoot, { reason: `Review exited with code ${exitCode}` });
     }
   }
 
   process.exit(exitCode);
 }
 
-await main();
+// Only run main() when this file is executed directly (not when imported)
+if (import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  await main();
+}
