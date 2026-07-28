@@ -66,15 +66,23 @@ describe("formatPrComment", () => {
     });
   }
 
-  it("returns success status for a clean review", () => {
+  it("returns success status for a clean review, rendered from structured JSON (not raw CI log)", () => {
     writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(createValidReview()), "utf8");
-    writeFileSync(resolve(tempDir, "review-clean.txt"), "Detailed markdown", "utf8");
+    // review-clean.txt is the raw combined stdout+stderr CI log (diff progress, run
+    // ids, node warnings, dots). It must be ignored once structured JSON is valid.
+    writeFileSync(
+      resolve(tempDir, "review-clean.txt"),
+      "[code-review-agent] computing diff...\n[code-review-agent] status=finished\n",
+      "utf8",
+    );
 
     const result = run();
 
     expect(result.emoji).toBe("✅");
     expect(result.statusText).toBe("No issues found");
-    expect(result.content).toBe("Detailed markdown");
+    expect(result.content).toContain("### Summary");
+    expect(result.content).toContain("Clean changes.");
+    expect(result.content).not.toContain("[code-review-agent]");
   });
 
   it("does not treat missing validation output as failure when review failed", () => {
@@ -225,6 +233,22 @@ describe("formatPrComment", () => {
 
     expect(result.statusText).toBe("No structured output generated");
     expect(result.content).toBe("Review completed but produced no output");
+  });
+
+  it("includes model in output when provided", () => {
+    writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(createValidReview()), "utf8");
+
+    const result = run({ model: "composer-2.5" });
+
+    expect(result.model).toBe("composer-2.5");
+  });
+
+  it("omits model from output when not provided", () => {
+    writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(createValidReview()), "utf8");
+
+    const result = run();
+
+    expect(result.model).toBeUndefined();
   });
 });
 

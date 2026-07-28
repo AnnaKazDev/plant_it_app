@@ -27,6 +27,9 @@ outputs:
   review-output:
     description: Path to cleaned review output
     value: review-clean.txt
+  model-id:
+    description: Model ID used for review
+    value: ${{ inputs.model }}
 runs:
   using: composite
   steps:
@@ -61,7 +64,10 @@ runs:
       run: |
         set +e
         if [ -f review-output.json ]; then
-          npm run validate-json --prefix packages/code-review-agent -- review-output.json
+          # `npm run --prefix` runs the script with cwd set to that package dir,
+          # so a relative path here would resolve against packages/code-review-agent
+          # instead of the repo root where review.ts writes review-output.json.
+          npm run validate-json --prefix packages/code-review-agent -- "$(pwd)/review-output.json"
           echo "validation_exit_code=$?" >> $GITHUB_OUTPUT
         else
           echo "validation_exit_code=1" >> $GITHUB_OUTPUT

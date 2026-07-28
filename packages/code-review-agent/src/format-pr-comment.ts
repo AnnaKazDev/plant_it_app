@@ -27,12 +27,14 @@ export interface FormatPrCommentInput {
   failureTxtPath?: string;
   logTxtPath?: string;
   cwd?: string;
+  model?: string;
 }
 
 export interface FormatPrCommentOutput {
   statusText: string;
   emoji: string;
   content: string;
+  model?: string;
 }
 
 /**
@@ -126,9 +128,14 @@ function loadReview(jsonPath: string): LoadedReview {
   }
 }
 
-function buildDetailContent(review: ReviewOutput, cleanTxt: string | null): string {
-  const trimmedClean = cleanTxt?.trim();
-  const body = trimmedClean ? trimmedClean : `${review.summary}\n\n${renderMarkdown(review)}`;
+/**
+ * Render PR-facing content straight from the validated structured review.
+ * Deliberately does NOT fall back to review-clean.txt: that file is the raw
+ * combined stdout+stderr CI log (diff progress, run ids, node warnings, dots),
+ * and once we have valid structured JSON, that log is noise, not content.
+ */
+function buildDetailContent(review: ReviewOutput): string {
+  const body = renderMarkdown(review);
   const severityLine = buildSeveritySummary(review);
 
   if (severityLine === "No issues found") {
@@ -169,6 +176,14 @@ function buildReviewFailedStatus(exitCode: string, failureTxt: string | null): s
 }
 
 export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOutput {
+  const result = buildFormatPrCommentResult(input);
+  const model = input.model?.trim();
+  return model ? { ...result, model } : result;
+}
+
+function buildFormatPrCommentResult(
+  input: FormatPrCommentInput,
+): Omit<FormatPrCommentOutput, "model"> {
   const cwd = input.cwd ?? process.cwd();
   const jsonPath = resolve(cwd, input.jsonPath ?? "review-output.json");
   const cleanTxtPath = resolve(cwd, input.cleanTxtPath ?? "review-clean.txt");
@@ -189,7 +204,7 @@ export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOut
       return {
         statusText: prefixStatus("Review failed", statusText),
         emoji,
-        content: buildDetailContent(loaded.review, cleanTxt),
+        content: buildDetailContent(loaded.review),
       };
     }
 
@@ -207,7 +222,7 @@ export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOut
       return {
         statusText: prefixStatus("Validation failed", statusText),
         emoji: validationOutputMissing ? "❌" : emoji,
-        content: buildDetailContent(loaded.review, cleanTxt),
+        content: buildDetailContent(loaded.review),
       };
     }
 
@@ -243,7 +258,7 @@ export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOut
   return {
     statusText,
     emoji,
-    content: buildDetailContent(loaded.review, cleanTxt),
+    content: buildDetailContent(loaded.review),
   };
 }
 
@@ -270,6 +285,8 @@ function parseArgs(argv: string[]): { input: FormatPrCommentInput; outputPath?: 
       input.logTxtPath = argv[++i];
     } else if (arg === "--cwd") {
       input.cwd = argv[++i];
+    } else if (arg === "--model") {
+      input.model = argv[++i];
     } else if (arg === "--output") {
       outputPath = argv[++i];
     }
