@@ -78,13 +78,35 @@ describe("formatPrComment", () => {
   });
 
   it("does not treat missing validation output as failure when review failed", () => {
-    writeFileSync(resolve(tempDir, "review-clean.txt"), "Agent error output", "utf8");
+    writeFileSync(
+      resolve(tempDir, "review-failure.txt"),
+      "### Review agent error\n\n**Reason:** Could not parse structured JSON from agent response\n\n**Details:** unbalanced braces\n",
+      "utf8",
+    );
 
     const result = run({ exitCode: "2", validationExitCode: "" });
 
     expect(result.emoji).toBe("❌");
-    expect(result.statusText).toBe("Review failed");
-    expect(result.content).toBe("Agent error output");
+    expect(result.statusText).toBe("Review failed | Agent output could not be parsed");
+    expect(result.content).toContain("unbalanced braces");
+  });
+
+  it("prefers failure report over npm noise in logs", () => {
+    writeFileSync(
+      resolve(tempDir, "review-failure.txt"),
+      "### Review agent error\n\n**Reason:** parse failed\n",
+      "utf8",
+    );
+    writeFileSync(
+      resolve(tempDir, "review-clean.txt"),
+      "> @plant-it/code-review-agent@0.1.0 review\n> tsx src/review.ts\n",
+      "utf8",
+    );
+
+    const result = run({ exitCode: "2", validationExitCode: "" });
+
+    expect(result.content).toContain("parse failed");
+    expect(result.content).not.toContain("tsx src/review.ts");
   });
 
   it("reports validation failure when review succeeded but validation output is missing", () => {

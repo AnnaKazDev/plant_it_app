@@ -45,6 +45,8 @@ jobs:
             --validation-exit-code "${{ steps.review.outputs.validation-exit-code }}" \
             --json-path review-output.json \
             --clean-txt-path review-clean.txt \
+            --failure-txt-path review-failure.txt \
+            --log-txt-path review-output.txt \
             --output pr-comment.json
       
       - name: Comment

@@ -45,7 +45,7 @@ runs:
       shell: bash
       run: |
         set +e
-        npm run review > review-output.txt
+        npm run review --prefix packages/code-review-agent --silent -- > review-output.txt 2>&1
         echo "exit_code=$?" >> $GITHUB_OUTPUT
         set -e
         sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/\x1B\]8;;[^\x1B]*\x1B\\//g; s/\x1B\]8;;\x1B\\//g' review-output.txt > review-clean.txt || echo "No output" > review-clean.txt

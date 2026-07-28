@@ -14,12 +14,18 @@ import {
   type ReviewOutput,
 } from "./review-schema.js";
 import { renderMarkdown } from "./render-markdown.js";
+import {
+  extractUsefulLogContent,
+  REVIEW_FAILURE_FILENAME,
+} from "./review-failure.js";
 
 export interface FormatPrCommentInput {
   exitCode: string;
   validationExitCode: string;
   jsonPath?: string;
   cleanTxtPath?: string;
+  failureTxtPath?: string;
+  logTxtPath?: string;
   cwd?: string;
 }
 
@@ -140,11 +146,37 @@ function fallbackContent(cleanTxt: string | null, fallback: string): string {
   return cleanTxt?.trim() || fallback;
 }
 
+function buildFailureContent(
+  cleanTxt: string | null,
+  failureTxt: string | null,
+  logTxt: string | null,
+  exitCode: string,
+): string {
+  return (
+    extractUsefulLogContent(failureTxt, cleanTxt, logTxt) ??
+    fallbackContent(cleanTxt, `Review agent failed with exit code ${exitCode}`)
+  );
+}
+
+function buildReviewFailedStatus(exitCode: string, failureTxt: string | null): string {
+  if (failureTxt?.includes("Could not parse structured JSON")) {
+    return "Review failed | Agent output could not be parsed";
+  }
+  if (failureTxt?.includes("Could not start review agent")) {
+    return "Review failed | Agent startup error";
+  }
+  return `Review failed | Exit code ${exitCode}`;
+}
+
 export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOutput {
   const cwd = input.cwd ?? process.cwd();
   const jsonPath = resolve(cwd, input.jsonPath ?? "review-output.json");
   const cleanTxtPath = resolve(cwd, input.cleanTxtPath ?? "review-clean.txt");
+  const failureTxtPath = resolve(cwd, input.failureTxtPath ?? REVIEW_FAILURE_FILENAME);
+  const logTxtPath = resolve(cwd, input.logTxtPath ?? "review-output.txt");
   const cleanTxt = readTextFile(cleanTxtPath);
+  const failureTxt = readTextFile(failureTxtPath);
+  const logTxt = readTextFile(logTxtPath);
   const loaded = loadReview(jsonPath);
 
   const resolvedValidationExitCode = resolveValidationExitCode(input.exitCode, input.validationExitCode);
@@ -162,9 +194,9 @@ export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOut
     }
 
     return {
-      statusText: "Review failed",
+      statusText: buildReviewFailedStatus(input.exitCode, failureTxt),
       emoji: "❌",
-      content: fallbackContent(cleanTxt, `Review agent failed with exit code ${input.exitCode}`),
+      content: buildFailureContent(cleanTxt, failureTxt, logTxt, input.exitCode),
     };
   }
 
@@ -182,9 +214,11 @@ export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOut
     return {
       statusText: "Validation failed",
       emoji: "❌",
-      content: fallbackContent(
+      content: buildFailureContent(
         cleanTxt,
-        `Validation exit code ${resolvedValidationExitCode}`,
+        failureTxt,
+        logTxt,
+        resolvedValidationExitCode,
       ),
     };
   }
@@ -230,6 +264,10 @@ function parseArgs(argv: string[]): { input: FormatPrCommentInput; outputPath?: 
       input.jsonPath = argv[++i];
     } else if (arg === "--clean-txt-path") {
       input.cleanTxtPath = argv[++i];
+    } else if (arg === "--failure-txt-path") {
+      input.failureTxtPath = argv[++i];
+    } else if (arg === "--log-txt-path") {
+      input.logTxtPath = argv[++i];
     } else if (arg === "--cwd") {
       input.cwd = argv[++i];
     } else if (arg === "--output") {

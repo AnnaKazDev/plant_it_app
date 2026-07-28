@@ -40,3 +40,4 @@ test-results/
 review-output.json
 review-output.txt
 review-clean.txt
+review-failure.txt

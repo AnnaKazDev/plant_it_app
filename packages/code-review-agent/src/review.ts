@@ -7,6 +7,7 @@ import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
 import { renderMarkdown } from "./render-markdown.js";
+import { formatFailureReport, REVIEW_FAILURE_FILENAME } from "./review-failure.js";
 import {
   ReviewOutputSchema,
   type ReviewOutput,
@@ -162,6 +163,15 @@ export function parseReviewResponse(fullResponse: string): unknown {
   return JSON.parse(jsonStr);
 }
 
+function emitFailureReport(
+  root: string,
+  input: { reason: string; rawResponse?: string; details?: string },
+): void {
+  const content = formatFailureReport(input);
+  writeFileSync(resolve(root, REVIEW_FAILURE_FILENAME), content, "utf8");
+  console.log(content);
+}
+
 async function main(): Promise<void> {
   const apiKey = process.env.CURSOR_API_KEY?.trim();
   if (!apiKey) {
@@ -239,6 +249,12 @@ async function main(): Promise<void> {
   let agentStarted = false;
 
   let exitCode = 0;
+  let failureReported = false;
+
+  const reportFailure = (input: { reason: string; rawResponse?: string; details?: string }) => {
+    emitFailureReport(repoRoot, input);
+    failureReported = true;
+  };
 
   try {
     await using agent = await Agent.create({
@@ -276,10 +292,13 @@ async function main(): Promise<void> {
     console.error(`\n[code-review-agent] status=${result.status}`);
 
     if (result.status === "error") {
-      console.error(result.error?.message ?? "Run failed");
+      const message = result.error?.message ?? "Run failed";
+      console.error(message);
+      reportFailure({ reason: "Agent run failed", details: message });
       exitCode = 2;
     } else if (result.status === "cancelled") {
       console.error("Run cancelled");
+      reportFailure({ reason: "Agent run was cancelled" });
       exitCode = 2;
     } else {
       // Parse and validate JSON response
@@ -307,20 +326,27 @@ async function main(): Promise<void> {
           console.error(`[code-review-agent] Overall verdict: PASS`);
         }
       } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
         console.error("[code-review-agent] Failed to parse structured output:");
         console.error(err);
-        console.error("\nRaw response:");
-        console.error(fullResponse.slice(0, 1000)); // Show first 1KB for debugging
+        reportFailure({
+          reason: "Could not parse structured JSON from agent response",
+          details: reason,
+          rawResponse: fullResponse,
+        });
         exitCode = 2;
       }
     }
   } catch (err) {
     if (err instanceof CursorAgentError) {
-      console.error(`Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`);
+      const message = `Startup failed: ${err.message} (retryable=${String(err.isRetryable)})`;
+      console.error(message);
+      reportFailure({ reason: "Could not start review agent", details: err.message });
       exitCode = 1;
     } else {
-      // Unexpected error; log and exit 1 after finally runs.
+      const message = err instanceof Error ? err.message : String(err);
       console.error("Unexpected error:", err);
+      reportFailure({ reason: "Unexpected review error", details: message });
       exitCode = 1;
     }
   } finally {
@@ -334,9 +360,17 @@ async function main(): Promise<void> {
         console.error(statusBefore || "(clean)");
         console.error("After:");
         console.error(statusAfter);
+        reportFailure({
+          reason: "Review agent modified the working tree",
+          details: "The agent must be read-only in CI. Check tool permissions and prompt.",
+        });
         // Tree modification is more critical than run error/cancel; always use exit 3.
         exitCode = 3;
       }
+    }
+
+    if (exitCode !== 0 && !failureReported) {
+      emitFailureReport(repoRoot, { reason: `Review exited with code ${exitCode}` });
     }
   }
 
