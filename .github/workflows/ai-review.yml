@@ -36,6 +36,21 @@ jobs:
           base-ref: origin/main
           head-ref: ${{ github.sha }}
       
+      - name: Evaluate merge gate
+        if: always()
+        env:
+          AI_REVIEW_GATE_MODE: ${{ vars.AI_REVIEW_GATE_MODE || 'advisory' }}
+          AI_REVIEW_GATE_POLICY: ${{ vars.AI_REVIEW_GATE_POLICY || 'default' }}
+        run: |
+          npm run evaluate-gate --prefix packages/code-review-agent -- \
+            --cwd "${{ github.workspace }}" \
+            --policy "${AI_REVIEW_GATE_POLICY}" \
+            --mode "${AI_REVIEW_GATE_MODE}" \
+            --review-exit-code "${{ steps.review.outputs.exit-code }}" \
+            --validation-exit-code "${{ steps.review.outputs.validation-exit-code }}" \
+            --json-path review-output.json \
+            --output gate-result.json
+      
       - name: Format PR comment
         if: always()
         run: |
@@ -47,6 +62,7 @@ jobs:
             --clean-txt-path review-clean.txt \
             --failure-txt-path review-failure.txt \
             --log-txt-path review-output.txt \
+            --gate-result-path gate-result.json \
             --model "${{ steps.review.outputs.model-id }}" \
             --output pr-comment.json
       
@@ -60,6 +76,7 @@ jobs:
             let statusText = 'Review failed';
             let emoji = '❌';
             let content = 'Could not format review output.';
+            let gateStatusText = '';
             let model = '';
 
             try {
@@ -67,6 +84,7 @@ jobs:
               statusText = formatted.statusText;
               emoji = formatted.emoji;
               content = formatted.content;
+              gateStatusText = formatted.gateStatusText || '';
               model = formatted.model || '';
             } catch (err) {
               console.error('Failed to read pr-comment.json:', err);
@@ -76,7 +94,8 @@ jobs:
             }
 
             const footer = '---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)' + (model ? ' · Model: `' + model + '`' : '') + '</sub>';
-            const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n' + footer;
+            const gateLine = gateStatusText ? '\n\n**Merge gate:** ' + gateStatusText : '';
+            const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + gateLine + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n' + footer;
             
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,

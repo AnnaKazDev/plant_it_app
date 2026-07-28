@@ -8,7 +8,16 @@ The workflow uses one label:
 
 - `ai-cr:review` — manual trigger for on-demand reviews
 
-**Verdict is comment-only.** Automatic `ai-cr:passed` / `ai-cr:failed` labels were removed. Pass/fail is shown in the PR comment from structured JSON + rendered markdown.
+**Verdict is comment-only.** Pass/fail labels are not used. Findings and merge gate status are shown in the PR comment from structured JSON + rendered markdown.
+
+## Merge gate (repository variables)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AI_REVIEW_GATE_MODE` | `advisory` | `advisory` = evaluate and report only; `enforce` = fail CI job when gate blocks; `off` = skip gate evaluation |
+| `AI_REVIEW_GATE_POLICY` | `default` | `blocker-only`, `default` (BLOCKER or 3+ MAJOR), `strict` (BLOCKER or any MAJOR) |
+
+To block merges: set `AI_REVIEW_GATE_MODE=enforce` and add the **AI Review Agent** workflow job as a required status check on `main`.
 
 ## Trigger on label addition
 

@@ -14,10 +14,12 @@ import {
   type ReviewOutput,
 } from "./review-schema.js";
 import { renderMarkdown } from "./render-markdown.js";
+import { resolveValidationExitCode } from "./review-ci.js";
 import {
   extractUsefulLogContent,
   REVIEW_FAILURE_FILENAME,
 } from "./review-failure.js";
+import type { GateResult } from "./gate-policy.js";
 
 export interface FormatPrCommentInput {
   exitCode: string;
@@ -26,6 +28,7 @@ export interface FormatPrCommentInput {
   cleanTxtPath?: string;
   failureTxtPath?: string;
   logTxtPath?: string;
+  gateResultPath?: string;
   cwd?: string;
   model?: string;
 }
@@ -34,6 +37,7 @@ export interface FormatPrCommentOutput {
   statusText: string;
   emoji: string;
   content: string;
+  gateStatusText?: string;
   model?: string;
 }
 
@@ -41,12 +45,7 @@ export interface FormatPrCommentOutput {
  * Resolve validation exit code with fail-closed semantics.
  * The validate step runs only when review exit code is 0; a missing output then means failure.
  */
-export function resolveValidationExitCode(exitCode: string, validationExitCode: string): string {
-  if (exitCode === "0" && !validationExitCode) {
-    return "1";
-  }
-  return validationExitCode || "0";
-}
+export { resolveValidationExitCode } from "./review-ci.js";
 
 function readTextFile(path: string): string | null {
   return existsSync(path) ? readFileSync(path, "utf8") : null;
@@ -175,8 +174,36 @@ function buildReviewFailedStatus(exitCode: string, failureTxt: string | null): s
   return `Review failed | Exit code ${exitCode}`;
 }
 
+function readGateResult(path: string): GateResult | null {
+  if (!existsSync(path)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(readFileSync(path, "utf8")) as GateResult;
+  } catch {
+    return null;
+  }
+}
+
+function attachGateStatus(
+  result: Omit<FormatPrCommentOutput, "model">,
+  gateResult: GateResult | null,
+): Omit<FormatPrCommentOutput, "model"> {
+  if (!gateResult?.statusText) {
+    return result;
+  }
+
+  return { ...result, gateStatusText: gateResult.statusText };
+}
+
 export function formatPrComment(input: FormatPrCommentInput): FormatPrCommentOutput {
-  const result = buildFormatPrCommentResult(input);
+  const cwd = input.cwd ?? process.cwd();
+  const gateResultPath = input.gateResultPath
+    ? resolve(cwd, input.gateResultPath)
+    : undefined;
+  const gateResult = gateResultPath ? readGateResult(gateResultPath) : null;
+  const result = attachGateStatus(buildFormatPrCommentResult(input), gateResult);
   const model = input.model?.trim();
   return model ? { ...result, model } : result;
 }
@@ -283,6 +310,8 @@ function parseArgs(argv: string[]): { input: FormatPrCommentInput; outputPath?: 
       input.failureTxtPath = argv[++i];
     } else if (arg === "--log-txt-path") {
       input.logTxtPath = argv[++i];
+    } else if (arg === "--gate-result-path") {
+      input.gateResultPath = argv[++i];
     } else if (arg === "--cwd") {
       input.cwd = argv[++i];
     } else if (arg === "--model") {

@@ -243,6 +243,26 @@ describe("formatPrComment", () => {
     expect(result.model).toBe("composer-2.5");
   });
 
+  it("includes merge gate status when gate result is provided", () => {
+    writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(createValidReview()), "utf8");
+    writeFileSync(
+      resolve(tempDir, "gate-result.json"),
+      JSON.stringify({
+        passed: true,
+        policy: "default",
+        mode: "advisory",
+        reason: "No gate violations",
+        counts: { blockerCount: 0, majorCount: 0, minorCount: 0, nitCount: 0 },
+        statusText: "Would pass (policy: default, mode: advisory)",
+      }),
+      "utf8",
+    );
+
+    const result = run({ gateResultPath: "gate-result.json" });
+
+    expect(result.gateStatusText).toBe("Would pass (policy: default, mode: advisory)");
+  });
+
   it("omits model from output when not provided", () => {
     writeFileSync(resolve(tempDir, "review-output.json"), JSON.stringify(createValidReview()), "utf8");
 

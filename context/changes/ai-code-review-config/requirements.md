@@ -91,7 +91,23 @@ Agent evaluates 10 stack-specific criteria. Output is structured JSON (zod-valid
 ## Expected behavior
 
 - On-demand retry when label `ai-cr:review` is added
-- **Advisory review** - does not block merge (human makes final decision)
+- **Advisory merge gate** (default) — evaluates policy mechanically but does not block merge
+- Set repository variable `AI_REVIEW_GATE_MODE=enforce` to block merge on gate failure (requires branch protection on the AI Review workflow job)
+
+## Merge gate
+
+Mechanical pass/fail from `review-output.json` findings (policy computed in TypeScript, not trusted from the LLM).
+
+| Variable | Default | Values |
+|----------|---------|--------|
+| `AI_REVIEW_GATE_MODE` | `advisory` | `advisory` (report only), `enforce` (fail job), `off` |
+| `AI_REVIEW_GATE_POLICY` | `default` | `blocker-only`, `default`, `strict` |
+
+**Policy `default`:** fail gate on any BLOCKER or 3+ MAJOR findings (same as overall verdict).
+
+Gate also fails closed on technical errors (agent crash, parse failure, missing/invalid JSON).
+
+PR comment includes a **Merge gate** line showing what would happen under the active mode.
 
 ## Note
 
