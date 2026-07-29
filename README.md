@@ -41,22 +41,18 @@ The app automatically enriches each care action with historical weather data (te
 ## 📸 Screenshots
 
 ### Home Page
-_Placeholder: Screenshot showing landing page/home view_
 
 ![Home Page](./docs/screenshots/home-page.png)
 
 ### Plant List View
-_Placeholder: Screenshot showing list of plants with action teasers_
 
 ![Plant List](./docs/screenshots/plant-list.png)
 
 ### Plant Detail Card
-_Placeholder: Screenshot showing full action history for a single plant_
 
 ![Plant Detail](./docs/screenshots/plant-detail.png)
 
 ### Garden Map View
-_Placeholder: Screenshot showing spatial plant distribution on garden grid_
 
 ![Garden Map](./docs/screenshots/garden-map.png)
 
@@ -73,8 +69,6 @@ _Placeholder: Screenshot showing spatial plant distribution on garden grid_
   </tr>
 </table>
 
-_Placeholder: Side-by-side mobile screenshots showing light and dark theme_
-
 ### Mobile Experience
 
 <table>
@@ -87,8 +81,6 @@ _Placeholder: Side-by-side mobile screenshots showing light and dark theme_
     <td align="center"><em>Mobile Registration</em></td>
   </tr>
 </table>
-
-_Placeholder: Mobile menu and signup flow screenshots_
 
 ---
 
@@ -122,14 +114,19 @@ cd plant_it_app
 # 2. Install dependencies
 npm install
 
-# 3. Set up environment variables
-cp .env.example .env
-cp .env.example .dev.vars
-
-# 4. Start local Supabase (requires Docker)
+# 3. Start local Supabase (requires Docker)
 npx supabase start
 
-# 5. Run development server
+# 4. Set up environment variables
+# Copy the values printed by supabase start into .env and .dev.vars
+cp .env.example .env
+cp .env.example .dev.vars
+# Edit both files with actual values: SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY
+
+# 5. Apply database migrations
+npx supabase db push
+
+# 6. Run development server
 npm run dev
 ```
 
@@ -202,8 +199,12 @@ To skip email confirmation during local development:
 | `npm run format` | Run Prettier on all files |
 | `npm run test:integration` | Run integration tests (requires local Supabase) |
 | `npm run test:watch` | Run tests in watch mode with UI |
+| `npm run review:install` | Install code-review-agent dependencies |
+| `npm run review` | Run code review agent (requires `CURSOR_API_KEY`) |
 
 **Pre-commit hooks:** Husky + lint-staged automatically runs ESLint and Prettier on staged files.
+
+**Code Review Agent:** For automated code reviews, see `packages/code-review-agent/README.md` for setup instructions (requires `CURSOR_API_KEY` environment variable).
 
 ---
 
@@ -213,7 +214,7 @@ To skip email confirmation during local development:
 .
 ├── src/
 │   ├── pages/              # Astro pages (file-based routing)
-│   │   ├── api/           # API endpoints
+│   │   ├── api/           # API endpoints (with colocated *.test.ts)
 │   │   ├── auth/          # Authentication pages
 │   │   ├── garden/        # Garden-related pages
 │   │   └── plants/        # Plant management pages
@@ -227,11 +228,14 @@ To skip email confirmation during local development:
 │   │   └── weather.ts   # Weather API integration
 │   ├── middleware.ts     # Auth middleware
 │   └── types.ts          # Shared TypeScript types
+├── packages/
+│   └── code-review-agent/ # Automated code review tool (Cursor SDK)
+├── context/
+│   └── sdk/              # Cursor SDK integration utilities
 ├── supabase/
 │   └── migrations/       # Database migrations
 ├── tests/
-│   ├── e2e/             # End-to-end tests
-│   └── integration/     # API integration tests
+│   └── e2e/             # End-to-end tests (Playwright)
 ├── public/              # Static assets
 └── wrangler.jsonc       # Cloudflare Workers config
 ```
@@ -245,14 +249,21 @@ To skip email confirmation during local development:
 ### Running Tests
 
 ```bash
-# Integration tests (requires local Supabase)
+# Integration tests (requires local Supabase + dev server)
+# Terminal 1: Start infrastructure
 npx supabase start
+npx supabase db push
+
+# Terminal 2: Start dev server
+npm run dev
+
+# Terminal 3: Run tests
 npm run test:integration
 
 # Watch mode with UI
 npm run test:watch
 
-# E2E tests
+# E2E tests (requires built app)
 npm run test:e2e
 ```
 
@@ -336,6 +347,8 @@ npx wrangler rollback [deployment-id]
 
 **Note:** Cloudflare Workers free tier has a 10ms CPU time limit. Current measurements show 18-20ms. Monitor after deployments; you may need to upgrade to Workers Paid ($5/month) for production use.
 
+For detailed deployment setup and operational runbooks, see `context/deployment/deploy-plan.md`.
+
 ---
 
 ## 📡 API Documentation
@@ -377,11 +390,17 @@ npx wrangler rollback [deployment-id]
 | `/api/auth/signin` | POST | Sign in with email/password |
 | `/api/auth/signup` | POST | Create new account |
 | `/api/auth/signout` | POST | Sign out current user |
+| `/api/action-types` | GET | List available action types |
+| `/api/profile/setup` | POST | Configure user profile (garden dimensions) |
 | `/api/plants` | GET | List user's plants |
 | `/api/plants` | POST | Create new plant |
 | `/api/plants/[id]` | GET | Get plant details |
 | `/api/actions` | POST | Create new action |
+| `/api/actions/[id]` | PATCH | Update an existing action |
+| `/api/actions/[id]` | DELETE | Delete an action |
 | `/api/photos/upload` | POST | Upload photo to action |
+
+**Note:** For a complete list of all API endpoints, see `src/pages/api/`.
 
 ---
 
