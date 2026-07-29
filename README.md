@@ -115,18 +115,17 @@ cd plant_it_app
 npm install
 
 # 3. Start local Supabase (requires Docker)
+# This automatically applies migrations from supabase/migrations/
 npx supabase start
 
 # 4. Set up environment variables
 # Copy the values printed by supabase start into .env and .dev.vars
 cp .env.example .env
 cp .env.example .dev.vars
-# Edit both files with actual values: SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY
+# Edit both files with actual Supabase values and add your WeatherAPI key:
+# SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY, WEATHER_API_KEY
 
-# 5. Apply database migrations
-npx supabase db push
-
-# 6. Run development server
+# 5. Run development server
 npm run dev
 ```
 
@@ -152,9 +151,9 @@ Visit `http://localhost:4321` to see the app.
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-from-cli
    ```
 
-3. Apply migrations:
+3. Migrations are applied automatically on `supabase start`. If you pull new migrations later:
    ```bash
-   npx supabase db push
+   npx supabase migration up
    ```
 
 4. Access Supabase Studio at `http://localhost:54323`
@@ -199,12 +198,14 @@ To skip email confirmation during local development:
 | `npm run format` | Run Prettier on all files |
 | `npm run test:integration` | Run integration tests (requires local Supabase) |
 | `npm run test:watch` | Run tests in watch mode with UI |
+| `npm run test:e2e` | Run end-to-end tests with Playwright |
+| `npm run test:e2e:ui` | Run E2E tests in interactive UI mode |
 | `npm run review:install` | Install code-review-agent dependencies |
 | `npm run review` | Run code review agent (requires `CURSOR_API_KEY`) |
 
 **Pre-commit hooks:** Husky + lint-staged automatically runs ESLint and Prettier on staged files.
 
-**Code Review Agent:** For automated code reviews, see `packages/code-review-agent/README.md` for setup instructions (requires `CURSOR_API_KEY` environment variable).
+**Code Review Agent:** For automated code reviews, see `packages/code-review-agent/README.md` for setup instructions (requires `CURSOR_API_KEY` environment variable). Pull requests automatically trigger reviews via `.github/workflows/ai-review.yml`.
 
 ---
 
@@ -250,9 +251,8 @@ To skip email confirmation during local development:
 
 ```bash
 # Integration tests (requires local Supabase + dev server)
-# Terminal 1: Start infrastructure
+# Terminal 1: Start infrastructure (migrations apply automatically)
 npx supabase start
-npx supabase db push
 
 # Terminal 2: Start dev server
 npm run dev
@@ -285,10 +285,13 @@ npm run format
 # Create a new migration
 npx supabase migration new your_migration_name
 
-# Apply migrations
+# Apply migrations to local database
+npx supabase migration up
+
+# Push migrations to cloud Supabase (requires supabase link)
 npx supabase db push
 
-# Reset database (WARNING: destructive)
+# Reset local database (WARNING: destructive)
 npx supabase db reset
 ```
 
@@ -395,6 +398,7 @@ For detailed deployment setup and operational runbooks, see `context/deployment/
 | `/api/plants` | GET | List user's plants |
 | `/api/plants` | POST | Create new plant |
 | `/api/plants/[id]` | GET | Get plant details |
+| `/api/plants/[id]` | DELETE | Delete a plant |
 | `/api/actions` | POST | Create new action |
 | `/api/actions/[id]` | PATCH | Update an existing action |
 | `/api/actions/[id]` | DELETE | Delete an action |
