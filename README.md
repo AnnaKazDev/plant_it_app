@@ -1,10 +1,6 @@
 # Plant It 🌱
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./public/plant_it_logo_darkmode.png">
-  <source media="(prefers-color-scheme: light)" srcset="./public/plant_it_logo.png">
-  <img alt="Plant It Logo" src="./public/plant_it_logo.png" width="400">
-</picture>
+![Plant It Logo](./public/plant_it_logo.png)
 
 **A visual garden tracking app that helps hobby gardeners document plant growth with photos, weather data, and spatial organization.**
 
@@ -176,6 +172,8 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    WEATHER_API_KEY=your-api-key-here
    ```
 
+> **Note:** Integration tests mock WeatherAPI `fetch()` calls and do not require a live `WEATHER_API_KEY`. The key is only needed for manual testing in the running app.
+
 ### Email Confirmation (Local Dev)
 
 To skip email confirmation during local development:
@@ -220,8 +218,7 @@ To skip email confirmation during local development:
 │   │   ├── garden/        # Garden-related pages
 │   │   └── plants/        # Plant management pages
 │   ├── components/        # UI components (Astro + React)
-│   │   ├── ui/           # shadcn/ui components
-│   │   └── hooks/        # React hooks
+│   │   └── ui/           # shadcn/ui components
 │   ├── layouts/          # Page layouts
 │   ├── lib/              # Utilities and services
 │   │   ├── supabase.ts  # Supabase client
@@ -267,6 +264,8 @@ npm run test:watch
 npm run test:e2e
 ```
 
+> **CI note:** `.github/workflows/ci.yml` currently runs lint and build only — integration and E2E tests are run locally. PRs also trigger the AI review workflow (`.github/workflows/ai-review.yml`), which is separate from CI.
+
 ### Linting and Formatting
 
 ```bash
@@ -307,7 +306,7 @@ The app automatically deploys to Cloudflare Workers when you push to `main`:
 git checkout -b feature/my-feature
 # ... make changes ...
 git add .
-git commit -m "Add my feature"
+git commit -m "feat: add my feature"
 git push origin feature/my-feature
 # Create PR → merge to main → auto-deploy 🚀
 ```
@@ -330,10 +329,15 @@ npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 npx wrangler secret put WEATHER_API_KEY
 ```
 
-For GitHub Actions CI/CD, add these as repository secrets:
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-- `CLOUDFLARE_API_TOKEN`
+For GitHub Actions, add these as repository secrets:
+
+**CI/CD (`.github/workflows/ci.yml`):**
+- `SUPABASE_URL` — required for the build step
+- `SUPABASE_KEY` — required for the build step
+- `CLOUDFLARE_API_TOKEN` — required for auto-deploy to Cloudflare Workers on push to `main`
+
+**AI Review (`.github/workflows/ai-review.yml`):**
+- `CURSOR_API_KEY` — required for automated PR code reviews (see `packages/code-review-agent/README.md`)
 
 ### Monitoring
 
