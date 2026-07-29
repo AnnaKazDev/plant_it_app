@@ -1,229 +1,356 @@
-# 10x Astro Starter
+# Plant It 🌱
 
-![](./public/template.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./public/plant_it_logo_darkmode.png">
+  <source media="(prefers-color-scheme: light)" srcset="./public/plant_it_logo.png">
+  <img alt="Plant It Logo" src="./public/plant_it_logo.png" width="400">
+</picture>
 
-A modern, opinionated starter template for building fast, accessible web applications.
+**A visual garden tracking app that helps hobby gardeners document plant growth with photos, weather data, and spatial organization.**
 
-## Tech Stack
+[![Deployed on Cloudflare Workers](https://img.shields.io/badge/deployed-Cloudflare%20Workers-orange)](https://plant-it.anna-kazmierczak-it.workers.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-- [Astro](https://astro.build/) v6 - Modern web framework with server-first rendering
-- [React](https://react.dev/) v19 - UI library for interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS framework
-- [Supabase](https://supabase.com/) - Authentication and backend-as-a-service
-- [Cloudflare Workers](https://workers.cloudflare.com/) - Edge deployment runtime
+🌐 **Live App:** [https://plant-it.anna-kazmierczak-it.workers.dev](https://plant-it.anna-kazmierczak-it.workers.dev)
 
-## Features
+---
 
-- **AI Code Review** - Automated code reviews using Cursor SDK
-- **Type Safety** - Full TypeScript coverage with strict mode
-- **Modern UI** - Tailwind CSS 4 with shadcn/ui components
-- **Authentication** - Built-in Supabase auth with middleware protection
-- **Edge Deployment** - Optimized for Cloudflare Workers
+## Overview
 
-## Prerequisites
+**Plant It** is a web application designed for hobby gardeners who want to track their plants' growth journey through photos and care actions. Instead of relying on memory or scattered camera roll photos, gardeners can document every stage of their plants' development — from seed to harvest — with photos, dates, and contextual information.
 
-- Node.js v22.14.0 or higher (see `.nvmrc`)
-- npm (comes with Node.js)
-- Docker (for local Supabase development)
+The app automatically enriches each care action with historical weather data (temperature, precipitation, sun/moon phase), helping you understand how environmental conditions affected your plants. A visual garden map lets you track which garden locations produce the best results.
 
-## Getting Started
+**Who it's for:** Home gardeners managing vegetables, herbs, and flowers across different garden locations and growth stages. Perfect for anyone who wants to see the full story of their garden, not just a care schedule.
 
-1. Clone the repository:
+---
+
+## ✨ Features
+
+- **Plant Management** — Add plants with photos, names, and garden locations. Track multiple plants of the same type in different locations.
+- **Action Tracking** — Document care activities (watering, fertilizing, pruning, transplanting) with up to 5 photos per action, custom notes, and any date (past, present, or future).
+- **Weather Integration** — Automatic historical weather data (temperature, precipitation, sun/moon phase) for every action based on your location.
+- **Garden Map** — Visual grid showing spatial distribution of plants in your garden. Click any plant to see its full history.
+- **Growth Timeline** — See each plant's complete journey: all actions, photos, and weather conditions in chronological order.
+- **Private Storage** — Your photos are private and secure. Only you can access your garden data.
+- **Planned Actions** — Schedule future care activities and see them as badges in your plant list.
+- **Dark Mode** — Full dark mode support with automatic theme detection and manual toggle.
+
+---
+
+## 📸 Screenshots
+
+### Home Page
+_Placeholder: Screenshot showing landing page/home view_
+
+![Home Page](./docs/screenshots/home-page.png)
+
+### Plant List View
+_Placeholder: Screenshot showing list of plants with action teasers_
+
+![Plant List](./docs/screenshots/plant-list.png)
+
+### Plant Detail Card
+_Placeholder: Screenshot showing full action history for a single plant_
+
+![Plant Detail](./docs/screenshots/plant-detail.png)
+
+### Garden Map View
+_Placeholder: Screenshot showing spatial plant distribution on garden grid_
+
+![Garden Map](./docs/screenshots/garden-map.png)
+
+### Mobile & Dark Mode
+
+<table>
+  <tr>
+    <td><img src="./docs/screenshots/mobile-light.png" alt="Mobile Light Mode" width="300"/></td>
+    <td><img src="./docs/screenshots/mobile-dark.png" alt="Mobile Dark Mode" width="300"/></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Light Mode</em></td>
+    <td align="center"><em>Dark Mode</em></td>
+  </tr>
+</table>
+
+_Placeholder: Side-by-side mobile screenshots showing light and dark theme_
+
+### Mobile Experience
+
+<table>
+  <tr>
+    <td><img src="./docs/screenshots/mobile-menu.png" alt="Mobile Menu" width="300"/></td>
+    <td><img src="./docs/screenshots/mobile-signup.png" alt="Mobile Signup" width="300"/></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Mobile Navigation Menu</em></td>
+    <td align="center"><em>Mobile Registration</em></td>
+  </tr>
+</table>
+
+_Placeholder: Mobile menu and signup flow screenshots_
+
+---
+
+## 🛠️ Tech Stack
+
+- **[Astro 6](https://astro.build/)** — Server-first web framework
+- **[React 19](https://react.dev/)** — Interactive UI components
+- **[TypeScript 5](https://www.typescriptlang.org/)** — Type-safe development
+- **[Tailwind CSS 4](https://tailwindcss.com/)** — Utility-first styling
+- **[Supabase](https://supabase.com/)** — Authentication & PostgreSQL database
+- **[Cloudflare Workers](https://workers.cloudflare.com/)** — Edge deployment
+- **[WeatherAPI.com](https://weatherapi.com/)** — Historical weather data
+
+---
+
+## 📋 Prerequisites
+
+- **Node.js** v22.14.0 or higher (see `.nvmrc`)
+- **Docker** (for local Supabase development)
+- **WeatherAPI.com account** (free tier: 1M calls/month)
+
+---
+
+## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
-```
+# 1. Clone the repository
+git clone https://github.com/AnnaKazDev/plant_it_app.git
+cd plant_it_app
 
-2. Install dependencies:
-
-```bash
+# 2. Install dependencies
 npm install
-```
 
-3. Set up Supabase and configure environment variables — see [Supabase Configuration](#supabase-configuration) below.
-
-4. Create a `.dev.vars` file for local Cloudflare dev secrets:
-
-```bash
+# 3. Set up environment variables
+cp .env.example .env
 cp .env.example .dev.vars
-```
 
-5. Run the development server:
+# 4. Start local Supabase (requires Docker)
+npx supabase start
 
-```bash
+# 5. Run development server
 npm run dev
 ```
 
-## Available Scripts
+Visit `http://localhost:4321` to see the app.
 
-- `npm run dev` - Start development server (Cloudflare workerd runtime)
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run check` - TypeScript + Astro diagnostics (`.astro` props/frontmatter)
-- `npm run lint` - Run ESLint with type-checked rules
-- `npm run lint:fix` - Auto-fix ESLint issues
-- `npm run format` - Run Prettier
-- `npm run review:install` - Install deps for the local Cursor SDK code-review agent
-- `npm run review` - Run the scripted code review (`packages/code-review-agent`)
+---
 
-## Project Structure
+## ⚙️ Environment Setup
 
-```md
-.
-├── src/
-│ ├── layouts/ # Astro layouts
-│ ├── pages/ # Astro pages
-│ │ └── api/ # API endpoints
-│ ├── components/ # UI components (Astro & React)
-│ └── assets/ # Static assets
-├── packages/
-│ └── code-review-agent/ # Independent Cursor SDK review script (v1, local)
-├── context/sdk/ # Cached Cursor SDK docs for the review agent
-├── public/ # Public assets
-├── wrangler.jsonc # Cloudflare Workers config
+### Supabase Configuration
+
+**Local Development (Recommended for getting started):**
+
+1. Start local Supabase stack:
+   ```bash
+   npx supabase start
+   ```
+
+2. Copy credentials from CLI output to `.env` and `.dev.vars`:
+   ```env
+   SUPABASE_URL=http://127.0.0.1:54321
+   SUPABASE_KEY=your-anon-key-from-cli
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-from-cli
+   ```
+
+3. Apply migrations:
+   ```bash
+   npx supabase db push
+   ```
+
+4. Access Supabase Studio at `http://localhost:54323`
+
+**Cloud Supabase (Alternative):**
+
+Get credentials from your Supabase dashboard → Settings → API:
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-## Code review agent (Cursor SDK)
+### WeatherAPI.com Setup
 
-Independent package under `packages/code-review-agent`. Reviews `git diff` via a local Cursor agent (`Agent.create` + `agent.send` + streaming). Not part of the Astro app runtime. Runs automatically on PRs via GitHub Actions (`.github/workflows/review.yml`), and can be invoked manually.
+1. Sign up at [weatherapi.com/signup.aspx](https://weatherapi.com/signup.aspx)
+2. Get your API key from the [dashboard](https://weatherapi.com/my/)
+3. Add to `.env` and `.dev.vars`:
+   ```env
+   WEATHER_API_KEY=your-api-key-here
+   ```
 
-1. One-time setup (required — root `npm ci` does not install this package):
+### Email Confirmation (Local Dev)
 
-```bash
-npm run review:install
-```
-
-2. Add a user API key (shell export, or only `CURSOR_API_KEY=...` in gitignored `.env` / `.dev.vars` — see `.env.example`). The review script does **not** bulk-load other secrets from those files.
-
-```bash
-CURSOR_API_KEY=crsr_...
-```
-
-Create the key at [Cursor Dashboard → API Keys](https://cursor.com/dashboard/api).
-
-3. Run from repo root:
-
-```bash
-npm run review
-# optional range:
-npm run review -- --base main --head HEAD
-```
-
-Details and security notes: [`packages/code-review-agent/README.md`](./packages/code-review-agent/README.md).
-
-## Supabase Configuration
-
-This project uses [Supabase](https://supabase.com/) for authentication. Environment variables are declared via Astro's `astro:env` schema and are treated as **server-only secrets** — they are never exposed to the client.
-
-### First-time setup (local, no cloud project needed)
-
-Requires [Docker](https://www.docker.com/) and ~7 GB RAM.
-
-1. Create your `.env` file:
-
-```bash
-cp .env.example .env
-```
-
-2. Initialize the local Supabase project (creates a `supabase/` config folder):
-
-```bash
-npx supabase init
-```
-
-3. Start the local stack (downloads Docker images on first run):
-
-```bash
-npx supabase start
-```
-
-4. Copy the credentials printed by the CLI into your `.env` and `.dev.vars`:
-
-```
-SUPABASE_URL=http://127.0.0.1:54321
-SUPABASE_KEY=<anon key from CLI output>
-```
-
-5. To stop the stack when done:
-
-```bash
-npx supabase stop
-```
-
-The local Studio UI is available at `http://localhost:54323`.
-
-No database tables or migrations are required — this project uses Supabase Auth's built-in `auth.users` table only.
-
-### Using a cloud Supabase project instead
-
-If you prefer to use a hosted Supabase project, add these variables to your `.env` and `.dev.vars` files:
-
-| Variable       | Description                                                |
-| -------------- | ---------------------------------------------------------- |
-| `SUPABASE_URL` | Project URL from Supabase dashboard → Settings → API       |
-| `SUPABASE_KEY` | `anon` public key from Supabase dashboard → Settings → API |
-
-```
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_KEY=<anon-key>
-```
-
-### Email confirmation in local development
-
-By default Supabase requires email confirmation before a user can sign in. To skip this during local development:
-
-1. Open the Supabase dashboard for your project
+To skip email confirmation during local development:
+1. Open Supabase Studio (`http://localhost:54323`)
 2. Go to **Authentication → Email → Confirm email**
 3. Toggle it **off**
 
-Users can then sign in immediately after sign-up without clicking a confirmation link.
+---
 
-### Auth routes
+## 📜 Available Scripts
 
-| Route                 | Description                                                             |
-| --------------------- | ----------------------------------------------------------------------- |
-| `/auth/signin`        | Email/password sign-in form                                             |
-| `/auth/signup`        | Email/password sign-up form                                             |
-| `/auth/confirm-email` | Post-signup "check your inbox" page                                     |
-| `/dashboard`          | Example protected page (redirects to `/auth/signin` if unauthenticated) |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server (Cloudflare workerd runtime) |
+| `npm run build` | Production build with SSR |
+| `npm run preview` | Preview production build locally |
+| `npm run check` | TypeScript + Astro diagnostics (faster than build) |
+| `npm run lint` | Run ESLint with type-checked rules |
+| `npm run lint:fix` | Auto-fix linting issues |
+| `npm run format` | Run Prettier on all files |
+| `npm run test:integration` | Run integration tests (requires local Supabase) |
+| `npm run test:watch` | Run tests in watch mode with UI |
 
-Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_ROUTES` array there to require authentication.
+**Pre-commit hooks:** Husky + lint-staged automatically runs ESLint and Prettier on staged files.
 
-## Photo Storage
+---
 
-This project uses Supabase Storage for managing plant photos with user-level security.
+## 📁 Project Structure
 
-### Setup
+```
+.
+├── src/
+│   ├── pages/              # Astro pages (file-based routing)
+│   │   ├── api/           # API endpoints
+│   │   ├── auth/          # Authentication pages
+│   │   ├── garden/        # Garden-related pages
+│   │   └── plants/        # Plant management pages
+│   ├── components/        # UI components (Astro + React)
+│   │   ├── ui/           # shadcn/ui components
+│   │   └── hooks/        # React hooks
+│   ├── layouts/          # Page layouts
+│   ├── lib/              # Utilities and services
+│   │   ├── supabase.ts  # Supabase client
+│   │   ├── storage.ts   # Photo storage helpers
+│   │   └── weather.ts   # Weather API integration
+│   ├── middleware.ts     # Auth middleware
+│   └── types.ts          # Shared TypeScript types
+├── supabase/
+│   └── migrations/       # Database migrations
+├── tests/
+│   ├── e2e/             # End-to-end tests
+│   └── integration/     # API integration tests
+├── public/              # Static assets
+└── wrangler.jsonc       # Cloudflare Workers config
+```
 
-The storage infrastructure is created automatically via database migrations:
+**Path alias:** `@/*` maps to `./src/*` (configured in `tsconfig.json`)
 
-1. **Storage bucket:** `plant-photos` (private, 10MB limit, JPEG/PNG/WebP only)
-2. **RLS policies:** Path-based access control ensures users can only access their own photos
-3. **Database integration:** Photos are linked to actions via the `photos` table
+---
 
-### Local Development
+## 🧪 Development
 
-After running `npx supabase start` and applying migrations (`npx supabase migration up`), you can:
+### Running Tests
 
-- View storage in the dashboard: `http://localhost:54323` → Storage → `plant-photos`
-- Upload photos via API: `POST /api/photos/upload` (requires authentication)
-- Photos are stored at path: `{user_id}/{action_id}/{uuid}.{ext}`
+```bash
+# Integration tests (requires local Supabase)
+npx supabase start
+npm run test:integration
 
-### Upload API
+# Watch mode with UI
+npm run test:watch
+
+# E2E tests
+npm run test:e2e
+```
+
+### Linting and Formatting
+
+```bash
+# Check for issues
+npm run lint
+npm run check
+
+# Auto-fix
+npm run lint:fix
+npm run format
+```
+
+### Database Migrations
+
+```bash
+# Create a new migration
+npx supabase migration new your_migration_name
+
+# Apply migrations
+npx supabase db push
+
+# Reset database (WARNING: destructive)
+npx supabase db reset
+```
+
+---
+
+## 🚀 Deployment
+
+### Auto-Deploy (Recommended)
+
+The app automatically deploys to Cloudflare Workers when you push to `main`:
+
+```bash
+git checkout -b feature/my-feature
+# ... make changes ...
+git add .
+git commit -m "Add my feature"
+git push origin feature/my-feature
+# Create PR → merge to main → auto-deploy 🚀
+```
+
+### Manual Deploy
+
+```bash
+npm run build
+npx wrangler deploy
+```
+
+### Production Secrets
+
+Set these secrets in Cloudflare via Wrangler CLI:
+
+```bash
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_KEY
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put WEATHER_API_KEY
+```
+
+For GitHub Actions CI/CD, add these as repository secrets:
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+- `CLOUDFLARE_API_TOKEN`
+
+### Monitoring
+
+```bash
+# Stream live logs
+npx wrangler tail
+
+# List deployments
+npx wrangler deployments list
+
+# Rollback to previous deployment
+npx wrangler rollback [deployment-id]
+```
+
+**Note:** Cloudflare Workers free tier has a 10ms CPU time limit. Current measurements show 18-20ms. Monitor after deployments; you may need to upgrade to Workers Paid ($5/month) for production use.
+
+---
+
+## 📡 API Documentation
+
+### Photo Upload
 
 **Endpoint:** `POST /api/photos/upload`
 
 **Authentication:** Required (session cookie)
 
-**Body:** multipart/form-data
-
-- `action_id` (string, UUID) - Action to attach photo to
-- `file` (File) - Image file (JPEG/PNG/WebP, max 10MB)
+**Body:** `multipart/form-data`
+- `action_id` (string, UUID) — Action to attach photo to
+- `file` (File) — Image file (JPEG/PNG/WebP, max 10MB)
 
 **Response:**
-
 ```json
 {
   "success": true,
@@ -232,135 +359,83 @@ After running `npx supabase start` and applying migrations (`npx supabase migrat
     "photo_url": "https://...",
     "size_bytes": 1234,
     "order_index": 1,
-    "created_at": "2026-06-05T..."
+    "created_at": "2026-07-29T..."
   }
 }
 ```
 
 **Validation:**
-
 - Max 5 photos per action
 - File type: JPEG, PNG, or WebP only
 - File size: ≤10MB
 - User must own the action (enforced via RLS)
 
-**Testing:**
+### Key API Routes
 
-```bash
-# Create test image
-echo "iVBORw0KGgo..." | base64 -d > test.png
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/signin` | POST | Sign in with email/password |
+| `/api/auth/signup` | POST | Create new account |
+| `/api/auth/signout` | POST | Sign out current user |
+| `/api/plants` | GET | List user's plants |
+| `/api/plants` | POST | Create new plant |
+| `/api/plants/[id]` | GET | Get plant details |
+| `/api/actions` | POST | Create new action |
+| `/api/photos/upload` | POST | Upload photo to action |
 
-# Upload (replace ACTION_ID and TOKEN)
-curl -X POST http://localhost:4321/api/photos/upload \
-  -H "Cookie: sb-access-token=YOUR_TOKEN" \
-  -F "action_id=YOUR_ACTION_ID" \
-  -F "file=@test.png"
-```
+---
 
-### Production Deployment
+## 🗺️ Garden Map Feature
 
-Migrations auto-apply via GitHub Actions. Verify the bucket exists in the Supabase Dashboard → Storage after deployment.
+The garden map allows you to visualize plant distribution across your physical garden space:
 
-## WeatherAPI.com Setup
+- **Grid System:** Define your garden dimensions (width × height in meters) during registration
+- **Plant Positioning:** Place each plant at specific coordinates when adding it
+- **Visual Navigation:** Click any plant icon on the map to open its full history
+- **Multi-plant Tracking:** Track multiple plants of the same type in different locations to compare growth
 
-This project integrates with [WeatherAPI.com](https://www.weatherapi.com/) to enrich plant care actions with historical weather data (temperature, precipitation, humidity, wind, sun/moon times).
+---
 
-### Getting Your API Key
+## 🤝 Contributing
 
-1. Sign up for a free account at https://weatherapi.com/signup.aspx
-2. Get your API key from https://www.weatherapi.com/my/ (Dashboard → "Your API Key")
-3. Add to your environment files:
-   - **Node.js / Supabase CLI:** Add `WEATHER_API_KEY=your-key-here` to `.env`
-   - **Cloudflare Workers local dev:** Add `WEATHER_API_KEY=your-key-here` to `.dev.vars`
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-### Production Setup
+### Commit Convention
 
-For production deployment, set the secret via Wrangler:
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation only
+- `style:` Code style changes (formatting)
+- `refactor:` Code refactoring
+- `test:` Adding tests
+- `chore:` Maintenance tasks
 
-```bash
-npx wrangler secret put WEATHER_API_KEY
-# Paste your API key when prompted
-```
+---
 
-For CI/CD, add `WEATHER_API_KEY` to GitHub repository secrets.
+## 📄 License
 
-### API Limits
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- **Free tier:** 1,000,000 calls/month
-- **Historical data:** Available from 2010-01-01 onwards
-- **Caching:** Weather data is cached in the database to minimize API calls
+---
 
-### Verification
+## 🙏 Acknowledgments
 
-Run integration tests to verify the setup:
+- Built with [Astro](https://astro.build/) and the amazing open-source community
+- Weather data provided by [WeatherAPI.com](https://weatherapi.com/)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Bootstrapped from [10x Astro Starter](https://github.com/przeprogramowani/10x-astro-starter)
 
-```bash
-npm run test:integration
-```
+---
 
-Weather integration tests use mocked `fetch()` and don't require a real API key.
+## 📞 Support
 
-## Deployment
+For issues and questions, please open an issue on [GitHub](https://github.com/AnnaKazDev/plant_it_app/issues).
 
-This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) with automatic deployment via GitHub Actions.
+---
 
-**Production URL:** https://plant-it.anna-kazmierczak-it.workers.dev
-
-### Development Workflow
-
-```bash
-# 1. Work on a feature branch
-git checkout -b feature/my-feature
-# ... make changes ...
-git add .
-git commit -m "Add my feature"
-git push origin feature/my-feature
-
-# 2. Create Pull Request on GitHub
-# → GitHub Actions runs: lint + build + tests
-
-# 3. Merge PR to main
-# → Automatic deployment to Cloudflare Workers 🚀
-```
-
-### Manual Deployment
-
-If you need to deploy manually:
-
-```bash
-npm run build
-npx wrangler deploy
-```
-
-### Required Secrets
-
-Configure these secrets in GitHub repository settings (Settings → Secrets and variables → Actions):
-
-- `SUPABASE_URL` - Your Supabase project URL
-- `SUPABASE_KEY` - Your Supabase anon/public key
-- `CLOUDFLARE_API_TOKEN` - Cloudflare API token with Workers permissions
-
-For local development, set these in `.dev.vars` file.
-
-### Monitoring Deployments
-
-- **GitHub Actions:** Check deployment status at `https://github.com/[username]/plant_it_app/actions`
-- **Cloudflare Dashboard:** View deployments at https://dash.cloudflare.com → Workers & Pages
-- **Logs:** Run `npx wrangler tail` to stream live logs from production
-
-### Detailed Deployment Guide
-
-For complete deployment setup instructions, see [context/deployment/deploy-plan.md](context/deployment/deploy-plan.md).
-
-## CI/CD
-
-GitHub Actions workflow runs on every push and PR to `main`:
-
-- **On Pull Requests:** Runs lint + build (no deployment)
-- **On Push to `main`:** Runs lint + build + **automatic deployment to Cloudflare Workers**
-
-The workflow is defined in `.github/workflows/ci.yml`.
-
-## License
-
-MIT
+**Happy Gardening! 🌻**
