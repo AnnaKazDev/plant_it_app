@@ -7,13 +7,13 @@ import { loadReviewEnvFile } from "./env.js";
 import { assertRefsExist, getDiff, getDiffStat, getWorkingTreeStatus, isDiffEmpty, resolveBaseRef } from "./git.js";
 import { buildReviewPrompt } from "./prompt.js";
 import { renderMarkdown } from "./render-markdown.js";
-import { formatFailureReport, REVIEW_FAILURE_FILENAME } from "./review-failure.js";
+import { formatFailureLogReport, formatFailureReport, REVIEW_FAILURE_FILENAME } from "./review-failure.js";
 import {
   ReviewOutputSchema,
   type ReviewOutput,
   applyComputedVerdicts,
   REQUIRED_CRITERIA,
-  normalizeCriteriaNames,
+  normalizeReviewData,
 } from "./review-schema.js";
 
 const packageDir = fileURLToPath(new URL("..", import.meta.url));
@@ -169,9 +169,8 @@ function emitFailureReport(
   root: string,
   input: { reason: string; rawResponse?: string; details?: string },
 ): void {
-  const content = formatFailureReport(input);
-  writeFileSync(resolve(root, REVIEW_FAILURE_FILENAME), content, "utf8");
-  console.log(content);
+  writeFileSync(resolve(root, REVIEW_FAILURE_FILENAME), formatFailureReport(input), "utf8");
+  console.error(formatFailureLogReport(input));
 }
 
 async function main(): Promise<void> {
@@ -307,7 +306,7 @@ async function main(): Promise<void> {
       try {
         const parsed = parseReviewResponse(fullResponse);
         const review = applyComputedVerdicts(
-          ReviewOutputSchema.parse(normalizeCriteriaNames(parsed)),
+          ReviewOutputSchema.parse(normalizeReviewData(parsed)),
         );
 
         // Save raw JSON for workflow

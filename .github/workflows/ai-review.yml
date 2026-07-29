@@ -73,18 +73,14 @@ jobs:
           script: |
             const fs = require('fs');
             const marker = '<!-- ai-review -->';
-            let statusText = 'Review failed';
-            let emoji = '❌';
+            let bannerMarkdown = '> ### ❌ REVIEW ERROR\n>\n> Could not format review output.';
             let content = 'Could not format review output.';
-            let gateStatusText = '';
             let model = '';
 
             try {
               const formatted = JSON.parse(fs.readFileSync('pr-comment.json', 'utf8'));
-              statusText = formatted.statusText;
-              emoji = formatted.emoji;
+              bannerMarkdown = formatted.bannerMarkdown || bannerMarkdown;
               content = formatted.content;
-              gateStatusText = formatted.gateStatusText || '';
               model = formatted.model || '';
             } catch (err) {
               console.error('Failed to read pr-comment.json:', err);
@@ -94,8 +90,7 @@ jobs:
             }
 
             const footer = '---\n<sub>Powered by [Cursor SDK](https://cursor.com/docs/sdk/typescript)' + (model ? ' · Model: `' + model + '`' : '') + '</sub>';
-            const gateLine = gateStatusText ? '\n\n**Merge gate:** ' + gateStatusText : '';
-            const body = marker + '\n## 🤖 AI Review ' + emoji + '\n\n**Status:** ' + statusText + gateLine + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n' + footer;
+            const body = marker + '\n## 🤖 AI Review\n\n' + bannerMarkdown + '\n\n<details>\n<summary>View detailed findings</summary>\n\n' + content + '\n\n</details>\n\n' + footer;
             
             const {data: comments} = await github.rest.issues.listComments({
               owner: context.repo.owner,

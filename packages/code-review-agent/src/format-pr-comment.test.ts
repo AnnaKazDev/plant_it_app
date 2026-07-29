@@ -152,8 +152,10 @@ describe("formatPrComment", () => {
 
     const result = run({ exitCode: "0", validationExitCode: "1" });
 
-    expect(result.statusText).toBe("Validation failed | PASS | 🟡 1 major");
-    expect(result.content).toMatch(/^PASS \| 🟡 1 major\n\n### Summary/);
+    expect(result.statusText).toBe("Validation failed | 🟡 1 major");
+    expect(result.reviewVerdict).toBe("PASS");
+    expect(result.bannerMarkdown).toContain("### ✅ PASS");
+    expect(result.content).toContain("### Summary");
   });
 
   it("computes FAIL status from blocker findings", () => {
@@ -183,9 +185,10 @@ describe("formatPrComment", () => {
     const result = run();
 
     expect(result.emoji).toBe("🔴");
-    expect(result.statusText).toContain("FAIL");
+    expect(result.reviewVerdict).toBe("FAIL");
     expect(result.statusText).toContain("1 blocker");
-    expect(result.content).toMatch(/^FAIL \| 🔴 1 blocker\n\n### Summary/);
+    expect(result.bannerMarkdown).toContain("### 🔴 FAIL");
+    expect(result.content).toContain("### Summary");
   });
 
   it("accepts paraphrased criterion names via normalization", () => {
@@ -261,6 +264,8 @@ describe("formatPrComment", () => {
     const result = run({ gateResultPath: "gate-result.json" });
 
     expect(result.gateStatusText).toBe("Would pass (policy: default, mode: advisory)");
+    expect(result.bannerMarkdown).toContain("### ✅ PASS");
+    expect(result.bannerMarkdown).toContain("Merge (advisory)");
   });
 
   it("omits model from output when not provided", () => {
@@ -297,5 +302,6 @@ describe("format-pr-comment CLI", () => {
     const parsed = JSON.parse(readFileSync(outputPath, "utf8"));
     expect(parsed.emoji).toBe("✅");
     expect(parsed.statusText).toBe("No issues found");
+    expect(parsed.bannerMarkdown).toContain("### ✅ PASS");
   });
 });

@@ -19,7 +19,7 @@ import {
 import {
   ReviewOutputSchema,
   applyComputedVerdicts,
-  normalizeCriteriaNames,
+  normalizeReviewData,
   type ReviewOutput,
 } from "./review-schema.js";
 import { resolveValidationExitCode } from "./review-ci.js";
@@ -67,7 +67,7 @@ function loadReview(jsonPath: string): LoadedReview {
   try {
     const parsed = JSON.parse(readFileSync(jsonPath, "utf8"));
     const review = applyComputedVerdicts(
-      ReviewOutputSchema.parse(normalizeCriteriaNames(parsed)),
+      ReviewOutputSchema.parse(normalizeReviewData(parsed)),
     );
     return { kind: "ok", review };
   } catch (err) {
