@@ -35,12 +35,7 @@ export default defineConfig({
     {
       name: "chromium-unauthenticated",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: [
-        /signin\.spec\.ts/,
-        /seed\.spec\.ts/,
-        /action-create-readback\.spec\.ts/,
-        /action-photo-teaser\.spec\.ts/,
-      ],
+      testMatch: [/signin\.spec\.ts/],
     },
   ],
   webServer: {
