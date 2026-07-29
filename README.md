@@ -11,7 +11,7 @@
 [![Deployed on Cloudflare Workers](https://img.shields.io/badge/deployed-Cloudflare%20Workers-orange)](https://plant-it.anna-kazmierczak-it.workers.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-🌐 **Live App:** [https://plant-it.anna-kazmierczak-it.workers.dev](https://plant-it.anna-kazmierczak-it.workers.dev)
+> 🚀 **Live Demo:** **[https://plant-it.anna-kazmierczak-it.workers.dev](https://plant-it.anna-kazmierczak-it.workers.dev)**
 
 ---
 
