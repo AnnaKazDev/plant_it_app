@@ -7,6 +7,8 @@ import {
   computeCriterionVerdict,
   computeOverallVerdict,
   normalizeCriteriaNames,
+  normalizeFindings,
+  normalizeReviewData,
   CriteriaMappingError,
   applyComputedVerdicts,
   REQUIRED_CRITERIA,
@@ -137,6 +139,45 @@ describe("normalizeCriteriaNames", () => {
   it("returns input unchanged when criteria count differs", () => {
     const input = { criteria: [{ name: "Only one", verdict: "PASS", findings: [] }] };
     expect(normalizeCriteriaNames(input)).toEqual(input);
+  });
+});
+
+describe("normalizeFindings", () => {
+  it("maps file/line/message aliases to location/issue/fix", () => {
+    const data = {
+      overall_verdict: "FAIL",
+      summary: "Test",
+      criteria: [
+        {
+          name: "Stack Conventions (Astro + React + Cloudflare)",
+          verdict: "FAIL",
+          findings: [
+            {
+              severity: "MAJOR",
+              file: "src/components/gate-test/BadPatternsDemo.tsx",
+              line: 1,
+              message: "Uses use client directive",
+            },
+          ],
+        },
+        ...REQUIRED_CRITERIA.slice(1).map((name) => ({
+          name,
+          verdict: "PASS",
+          findings: [],
+        })),
+      ],
+    };
+
+    const normalized = normalizeReviewData(data);
+    expect(() => ReviewOutputSchema.parse(normalized)).not.toThrow();
+
+    const parsed = ReviewOutputSchema.parse(normalized);
+    expect(parsed.criteria[0].findings[0]).toEqual({
+      severity: "MAJOR",
+      location: "src/components/gate-test/BadPatternsDemo.tsx:1",
+      issue: "Uses use client directive",
+      fix: "Review the issue and apply an appropriate fix.",
+    });
   });
 });
 

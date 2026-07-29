@@ -179,6 +179,92 @@ export function normalizeCriteriaNames(data: unknown): unknown {
   return data;
 }
 
+function asNonEmptyString(value: unknown): string | undefined {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  return undefined;
+}
+
+/**
+ * Map alternate LLM finding shapes (file/line/message) to canonical location/issue/fix.
+ */
+export function normalizeFinding(raw: Record<string, unknown>): Record<string, unknown> {
+  const file = asNonEmptyString(raw.file) ?? asNonEmptyString(raw.path);
+  const line = asNonEmptyString(raw.line);
+
+  const location =
+    asNonEmptyString(raw.location) ??
+    (file && line ? `${file}:${line}` : file) ??
+    "unknown";
+
+  const issue =
+    asNonEmptyString(raw.issue) ??
+    asNonEmptyString(raw.message) ??
+    asNonEmptyString(raw.description) ??
+    asNonEmptyString(raw.summary) ??
+    "No description provided";
+
+  const fix =
+    asNonEmptyString(raw.fix) ??
+    asNonEmptyString(raw.suggestion) ??
+    asNonEmptyString(raw.recommendation) ??
+    asNonEmptyString(raw.remediation) ??
+    "Review the issue and apply an appropriate fix.";
+
+  return {
+    severity: raw.severity,
+    location,
+    issue,
+    fix,
+  };
+}
+
+/**
+ * Normalize finding field names across all criteria before schema validation.
+ */
+export function normalizeFindings(data: unknown): unknown {
+  if (typeof data !== "object" || data === null || !("criteria" in data)) {
+    return data;
+  }
+
+  const review = data as { criteria?: unknown[]; [key: string]: unknown };
+  if (!Array.isArray(review.criteria)) {
+    return data;
+  }
+
+  return {
+    ...review,
+    criteria: review.criteria.map((criterion) => {
+      if (typeof criterion !== "object" || criterion === null) {
+        return criterion;
+      }
+
+      const entry = criterion as Record<string, unknown>;
+      if (!Array.isArray(entry.findings)) {
+        return criterion;
+      }
+
+      return {
+        ...entry,
+        findings: entry.findings.map((finding) =>
+          typeof finding === "object" && finding !== null
+            ? normalizeFinding(finding as Record<string, unknown>)
+            : finding,
+        ),
+      };
+    }),
+  };
+}
+
+/** Normalize LLM output aliases before Zod validation. */
+export function normalizeReviewData(data: unknown): unknown {
+  return normalizeCriteriaNames(normalizeFindings(data));
+}
+
 /**
  * Compute criterion verdict based on findings.
  * FAIL if any BLOCKER or MAJOR finding, otherwise PASS.
