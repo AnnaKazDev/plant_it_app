@@ -1,6 +1,12 @@
 # Plant It 🌱
 
-![Plant It Logo](./public/plant_it_logo.png)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/plant_it_logo_readme_dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="./docs/plant_it_logo_readme_light.png">
+    <img alt="Plant It Logo" src="./docs/plant_it_logo_readme_dark.png" width="400">
+  </picture>
+</p>
 
 **A visual garden tracking app that helps hobby gardeners document plant growth with photos, weather data, and spatial organization.**
 
